@@ -2,10 +2,11 @@
 
 mod cityjson;
 mod cjseq;
-// mod fcb;    // FlatCityBuf - to be implemented
+mod fcb;
 
 pub use cityjson::CityJSONReader;
 pub use cjseq::CityJSONSeqReader;
+pub use fcb::FlatCityBufReader;
 
 use crate::error::{CityJsonStacError, Result};
 use crate::metadata::{AttributeDefinition, BBox3D, Transform, CRS};
@@ -102,10 +103,8 @@ pub fn get_reader(file_path: &Path) -> Result<Box<dyn CityModelMetadataReader>> 
             Ok(Box::new(CityJSONSeqReader::new(file_path)?))
         }
         "fcb" => {
-            // FlatCityBuf - to be implemented
-            Err(CityJsonStacError::UnsupportedFormat(
-                "FlatCityBuf (.fcb) support coming soon".to_string(),
-            ))
+            // FlatCityBuf binary format
+            Ok(Box::new(FlatCityBufReader::new(file_path)?))
         }
         "parquet" => {
             // Future support
