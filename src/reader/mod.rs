@@ -1,10 +1,11 @@
 //! Reader implementations for different CityJSON formats
 
 mod cityjson;
-// mod cjseq;  // CityJSON Sequences - to be implemented
+mod cjseq;
 // mod fcb;    // FlatCityBuf - to be implemented
 
 pub use cityjson::CityJSONReader;
+pub use cjseq::CityJSONSeqReader;
 
 use crate::error::{CityJsonStacError, Result};
 use crate::metadata::{AttributeDefinition, BBox3D, Transform, CRS};
@@ -97,10 +98,8 @@ pub fn get_reader(file_path: &Path) -> Result<Box<dyn CityModelMetadataReader>> 
             }
         }
         "jsonl" | "cjseq" => {
-            // CityJSON Sequences - to be implemented
-            Err(CityJsonStacError::UnsupportedFormat(
-                "CityJSON Sequences (.jsonl) support coming soon".to_string(),
-            ))
+            // CityJSON Text Sequences
+            Ok(Box::new(CityJSONSeqReader::new(file_path)?))
         }
         "fcb" => {
             // FlatCityBuf - to be implemented
