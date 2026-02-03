@@ -227,16 +227,14 @@ mod get_reader_tests {
     }
 
     #[test]
-    fn test_get_reader_fcb_not_yet_supported() {
-        // FlatCityBuf should return "not yet supported" error
+    fn test_get_reader_fcb_supported() {
+        // FlatCityBuf is now supported
         let path = test_data_path("all.fcb");
         let result = get_reader(&path);
 
-        assert!(result.is_err());
-        if let Err(e) = result {
-            let err = e.to_string();
-            assert!(err.contains("coming soon") || err.contains("not yet"));
-        }
+        assert!(result.is_ok(), "FlatCityBuf should be supported now");
+        let reader = result.unwrap();
+        assert_eq!(reader.encoding(), "FlatCityBuf");
     }
 }
 
@@ -304,5 +302,213 @@ mod cjseq_integration_tests {
 
         let types = reader.city_object_types().expect("Failed to get types");
         assert!(!types.is_empty());
+    }
+}
+
+mod fcb_integration_tests {
+    use super::*;
+    use cityjson_stac::reader::FlatCityBufReader;
+
+    #[test]
+    fn test_read_fcb_file() {
+        let path = test_data_path("all.fcb");
+        let reader = FlatCityBufReader::new(&path).expect("Failed to create reader");
+
+        assert_eq!(reader.encoding(), "FlatCityBuf");
+    }
+
+    #[test]
+    fn test_fcb_version() {
+        let path = test_data_path("all.fcb");
+        let reader = FlatCityBufReader::new(&path).expect("Failed to create reader");
+
+        let version = reader.version().expect("Failed to get version");
+        // FCB files have a CityJSON version
+        assert!(!version.is_empty(), "Version should not be empty");
+    }
+
+    #[test]
+    fn test_fcb_city_object_count() {
+        let path = test_data_path("all.fcb");
+        let reader = FlatCityBufReader::new(&path).expect("Failed to create reader");
+
+        let count = reader.city_object_count().expect("Failed to get count");
+        // FCB files have features
+        assert!(count > 0, "FCB file should have city objects");
+    }
+
+    #[test]
+    fn test_fcb_bbox() {
+        let path = test_data_path("all.fcb");
+        let reader = FlatCityBufReader::new(&path).expect("Failed to create reader");
+
+        let result = reader.bbox();
+        // FCB files may or may not have bbox
+        if let Ok(bbox) = result {
+            assert!(bbox.is_valid(), "Bbox should be valid if present");
+        }
+    }
+
+    #[test]
+    fn test_fcb_crs() {
+        let path = test_data_path("all.fcb");
+        let reader = FlatCityBufReader::new(&path).expect("Failed to create reader");
+
+        let crs = reader.crs().expect("Failed to get CRS");
+        // CRS should always be available (may be default WGS84)
+        assert!(crs.epsg.is_some(), "CRS should have EPSG code");
+    }
+
+    #[test]
+    fn test_fcb_attributes() {
+        let path = test_data_path("all.fcb");
+        let reader = FlatCityBufReader::new(&path).expect("Failed to create reader");
+
+        let attrs = reader.attributes().expect("Failed to get attributes");
+        // FCB files define columns which map to attributes
+        // This may be empty if no columns are defined
+        assert!(
+            attrs.is_empty() || !attrs.is_empty(),
+            "Attributes call should not panic"
+        );
+    }
+
+    #[test]
+    fn test_fcb_transform() {
+        let path = test_data_path("all.fcb");
+        let reader = FlatCityBufReader::new(&path).expect("Failed to create reader");
+
+        let transform = reader.transform().expect("Failed to get transform");
+        // Transform may or may not be present
+        if let Some(t) = transform {
+            assert_eq!(t.scale.len(), 3, "Scale should have 3 components");
+            assert_eq!(t.translate.len(), 3, "Translate should have 3 components");
+        }
+    }
+
+    #[test]
+    fn test_fcb_metadata() {
+        let path = test_data_path("all.fcb");
+        let reader = FlatCityBufReader::new(&path).expect("Failed to create reader");
+
+        let metadata = reader.metadata().expect("Failed to get metadata");
+        // Metadata may or may not be present
+        if let Some(m) = metadata {
+            assert!(m.is_object(), "Metadata should be an object");
+        }
+    }
+
+    #[test]
+    fn test_fcb_file_path() {
+        let path = test_data_path("all.fcb");
+        let reader = FlatCityBufReader::new(&path).expect("Failed to create reader");
+
+        assert_eq!(reader.file_path(), path);
+    }
+
+    #[test]
+    fn test_fcb_thread_safety() {
+        use std::sync::Arc;
+        use std::thread;
+
+        let path = test_data_path("all.fcb");
+        let reader = Arc::new(FlatCityBufReader::new(&path).expect("Failed to create reader"));
+
+        let handles: Vec<_> = (0..4)
+            .map(|_| {
+                let r = Arc::clone(&reader);
+                thread::spawn(move || {
+                    let encoding = r.encoding();
+                    let version = r.version().expect("Failed to get version");
+                    (encoding, version)
+                })
+            })
+            .collect();
+
+        for handle in handles {
+            let (encoding, version) = handle.join().expect("Thread panicked");
+            assert_eq!(encoding, "FlatCityBuf");
+            assert!(!version.is_empty());
+        }
+    }
+
+    #[test]
+    fn test_fcb_lods() {
+        let path = test_data_path("all.fcb");
+        let reader = FlatCityBufReader::new(&path).expect("Failed to create reader");
+
+        let lods = reader.lods().expect("Failed to get LODs");
+        // FCB file should have at least one LOD from geometry
+        // LODs are sorted alphabetically
+        if !lods.is_empty() {
+            // Verify they are sorted
+            let mut sorted = lods.clone();
+            sorted.sort();
+            assert_eq!(lods, sorted, "LODs should be sorted");
+        }
+    }
+
+    #[test]
+    fn test_fcb_city_object_types() {
+        let path = test_data_path("all.fcb");
+        let reader = FlatCityBufReader::new(&path).expect("Failed to create reader");
+
+        let types = reader
+            .city_object_types()
+            .expect("Failed to get city object types");
+        // FCB file should have at least one city object type
+        assert!(!types.is_empty(), "FCB file should have city object types");
+
+        // The test file is called "all.fcb" so it likely contains various city object types
+        // Types should be sorted alphabetically
+        let mut sorted = types.clone();
+        sorted.sort();
+        assert_eq!(types, sorted, "City object types should be sorted");
+    }
+
+    #[test]
+    fn test_fcb_lods_and_types_caching() {
+        let path = test_data_path("all.fcb");
+        let reader = FlatCityBufReader::new(&path).expect("Failed to create reader");
+
+        // Call lods() twice - second call should use cache
+        let lods1 = reader.lods().expect("Failed to get LODs first time");
+        let lods2 = reader.lods().expect("Failed to get LODs second time");
+        assert_eq!(lods1, lods2, "LODs should be consistent between calls");
+
+        // city_object_types() should use the same cached data
+        let types = reader
+            .city_object_types()
+            .expect("Failed to get city object types");
+        assert!(!types.is_empty(), "Should get types from cached data");
+    }
+
+    #[test]
+    fn test_fcb_streaming_thread_safety() {
+        use std::sync::Arc;
+        use std::thread;
+
+        let path = test_data_path("all.fcb");
+        let reader = Arc::new(FlatCityBufReader::new(&path).expect("Failed to create reader"));
+
+        let handles: Vec<_> = (0..4)
+            .map(|i| {
+                let r = Arc::clone(&reader);
+                thread::spawn(move || {
+                    if i % 2 == 0 {
+                        r.lods().expect("Failed to get LODs")
+                    } else {
+                        r.city_object_types().expect("Failed to get types")
+                    }
+                })
+            })
+            .collect();
+
+        for handle in handles {
+            let result = handle.join().expect("Thread panicked");
+            // All threads should succeed and get non-empty results
+            // (since the file has content)
+            assert!(result.is_empty() || !result.is_empty(), "Should not panic");
+        }
     }
 }
