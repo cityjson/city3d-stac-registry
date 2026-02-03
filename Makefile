@@ -22,6 +22,10 @@ release:
 test:
 	cargo test --all-features
 
+## Run tests with nextest (fast)
+nextest:
+	cargo nextest run --all-features
+
 ## Run tests with output
 test-verbose:
 	cargo test --all-features -- --nocapture
