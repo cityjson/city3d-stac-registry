@@ -145,43 +145,52 @@
         },
         "cj:co_types": {
           "title": "City Object Types",
-          "description": "City object types present in the dataset",
+          "description": "City object types present in the dataset (includes extension types prefixed with +)",
           "type": "array",
           "items": {
-            "type": "string",
-            "enum": [
-              "Building",
-              "BuildingPart",
-              "BuildingInstallation",
-              "BuildingConstructionElement",
-              "BuildingFurniture",
-              "BuildingStorey",
-              "BuildingRoom",
-              "BuildingUnit",
-              "Bridge",
-              "BridgePart",
-              "BridgeInstallation",
-              "BridgeConstructionElement",
-              "BridgeRoom",
-              "BridgeFurniture",
-              "CityFurniture",
-              "CityObjectGroup",
-              "GenericCityObject",
-              "LandUse",
-              "OtherConstruction",
-              "PlantCover",
-              "Railway",
-              "Road",
-              "SolitaryVegetationObject",
-              "TINRelief",
-              "TransportSquare",
-              "Tunnel",
-              "TunnelPart",
-              "TunnelInstallation",
-              "TunnelConstructionElement",
-              "TunnelHollowSpace",
-              "TunnelFurniture",
-              "WaterBody"
+            "oneOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "Building",
+                  "BuildingPart",
+                  "BuildingInstallation",
+                  "BuildingConstructionElement",
+                  "BuildingFurniture",
+                  "BuildingStorey",
+                  "BuildingRoom",
+                  "BuildingUnit",
+                  "Bridge",
+                  "BridgePart",
+                  "BridgeInstallation",
+                  "BridgeConstructionElement",
+                  "BridgeRoom",
+                  "BridgeFurniture",
+                  "CityFurniture",
+                  "CityObjectGroup",
+                  "GenericCityObject",
+                  "LandUse",
+                  "OtherConstruction",
+                  "PlantCover",
+                  "Railway",
+                  "Road",
+                  "SolitaryVegetationObject",
+                  "TINRelief",
+                  "TransportSquare",
+                  "Tunnel",
+                  "TunnelPart",
+                  "TunnelInstallation",
+                  "TunnelConstructionElement",
+                  "TunnelHollowSpace",
+                  "TunnelFurniture",
+                  "WaterBody"
+                ]
+              },
+              {
+                "$comment": "Extension City Object types start with +",
+                "type": "string",
+                "pattern": "^\\+.+$"
+              }
             ]
           },
           "minItems": 1,
@@ -276,6 +285,16 @@
               }
             }
           }
+        },
+        "cj:extensions": {
+          "title": "CityJSON Extensions",
+          "description": "URLs to CityJSON extension schemas (Application Domain Extensions)",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          },
+          "uniqueItems": true
         }
       },
       "patternProperties": {

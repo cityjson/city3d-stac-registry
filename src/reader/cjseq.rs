@@ -385,6 +385,26 @@ fn extract_version_from_header(header: &Value) -> Result<String> {
     Ok("2.0".to_string()) // Default version for CityJSONSeq (requires CityJSON 2.0+)
 }
 
+/// Extract CityJSON extensions from header (Application Domain Extensions)
+///
+/// In CityJSONSeq, extensions are declared in the header (first line).
+fn extract_extensions_from_header(header: &Value) -> Result<Vec<String>> {
+    let mut extensions = Vec::new();
+
+    if let Some(ext_obj) = header.get("extensions") {
+        if let Some(obj) = ext_obj.as_object() {
+            // Extensions are stored as {url: name}, we return the URLs
+            for url in obj.keys() {
+                extensions.push(url.clone());
+            }
+        }
+    }
+
+    // Sort for consistent output
+    extensions.sort();
+    Ok(extensions)
+}
+
 impl CityModelMetadataReader for CityJSONSeqReader {
     fn bbox(&self) -> Result<BBox3D> {
         self.with_data(extract_bbox_from_data)
@@ -428,6 +448,10 @@ impl CityModelMetadataReader for CityJSONSeqReader {
 
     fn metadata(&self) -> Result<Option<Value>> {
         self.with_data(|data| Ok(data.header.get("metadata").cloned()))
+    }
+
+    fn extensions(&self) -> Result<Vec<String>> {
+        self.with_data(|data| extract_extensions_from_header(&data.header))
     }
 }
 
@@ -639,5 +663,47 @@ mod tests {
         assert!((bbox.xmax - 10.0).abs() < 1e-6);
         assert!((bbox.ymax - 20.0).abs() < 1e-6);
         assert!((bbox.zmax - 30.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_cjseq_extensions_empty() {
+        // Standard test file has no extensions
+        let temp_file = create_test_cjseq();
+        let reader = CityJSONSeqReader::new(temp_file.path()).unwrap();
+        let extensions = reader.extensions().unwrap();
+        assert!(extensions.is_empty());
+    }
+
+    #[test]
+    fn test_cjseq_extensions_present() {
+        // Create a test file with extensions in header
+        let mut temp_file = tempfile::Builder::new()
+            .suffix(".city.jsonl")
+            .tempfile()
+            .unwrap();
+
+        // Write header line with extensions
+        writeln!(
+            temp_file,
+            r#"{{"type":"CityJSON","version":"2.0","extensions":{{"https://www.cityjson.org/extensions/noise.ext.json":"Noise"}},"transform":{{"scale":[0.001,0.001,0.001],"translate":[0,0,0]}},"CityObjects":{{}},"vertices":[]}}"#
+        )
+        .unwrap();
+
+        // Write a feature
+        writeln!(
+            temp_file,
+            r#"{{"type":"CityJSONFeature","id":"building1","CityObjects":{{"building1":{{"type":"+NoiseBuilding","geometry":[]}}}},"vertices":[]}}"#
+        )
+        .unwrap();
+
+        temp_file.flush().unwrap();
+
+        let reader = CityJSONSeqReader::new(temp_file.path()).unwrap();
+        let extensions = reader.extensions().unwrap();
+
+        assert_eq!(extensions.len(), 1);
+        assert!(
+            extensions.contains(&"https://www.cityjson.org/extensions/noise.ext.json".to_string())
+        );
     }
 }

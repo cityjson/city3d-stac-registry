@@ -212,6 +212,22 @@ impl StacCollectionBuilder {
                 .insert("proj:epsg".to_string(), serde_json::to_value(codes)?);
         }
 
+        // Aggregate CityJSON extensions (Application Domain Extensions)
+        let all_extensions: HashSet<String> = readers
+            .iter()
+            .filter_map(|r| r.extensions().ok())
+            .flatten()
+            .collect();
+
+        if !all_extensions.is_empty() {
+            let mut extensions: Vec<String> = all_extensions.into_iter().collect();
+            extensions.sort();
+            self.summaries.insert(
+                "cj:extensions".to_string(),
+                serde_json::to_value(extensions)?,
+            );
+        }
+
         // Merge all bounding boxes for spatial extent
         let bboxes: Vec<BBox3D> = readers.iter().filter_map(|r| r.bbox().ok()).collect();
 

@@ -317,6 +317,36 @@ fn extract_version_from_data(data: &Value) -> Result<String> {
     Ok("1.0".to_string()) // Default version
 }
 
+/// Helper function to extract CityJSON extensions (Application Domain Extensions)
+///
+/// In CityJSON, extensions are declared at the root level in an object where:
+/// - The key is the URL to the extension schema file
+/// - The value is the extension name/prefix (used for new City Object types with "+" prefix)
+///
+/// Example:
+/// ```json
+/// "extensions": {
+///   "https://example.org/noise.ext.json": "Noise",
+///   "https://cityjson.org/extensions/3dbag.json": "3DBAG"
+/// }
+/// ```
+fn extract_extensions_from_data(data: &Value) -> Result<Vec<String>> {
+    let mut extensions = Vec::new();
+
+    if let Some(ext_obj) = data.get("extensions") {
+        if let Some(obj) = ext_obj.as_object() {
+            // Extensions are stored as {url: name}, we return the URLs
+            for url in obj.keys() {
+                extensions.push(url.clone());
+            }
+        }
+    }
+
+    // Sort for consistent output
+    extensions.sort();
+    Ok(extensions)
+}
+
 impl CityModelMetadataReader for CityJSONReader {
     fn bbox(&self) -> Result<BBox3D> {
         self.with_data(extract_bbox_from_data)
@@ -360,6 +390,10 @@ impl CityModelMetadataReader for CityJSONReader {
 
     fn metadata(&self) -> Result<Option<Value>> {
         self.with_data(|data| Ok(data.get("metadata").cloned()))
+    }
+
+    fn extensions(&self) -> Result<Vec<String>> {
+        self.with_data(extract_extensions_from_data)
     }
 }
 
@@ -486,5 +520,78 @@ mod tests {
         let temp_file = create_test_cityjson();
         let reader = CityJSONReader::new(temp_file.path()).unwrap();
         assert_eq!(reader.encoding(), "CityJSON");
+    }
+
+    #[test]
+    fn test_cityjson_extensions_empty() {
+        // Standard test file has no extensions
+        let temp_file = create_test_cityjson();
+        let reader = CityJSONReader::new(temp_file.path()).unwrap();
+        let extensions = reader.extensions().unwrap();
+        assert!(extensions.is_empty());
+    }
+
+    #[test]
+    fn test_cityjson_extensions_present() {
+        // Create a test file with extensions
+        let mut temp_file = NamedTempFile::new().unwrap();
+        let cityjson = r#"{
+            "type": "CityJSON",
+            "version": "2.0",
+            "extensions": {
+                "https://www.cityjson.org/extensions/noise.ext.json": "Noise",
+                "https://3dbag.nl/extensions/3dbag.ext.json": "3DBAG"
+            },
+            "metadata": {
+                "geographicalExtent": [1.0, 2.0, 0.0, 10.0, 20.0, 30.0],
+                "referenceSystem": "https://www.opengis.net/def/crs/EPSG/0/7415"
+            },
+            "CityObjects": {
+                "building1": {
+                    "type": "+NoiseBuilding",
+                    "geometry": []
+                }
+            },
+            "vertices": []
+        }"#;
+
+        writeln!(temp_file, "{}", cityjson).unwrap();
+        temp_file.flush().unwrap();
+
+        let reader = CityJSONReader::new(temp_file.path()).unwrap();
+        let extensions = reader.extensions().unwrap();
+
+        assert_eq!(extensions.len(), 2);
+        assert!(extensions.contains(&"https://3dbag.nl/extensions/3dbag.ext.json".to_string()));
+        assert!(
+            extensions.contains(&"https://www.cityjson.org/extensions/noise.ext.json".to_string())
+        );
+    }
+
+    #[test]
+    fn test_cityjson_extensions_sorted() {
+        // Verify extensions are returned sorted
+        let mut temp_file = NamedTempFile::new().unwrap();
+        let cityjson = r#"{
+            "type": "CityJSON",
+            "version": "2.0",
+            "extensions": {
+                "https://z-extension.org/z.ext.json": "Z",
+                "https://a-extension.org/a.ext.json": "A"
+            },
+            "CityObjects": {},
+            "vertices": []
+        }"#;
+
+        writeln!(temp_file, "{}", cityjson).unwrap();
+        temp_file.flush().unwrap();
+
+        let reader = CityJSONReader::new(temp_file.path()).unwrap();
+        let extensions = reader.extensions().unwrap();
+
+        assert_eq!(extensions.len(), 2);
+        // Should be sorted alphabetically
+        assert_eq!(extensions[0], "https://a-extension.org/a.ext.json");
+        assert_eq!(extensions[1], "https://z-extension.org/z.ext.json");
     }
 }

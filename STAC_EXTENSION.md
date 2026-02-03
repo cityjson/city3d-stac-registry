@@ -26,6 +26,7 @@ Properties in the STAC Item `properties` object:
 | `cj:attributes`   | array[object] | No       | Attribute schema definitions                     |
 | `cj:transform`    | object        | No       | Coordinate transformation parameters             |
 | `cj:metadata`     | object        | No       | Additional CityJSON metadata                     |
+| `cj:extensions`   | array[string] | No       | CityJSON extension schema URLs (ADEs)            |
 
 ---
 
@@ -39,6 +40,7 @@ Properties in the STAC Collection `summaries` object:
 | `cj:city_objects` | object        | Yes      | Statistics: `{min, max, total}`         |
 | `cj:lods`         | array[string] | Yes      | All LODs across collection              |
 | `cj:co_types`     | array[string] | Yes      | All city object types across collection |
+| `cj:extensions`   | array[string] | No       | All extension URLs across collection    |
 
 ---
 
@@ -133,6 +135,24 @@ Free-form additional CityJSON metadata.
   "referenceDate": "2023-05-15",
   "dataSource": "LiDAR survey 2023"
 }
+```
+
+### `cj:extensions`
+
+CityJSON Extension schema URLs (Application Domain Extensions).
+
+CityJSON Extensions allow extending the core data model with:
+
+- New properties at the root level
+- New attributes for existing City Objects
+- New semantic objects
+- New City Object types (prefixed with "+")
+
+```json
+"cj:extensions": [
+  "https://www.cityjson.org/extensions/noise.ext.json",
+  "https://3dbag.nl/extensions/3dbag.ext.json"
+]
 ```
 
 ---
