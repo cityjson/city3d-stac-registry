@@ -15,7 +15,7 @@ STAC is widely adopted for geospatial data but lacks native support for 3D city 
 | Format                | Extension | Library                                                           | Status |
 | --------------------- | --------- | ----------------------------------------------------------------- | ------ |
 | CityJSON              | `.json`   | `serde_json`                                                      | ✅     |
-| CityJSONTextSequences | `.jsonl`  | `serde_json` (streaming)                                          | 🚧     |
+| CityJSONTextSequences | `.jsonl`  | `serde_json` (streaming)                                          | ✅     |
 | FlatCityBuf           | `.fcb`    | [flatcitybuf](https://github.com/cityjson/flatcitybuf) Rust crate | 🚧     |
 
 ## High-Level Architecture

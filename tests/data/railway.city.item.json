@@ -1,0 +1,117 @@
+{
+  "stac_version": "1.0.0",
+  "stac_extensions": [
+    "https://raw.githubusercontent.com/cityjson/cityjson-stac/main/stac-extension/schema.json",
+    "https://stac-extensions.github.io/projection/v1.1.0/schema.json"
+  ],
+  "type": "Feature",
+  "id": "railway.city",
+  "bbox": [
+    0.56,
+    0.64,
+    7.579,
+    12.64,
+    7.68,
+    9.103
+  ],
+  "geometry": {
+    "coordinates": [
+      [
+        [
+          0.56,
+          0.64
+        ],
+        [
+          12.64,
+          0.64
+        ],
+        [
+          12.64,
+          7.68
+        ],
+        [
+          0.56,
+          7.68
+        ],
+        [
+          0.56,
+          0.64
+        ]
+      ]
+    ],
+    "type": "Polygon"
+  },
+  "properties": {
+    "cj:attributes": [
+      {
+        "name": "class",
+        "type": "String"
+      },
+      {
+        "name": "function",
+        "type": "String"
+      },
+      {
+        "name": "species",
+        "type": "String"
+      }
+    ],
+    "cj:encoding": "CityJSON",
+    "cj:transform": {
+      "scale": [
+        0.001,
+        0.001,
+        0.001
+      ],
+      "translate": [
+        0.56,
+        0.64,
+        7.579
+      ]
+    },
+    "cj:lods": [
+      "3"
+    ],
+    "cj:version": "2.0",
+    "datetime": "2026-02-03T14:22:44.016495+00:00",
+    "cj:co_types": [
+      "Bridge",
+      "BridgeConstructiveElement",
+      "BridgeInstallation",
+      "Building",
+      "BuildingInstallation",
+      "CityFurniture",
+      "CityObjectGroup",
+      "GenericCityObject",
+      "Railway",
+      "SolitaryVegetationObject",
+      "TINRelief",
+      "Tunnel",
+      "TunnelInstallation",
+      "WaterBody"
+    ],
+    "proj:epsg": 4326,
+    "cj:city_objects": 121,
+    "cj:metadata": {
+      "geographicalExtent": [
+        0.56,
+        0.64,
+        7.579,
+        12.64,
+        7.68,
+        9.103
+      ]
+    }
+  },
+  "assets": {
+    "data": {
+      "href": "/Users/hbbaba/tudelft/cityjson/cityjson-stac/tests/data/railway.city.json",
+      "type": "application/json",
+      "title": "CityJSON data file",
+      "roles": [
+        "data"
+      ]
+    }
+  },
+  "links": []
+}
