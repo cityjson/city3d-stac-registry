@@ -85,7 +85,7 @@ enum Commands {
         max_depth: Option<usize>,
 
         /// Skip files with errors
-        #[arg(long, default_value_t = true)]
+        #[arg(long)]
         skip_errors: bool,
 
         /// Pretty-print JSON
