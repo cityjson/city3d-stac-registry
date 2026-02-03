@@ -67,6 +67,7 @@ cityjson-stac collection ./data/ \
 ```
 
 The command will:
+
 - Scan the directory for supported files (`.json`, `.jsonl`, `.fcb`)
 - Generate a STAC Item for each file
 - Aggregate metadata into a STAC Collection
@@ -143,13 +144,14 @@ cityjson-stac collection ./data/ -v
 
 ## Documentation
 
-- [Design Document](DESIGN.md) - Architecture and implementation design
-- [STAC Extension Specification](STAC_EXTENSION.md) - Custom extension for CityJSON
-- [API Design](API_DESIGN.md) - Trait definitions and code structure
+- [AGENTS.md](AGENTS.md) / [CLAUDE.md](CLAUDE.md) - Project overview and coding guidelines for AI agents
+- [DESIGN_DOC.md](DESIGN_DOC.md) - Detailed technical architecture and implementation
+- [STAC_EXTENSION.md](STAC_EXTENSION.md) - CityJSON STAC extension specification
 
 ## Project Status
 
 ✅ **Core Implementation Complete** - The tool is functional with:
+
 - CityJSON format support (`.json` files)
 - STAC Item and Collection generation
 - Full CLI with `item` and `collection` commands
@@ -157,6 +159,7 @@ cityjson-stac collection ./data/ -v
 - Custom CityJSON STAC extension
 
 🚧 **In Progress:**
+
 - CityJSON Sequences (`.jsonl`) support
 - FlatCityBuf (`.fcb`) support
 

@@ -1,93 +1,71 @@
 # CityJSON STAC Extension Specification
 
-## Extension Overview
-
-**Extension Name:** CityJSON
-**Extension Prefix:** `cj`
-**Extension Version:** 1.0.0
-**Scope:** Item, Collection
+**Extension Name:** CityJSON  
+**Extension Prefix:** `cj`  
+**Extension Version:** 1.0.0  
+**Scope:** Item, Collection  
 **Maturity:** Proposal
 
-### Purpose
-This extension defines additional properties for STAC Items and Collections that describe 3D city model datasets in CityJSON and related formats.
+## Purpose
 
-## Namespace
+This extension defines properties for STAC Items and Collections describing 3D city model datasets in CityJSON and related formats. All extension properties use the `cj:` prefix.
 
-All extension properties use the `cj:` prefix to avoid conflicts with other STAC extensions.
+---
 
-## Extension Properties
+## Item-Level Properties
 
-### Item-Level Properties
+Properties in the STAC Item `properties` object:
 
-Properties that appear in STAC Item `properties` object:
+| Field Name        | Type          | Required | Description                                      |
+| ----------------- | ------------- | -------- | ------------------------------------------------ |
+| `cj:encoding`     | string        | Yes      | Format: `CityJSON`, `CityJSONSeq`, `FlatCityBuf` |
+| `cj:version`      | string        | Yes      | CityJSON version (e.g., "2.0", "1.1")            |
+| `cj:city_objects` | integer       | Yes      | Number of city objects                           |
+| `cj:lods`         | array[string] | Yes      | Available levels of detail (e.g., ["1", "2"])    |
+| `cj:co_types`     | array[string] | Yes      | City object types (e.g., ["Building", "Road"])   |
+| `cj:attributes`   | array[object] | No       | Attribute schema definitions                     |
+| `cj:transform`    | object        | No       | Coordinate transformation parameters             |
+| `cj:metadata`     | object        | No       | Additional CityJSON metadata                     |
 
-| Field Name | Type | Description | Required |
-|------------|------|-------------|----------|
-| `cj:encoding` | string | Encoding format: `CityJSON`, `CityJSONSeq`, `FlatCityBuf`, or `CityParquet` | Yes |
-| `cj:version` | string | CityJSON version (e.g., "2.0", "1.1") | Yes |
-| `cj:city_objects` | integer | Number of city objects in the file | Yes |
-| `cj:lods` | array[string] | Available levels of detail (e.g., ["0", "1", "2"]) | Yes |
-| `cj:co_types` | array[string] | City object types present (e.g., ["Building", "Road"]) | Yes |
-| `cj:attributes` | array[object] | Attribute schema definitions | No |
-| `cj:transform` | object | Coordinate transformation parameters (if used) | No |
-| `cj:metadata` | object | Additional CityJSON metadata | No |
+---
 
-### Collection-Level Properties
+## Collection-Level Properties
 
-Properties that appear in STAC Collection `summaries` object:
+Properties in the STAC Collection `summaries` object:
 
-| Field Name | Type | Description | Required |
-|------------|------|-------------|----------|
-| `cj:encoding` | array[string] | All encoding formats in collection | Yes |
-| `cj:city_objects` | object | Statistics: `{min, max, total}` | Yes |
-| `cj:lods` | array[string] | All LODs available across collection | Yes |
-| `cj:co_types` | array[string] | All CO types across collection | Yes |
+| Field Name        | Type          | Required | Description                             |
+| ----------------- | ------------- | -------- | --------------------------------------- |
+| `cj:encoding`     | array[string] | Yes      | All encoding formats in collection      |
+| `cj:city_objects` | object        | Yes      | Statistics: `{min, max, total}`         |
+| `cj:lods`         | array[string] | Yes      | All LODs across collection              |
+| `cj:co_types`     | array[string] | Yes      | All city object types across collection |
 
-## Property Definitions
+---
+
+## Property Details
 
 ### `cj:encoding`
 
-The file format/encoding used for the 3D city model data.
+Encoding format of the 3D city model data.
 
-**Type:** string
 **Allowed Values:**
+
 - `"CityJSON"` - Standard CityJSON (.json)
 - `"CityJSONSeq"` - CityJSON Text Sequences (.jsonl)
-- `"FlatCityBuf"` - FlatBuffers-based columnar format (.fcb)
-- `"CityParquet"` - Parquet-based format (.parquet) [future]
-
-**Example:**
-```json
-"cj:encoding": "CityJSON"
-```
+- `"FlatCityBuf"` - FlatBuffers-based format (.fcb)
 
 ### `cj:version`
 
-The CityJSON specification version used by the file.
-
-**Type:** string
-**Pattern:** Semantic versioning (e.g., "2.0", "1.1", "1.0")
-
-**Example:**
-```json
-"cj:version": "2.0"
-```
+CityJSON specification version. Pattern: semantic version (e.g., "2.0", "1.1").
 
 ### `cj:city_objects`
 
-Number of city objects contained in the file.
+**Item:** Integer count of city objects.
 
-**Type:** integer
-**Minimum:** 0
+**Collection:** Statistics object:
 
-**Item Example:**
 ```json
-"cj:city_objects": 1523
-```
-
-**Collection Example (in summaries):**
-```json
-"cj:city_objects": {
+{
   "min": 45,
   "max": 5000,
   "total": 125432
@@ -96,95 +74,49 @@ Number of city objects contained in the file.
 
 ### `cj:lods`
 
-Levels of Detail (LOD) available in the dataset. LODs represent different geometric complexity levels from 0 (lowest detail) to 3+ (highest detail).
+Levels of Detail available. Supports decimal values (e.g., "2.2").
 
-**Type:** array[string]
-**Items:** String representation of LOD levels (supports decimals like "2.2")
-
-**Example:**
 ```json
 "cj:lods": ["1", "2", "2.2", "3"]
 ```
 
 ### `cj:co_types`
 
-City object types present in the dataset. Based on CityJSON specification.
+CityJSON object types present.
 
-**Type:** array[string]
-**Items:** CityJSON object type names
+**Common Types:** Building, BuildingPart, Road, Railway, TINRelief, WaterBody, PlantCover, LandUse, Bridge, Tunnel, GenericCityObject
 
-**Common Types:**
-- Building
-- BuildingPart
-- BuildingInstallation
-- Road
-- Railway
-- TransportSquare
-- TINRelief
-- WaterBody
-- PlantCover
-- SolitaryVegetationObject
-- LandUse
-- GenericCityObject
-- CityFurniture
-- Bridge
-- BridgePart
-- BridgeConstructionElement
-- Tunnel
-- TunnelPart
-
-**Example:**
 ```json
-"cj:co_types": ["Building", "BuildingPart", "Road", "TINRelief"]
+"cj:co_types": ["Building", "BuildingPart", "TINRelief"]
 ```
 
 ### `cj:attributes`
 
-Schema definition for semantic attributes attached to city objects.
+Attribute schema definitions.
 
-**Type:** array[object]
+| Property    | Type    | Required | Description                                  |
+| ----------- | ------- | -------- | -------------------------------------------- |
+| name        | string  | Yes      | Attribute name                               |
+| type        | string  | Yes      | String, Number, Boolean, Date, Array, Object |
+| description | string  | No       | Human-readable description                   |
+| required    | boolean | No       | Whether always present                       |
 
-**Attribute Object Properties:**
-| Property | Type | Description | Required |
-|----------|------|-------------|----------|
-| `name` | string | Attribute name | Yes |
-| `type` | string | Data type: `String`, `Number`, `Boolean`, `Date`, `Array`, `Object` | Yes |
-| `description` | string | Human-readable description | No |
-| `required` | boolean | Whether attribute is always present | No |
-
-**Example:**
 ```json
 "cj:attributes": [
-  {
-    "name": "yearOfConstruction",
-    "type": "Number",
-    "description": "Year the building was constructed"
-  },
-  {
-    "name": "function",
-    "type": "String",
-    "description": "Building function/usage type"
-  },
-  {
-    "name": "roofType",
-    "type": "String"
-  }
+  { "name": "yearOfConstruction", "type": "Number" },
+  { "name": "function", "type": "String", "description": "Building usage" }
 ]
 ```
 
 ### `cj:transform`
 
-Coordinate transformation parameters when vertex compression is used. Based on CityJSON transform object.
+Coordinate transformation for vertex compression.
 
-**Type:** object
+| Property  | Type          | Description           |
+| --------- | ------------- | --------------------- |
+| scale     | array[number] | Scale factors [x,y,z] |
+| translate | array[number] | Offsets [x,y,z]       |
 
-**Transform Object Properties:**
-| Property | Type | Description | Required |
-|----------|------|-------------|----------|
-| `scale` | array[number] | Scale factors [x, y, z] | Yes |
-| `translate` | array[number] | Translation offsets [x, y, z] | Yes |
-
-**Example:**
 ```json
 "cj:transform": {
   "scale": [0.001, 0.001, 0.001],
@@ -194,38 +126,26 @@ Coordinate transformation parameters when vertex compression is used. Based on C
 
 ### `cj:metadata`
 
-Additional metadata from the CityJSON file's top-level metadata object.
+Free-form additional CityJSON metadata.
 
-**Type:** object (free-form)
-
-**Common Properties:**
-- `referenceDate`: Date the dataset represents
-- `geographicalExtent`: Original CityJSON extent values
-- `dataSource`: Source of the 3D data
-- `pointOfContact`: Contact information
-- Custom metadata fields
-
-**Example:**
 ```json
 "cj:metadata": {
   "referenceDate": "2023-05-15",
-  "dataSource": "LiDAR survey 2023",
-  "pointOfContact": {
-    "contactName": "City GIS Department",
-    "emailAddress": "gis@city.gov"
-  }
+  "dataSource": "LiDAR survey 2023"
 }
 ```
 
-## STAC Item Example
+---
 
-Complete example of a STAC Item for a CityJSON file:
+## Examples
+
+### STAC Item
 
 ```json
 {
   "stac_version": "1.0.0",
   "stac_extensions": [
-    "https://raw.githubusercontent.com/yourusername/cityjson-stac/main/extension.json",
+    "https://raw.githubusercontent.com/cityjson/cityjson-stac/main/stac-extension/schema.json",
     "https://stac-extensions.github.io/projection/v1.1.0/schema.json"
   ],
   "type": "Feature",
@@ -233,36 +153,24 @@ Complete example of a STAC Item for a CityJSON file:
   "bbox": [4.46, 51.91, -5.0, 4.49, 51.93, 100.0],
   "geometry": {
     "type": "Polygon",
-    "coordinates": [[
-      [4.46, 51.91],
-      [4.49, 51.91],
-      [4.49, 51.93],
-      [4.46, 51.93],
-      [4.46, 51.91]
-    ]]
+    "coordinates": [
+      [
+        [4.46, 51.91],
+        [4.49, 51.91],
+        [4.49, 51.93],
+        [4.46, 51.93],
+        [4.46, 51.91]
+      ]
+    ]
   },
   "properties": {
     "datetime": "2023-05-15T00:00:00Z",
-    "title": "Rotterdam Buildings LOD2",
-    "description": "Building models in Level of Detail 2 for Rotterdam city center",
     "proj:epsg": 7415,
     "cj:encoding": "CityJSON",
     "cj:version": "2.0",
     "cj:city_objects": 1523,
     "cj:lods": ["2", "2.2"],
     "cj:co_types": ["Building", "BuildingPart"],
-    "cj:attributes": [
-      {
-        "name": "yearOfConstruction",
-        "type": "Number",
-        "description": "Year built"
-      },
-      {
-        "name": "function",
-        "type": "String",
-        "description": "Building function"
-      }
-    ],
     "cj:transform": {
       "scale": [0.001, 0.001, 0.001],
       "translate": [4629170.0, 5804690.0, 0.0]
@@ -272,183 +180,77 @@ Complete example of a STAC Item for a CityJSON file:
     "data": {
       "href": "./rotterdam_buildings_lod2.json",
       "type": "application/json",
-      "title": "CityJSON data file",
       "roles": ["data"]
     }
   },
   "links": [
-    {
-      "rel": "self",
-      "href": "./rotterdam_buildings_lod2_item.json"
-    },
-    {
-      "rel": "parent",
-      "href": "./collection.json"
-    },
-    {
-      "rel": "collection",
-      "href": "./collection.json"
-    }
+    { "rel": "self", "href": "./rotterdam_buildings_lod2_item.json" },
+    { "rel": "collection", "href": "./collection.json" }
   ]
 }
 ```
 
-## STAC Collection Example
-
-Complete example of a STAC Collection aggregating multiple CityJSON files:
+### STAC Collection
 
 ```json
 {
   "stac_version": "1.0.0",
   "stac_extensions": [
-    "https://raw.githubusercontent.com/yourusername/cityjson-stac/main/extension.json",
-    "https://stac-extensions.github.io/projection/v1.1.0/schema.json"
+    "https://raw.githubusercontent.com/cityjson/cityjson-stac/main/stac-extension/schema.json"
   ],
   "type": "Collection",
   "id": "rotterdam_3dcity_2023",
   "title": "Rotterdam 3D City Model 2023",
-  "description": "Complete 3D city model of Rotterdam including buildings, roads, and terrain in multiple LODs",
+  "description": "3D city model with buildings and terrain in multiple LODs",
   "license": "CC-BY-4.0",
   "extent": {
-    "spatial": {
-      "bbox": [[4.46, 51.91, -5.0, 4.49, 51.93, 100.0]]
-    },
-    "temporal": {
-      "interval": [["2023-05-15T00:00:00Z", null]]
-    }
+    "spatial": { "bbox": [[4.42, 51.88, -5.0, 4.6, 51.98, 120.5]] },
+    "temporal": { "interval": [["2023-05-15T00:00:00Z", null]] }
   },
   "summaries": {
     "proj:epsg": [7415],
     "cj:encoding": ["CityJSON", "FlatCityBuf"],
-    "cj:city_objects": {
-      "min": 45,
-      "max": 5000,
-      "total": 125432
-    },
-    "cj:lods": ["0", "1", "2", "2.2", "3"],
-    "cj:co_types": [
-      "Building",
-      "BuildingPart",
-      "Road",
-      "Railway",
-      "TINRelief",
-      "WaterBody"
-    ]
+    "cj:city_objects": { "min": 45, "max": 5000, "total": 125432 },
+    "cj:lods": ["0", "1", "2", "3"],
+    "cj:co_types": ["Building", "BuildingPart", "TINRelief", "WaterBody"]
   },
   "links": [
-    {
-      "rel": "self",
-      "href": "./collection.json"
-    },
-    {
-      "rel": "root",
-      "href": "./catalog.json"
-    },
-    {
-      "rel": "item",
-      "href": "./items/rotterdam_buildings_lod2_item.json"
-    },
-    {
-      "rel": "item",
-      "href": "./items/rotterdam_terrain_item.json"
-    }
+    { "rel": "self", "href": "./collection.json" },
+    { "rel": "item", "href": "./items/buildings_item.json" }
   ]
 }
 ```
 
-## Integration with Other STAC Extensions
+---
 
-### Projection Extension
+## Compatible STAC Extensions
 
-The CityJSON extension works well with the Projection extension:
+- **[Projection Extension](https://stac-extensions.github.io/projection/)**: `proj:epsg`, `proj:wkt2`
+- **[File Extension](https://stac-extensions.github.io/file/)**: `file:size`, `file:checksum`
 
-```json
-"proj:epsg": 7415,
-"proj:wkt2": "...",
-"proj:projjson": {...}
-```
-
-### File Extension
-
-For describing file characteristics:
-
-```json
-"file:size": 15728640,
-"file:checksum": "1220abcd..."
-```
-
-### Processing Extension
-
-For derived datasets:
-
-```json
-"processing:level": "L2",
-"processing:facility": "City GIS Lab",
-"processing:software": {
-  "cityjson-tools": "2.0.0"
-}
-```
+---
 
 ## Best Practices
 
-### 1. Bounding Box Representation
-- STAC bbox should be 3D: `[xmin, ymin, zmin, xmax, ymax, zmax]`
-- For collections, use the union of all item bboxes
-- Ensure CRS consistency between bbox and geometry
+1. **3D Bounding Box**: Use 6-element bbox `[xmin, ymin, zmin, xmax, ymax, zmax]`
+2. **Geometry**: Provide 2D footprint polygon in WGS84 for map display
+3. **Temporal**: Use `datetime` for single timestamp, or `start/end_datetime` for ranges
+4. **Assets**: Include primary data file with `"roles": ["data"]`
 
-### 2. Geometry Simplification
-- STAC geometry should be 2D footprint (projected to WGS84)
-- Simplify complex building footprints for better map display
-- For items with many objects, use convex hull or envelope
+---
 
-### 3. Temporal Information
-- Use `datetime` for single timestamp datasets
-- Use `start_datetime` and `end_datetime` for temporal ranges
-- Include reference date in `cj:metadata` for historical context
-
-### 4. Asset Organization
-- Primary data file should be in `data` asset
-- Include thumbnails/previews if available
-- Link to related documentation or schemas
-
-### 5. Collection Organization
-- One collection per thematic/geographic dataset
-- Items should be homogeneous in quality and LOD
-- Use subcollections for different areas or time periods
-
-## Validation
-
-### JSON Schema
-
-The extension provides a JSON Schema for validation:
-
-```bash
-cityjson-stac validate <stac-file.json>
-```
-
-### Required Validations
-
-1. Extension URL present in `stac_extensions`
-2. All required `cj:*` properties present
-3. Property types match specification
-4. `cj:encoding` value is valid
-5. `cj:lods` and `cj:co_types` are non-empty arrays
-6. EPSG code is valid
-
-## Extension Schema URL
+## Schema URL
 
 ```
-https://raw.githubusercontent.com/[username]/cityjson-stac/main/stac-extension/schema.json
+https://raw.githubusercontent.com/cityjson/cityjson-stac/main/stac-extension/schema.json
 ```
 
-## Contributing
-
-This extension is under development. Feedback and contributions welcome via GitHub issues and pull requests.
+---
 
 ## Changelog
 
-### Version 1.0.0 (Proposal)
-- Initial extension specification
-- Support for CityJSON, CityJSONSeq, and FlatCityBuf formats
+### v1.0.0 (Proposal)
+
+- Initial specification
+- Support for CityJSON, CityJSONSeq, FlatCityBuf formats
 - Item and Collection level properties
-- Attribute schema definitions
