@@ -1,0 +1,36 @@
+{
+  "type": "CityJSON",
+  "version": "2.0",
+  "transform": {
+    "scale": [
+      0.001,
+      0.001,
+      0.001
+    ],
+    "translate": [
+      9223372037026576,
+      9223372037327476,
+      9223372036854776
+    ]
+  },
+  "CityObjects": {},
+  "vertices": [],
+  "metadata": {
+    "geographicalExtent": [
+      74782.684,
+      419982.871,
+      -14.93,
+      100067.947,
+      450171.531,
+      207.042
+    ],
+    "pointOfContact": {
+      "contactName": "3DBAG Team",
+      "role": "owner",
+      "emailAddress": "info@3dbag.nl",
+      "website": "https://3dbag.nl"
+    },
+    "referenceSystem": "https://www.opengis.net/def/crs/EPSG/0/7415",
+    "title": "3DBAG"
+  }
+}
