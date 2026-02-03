@@ -556,4 +556,88 @@ mod tests {
         assert_eq!(t.scale, [0.001, 0.001, 0.001]);
         assert_eq!(t.translate, [0.0, 0.0, 0.0]);
     }
+
+    #[test]
+    fn test_cjseq_invalid_header_type() {
+        let mut temp_file = tempfile::Builder::new()
+            .suffix(".city.jsonl")
+            .tempfile()
+            .unwrap();
+        // Write invalid header (wrong type)
+        writeln!(temp_file, r#"{{"type":"Invalid","version":"2.0"}}"#).unwrap();
+        temp_file.flush().unwrap();
+
+        let reader = CityJSONSeqReader::new(temp_file.path()).unwrap();
+        // Trigger lazy load
+        let result = reader.bbox();
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("First line"));
+    }
+
+    #[test]
+    fn test_cjseq_malformed_json_header() {
+        let mut temp_file = tempfile::Builder::new()
+            .suffix(".city.jsonl")
+            .tempfile()
+            .unwrap();
+        writeln!(temp_file, r#"{{ not json }}"#).unwrap();
+        temp_file.flush().unwrap();
+
+        let reader = CityJSONSeqReader::new(temp_file.path()).unwrap();
+        let result = reader.version();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_cjseq_invalid_feature_type() {
+        let mut temp_file = tempfile::Builder::new()
+            .suffix(".city.jsonl")
+            .tempfile()
+            .unwrap();
+        // Valid header
+        writeln!(temp_file, r#"{{"type":"CityJSON","version":"2.0","transform":{{"scale":[0.001,0.001,0.001],"translate":[0,0,0]}},"CityObjects":{{}},"vertices":[]}}"#).unwrap();
+        // Invalid feature
+        writeln!(temp_file, r#"{{"type":"NotAFeature"}}"#).unwrap();
+        temp_file.flush().unwrap();
+
+        let reader = CityJSONSeqReader::new(temp_file.path()).unwrap();
+        let result = reader.city_object_count();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_cjseq_extract_bbox_fallback() {
+        let mut temp_file = tempfile::Builder::new()
+            .suffix(".city.jsonl")
+            .tempfile()
+            .unwrap();
+        // Write header without geographicalExtent
+        // transform: scale=0.001, translate=[0,0,0]
+        writeln!(
+            temp_file,
+            r#"{{"type":"CityJSON","version":"2.0","transform":{{"scale":[0.001,0.001,0.001],"translate":[0,0,0]}},"CityObjects":{{}},"vertices":[]}}"#
+        )
+        .unwrap();
+
+        // Write feature with vertices
+        // [1000, 2000, 0] -> [1.0, 2.0, 0.0]
+        // [10000, 20000, 30000] -> [10.0, 20.0, 30.0]
+        writeln!(
+            temp_file,
+            r#"{{"type":"CityJSONFeature","id":"b1","CityObjects":{{}},"vertices":[[1000,2000,0],[10000,20000,30000]]}}"#
+        )
+        .unwrap();
+
+        temp_file.flush().unwrap();
+
+        let reader = CityJSONSeqReader::new(temp_file.path()).unwrap();
+        let bbox = reader.bbox().unwrap();
+
+        assert!((bbox.xmin - 1.0).abs() < 1e-6);
+        assert!((bbox.ymin - 2.0).abs() < 1e-6);
+        assert!((bbox.zmin - 0.0).abs() < 1e-6);
+        assert!((bbox.xmax - 10.0).abs() < 1e-6);
+        assert!((bbox.ymax - 20.0).abs() < 1e-6);
+        assert!((bbox.zmax - 30.0).abs() < 1e-6);
+    }
 }

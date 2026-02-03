@@ -274,3 +274,35 @@ mod reader_thread_safety_tests {
         }
     }
 }
+
+mod cjseq_integration_tests {
+    use super::*;
+
+    #[test]
+    fn test_read_delft_cjseq() {
+        let path = test_data_path("delft.city.jsonl");
+        let reader = get_reader(&path).expect("Failed to create reader");
+
+        assert_eq!(reader.encoding(), "CityJSONSeq");
+
+        let version = reader.version().expect("Failed to get version");
+        assert_eq!(version, "2.0");
+
+        let bbox = reader.bbox().expect("Failed to get bbox");
+        assert!(bbox.is_valid());
+    }
+
+    #[test]
+    fn test_read_railway_cjseq() {
+        let path = test_data_path("railway.city.jsonl");
+        let reader = get_reader(&path).expect("Failed to create reader");
+
+        assert_eq!(reader.encoding(), "CityJSONSeq");
+
+        let count = reader.city_object_count().expect("Failed to get count");
+        assert!(count > 0, "Railway should have city objects");
+
+        let types = reader.city_object_types().expect("Failed to get types");
+        assert!(!types.is_empty());
+    }
+}
