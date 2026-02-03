@@ -216,14 +216,14 @@ mod get_reader_tests {
     }
 
     #[test]
-    fn test_get_reader_jsonl_not_yet_supported() {
-        // CityJSON Sequences should return "not yet supported" error
+    fn test_get_reader_jsonl_supported() {
+        // CityJSON Sequences are now supported via CityJSONSeqReader
         let path = test_data_path("delft.city.jsonl");
         let result = get_reader(&path);
 
-        assert!(result.is_err());
-        let err = result.unwrap_err().to_string();
-        assert!(err.contains("coming soon") || err.contains("not yet"));
+        assert!(result.is_ok(), "CityJSONSeq (jsonl) should be supported");
+        let reader = result.unwrap();
+        assert_eq!(reader.encoding(), "CityJSONSeq");
     }
 
     #[test]
@@ -233,8 +233,10 @@ mod get_reader_tests {
         let result = get_reader(&path);
 
         assert!(result.is_err());
-        let err = result.unwrap_err().to_string();
-        assert!(err.contains("coming soon") || err.contains("not yet"));
+        if let Err(e) = result {
+            let err = e.to_string();
+            assert!(err.contains("coming soon") || err.contains("not yet"));
+        }
     }
 }
 

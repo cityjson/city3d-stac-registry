@@ -276,7 +276,7 @@ mod attribute_tests {
             AttributeType::Number
         );
 
-        let float_value = serde_json::json!(3.14);
+        let float_value = serde_json::json!(3.15);
         assert_eq!(
             AttributeType::from_json_value(&float_value),
             AttributeType::Number
