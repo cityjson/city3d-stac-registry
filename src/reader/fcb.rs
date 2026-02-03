@@ -37,13 +37,15 @@ pub struct FlatCityBufReader {
 struct CachedStreamedData {
     lods: Vec<String>,
     city_object_types: Vec<String>,
+    /// Total count of CityObjects across all features
+    /// Note: A single FCB feature can contain multiple CityObjects
+    city_object_count: usize,
 }
 
 /// Cached data extracted from the FCB header
 /// This avoids keeping a reference to the file's lifetime
 struct CachedHeaderData {
     version: String,
-    features_count: u64,
     geographical_extent: Option<(f64, f64, f64, f64, f64, f64)>,
     reference_system_code: Option<i32>,
     transform: Option<(f64, f64, f64, f64, f64, f64)>, // scale_x, scale_y, scale_z, translate_x, translate_y, translate_z
@@ -154,7 +156,6 @@ impl FlatCityBufReader {
 
             *data = Some(CachedHeaderData {
                 version,
-                features_count: header.features_count(),
                 geographical_extent,
                 reference_system_code,
                 transform,
@@ -300,22 +301,24 @@ impl FlatCityBufReader {
 
         // Double-check after acquiring write lock
         if data.is_none() {
-            let (lods, city_object_types) = self.stream_extract_lods_and_types_inner()?;
+            let (lods, city_object_types, city_object_count) =
+                self.stream_extract_lods_and_types_inner()?;
             *data = Some(CachedStreamedData {
                 lods,
                 city_object_types,
+                city_object_count,
             });
         }
 
         Ok(())
     }
 
-    /// Stream through features to extract LODs and city object types
+    /// Stream through features to extract LODs, city object types, and count
     ///
     /// This method iterates through all features in the FCB file in a streaming
-    /// fashion, extracting unique LODs and city object types without loading
-    /// all features into memory at once.
-    fn stream_extract_lods_and_types_inner(&self) -> Result<(Vec<String>, Vec<String>)> {
+    /// fashion, extracting unique LODs, city object types, and counting all
+    /// CityObjects without loading all features into memory at once.
+    fn stream_extract_lods_and_types_inner(&self) -> Result<(Vec<String>, Vec<String>, usize)> {
         let file = File::open(&self.file_path)?;
         let reader = BufReader::new(file);
 
@@ -325,6 +328,8 @@ impl FlatCityBufReader {
         // Use BTreeSet for automatic deduplication and sorting
         let mut lods: BTreeSet<String> = BTreeSet::new();
         let mut types: BTreeSet<String> = BTreeSet::new();
+        // Count all CityObjects (note: a single feature can have multiple objects)
+        let mut city_object_count: usize = 0;
 
         // Use the sequential (streaming) iterator
         let mut feature_iter = fcb_reader
@@ -341,6 +346,9 @@ impl FlatCityBufReader {
             // Extract from city objects within this feature
             if let Some(objects) = feature.objects() {
                 for obj in objects.iter() {
+                    // Count this CityObject
+                    city_object_count += 1;
+
                     // Extract city object type
                     let obj_type = obj.type_();
                     // Handle extension types specially
@@ -367,7 +375,11 @@ impl FlatCityBufReader {
         }
 
         // Convert to Vec (BTreeSet is already sorted)
-        Ok((lods.into_iter().collect(), types.into_iter().collect()))
+        Ok((
+            lods.into_iter().collect(),
+            types.into_iter().collect(),
+            city_object_count,
+        ))
     }
 
     /// Execute a closure with access to the loaded streamed data
@@ -446,7 +458,10 @@ impl CityModelMetadataReader for FlatCityBufReader {
     }
 
     fn city_object_count(&self) -> Result<usize> {
-        self.with_header_data(|data| Ok(data.features_count as usize))
+        // Use cached streamed data to get the actual number of CityObjects,
+        // which may be higher than the number of FCB features (rows).
+        // A single FCB feature can contain multiple CityObjects.
+        self.with_streamed_data(|data| Ok(data.city_object_count))
     }
 
     fn attributes(&self) -> Result<Vec<AttributeDefinition>> {

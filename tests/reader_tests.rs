@@ -366,11 +366,13 @@ mod fcb_integration_tests {
 
         let attrs = reader.attributes().expect("Failed to get attributes");
         // FCB files define columns which map to attributes
-        // This may be empty if no columns are defined
-        assert!(
-            attrs.is_empty() || !attrs.is_empty(),
-            "Attributes call should not panic"
-        );
+        // Verify attributes are sorted by name (the reader should sort them)
+        if !attrs.is_empty() {
+            let names: Vec<_> = attrs.iter().map(|a| &a.name).collect();
+            let mut sorted_names = names.clone();
+            sorted_names.sort();
+            assert_eq!(names, sorted_names, "Attributes should be sorted by name");
+        }
     }
 
     #[test]
@@ -438,14 +440,16 @@ mod fcb_integration_tests {
         let reader = FlatCityBufReader::new(&path).expect("Failed to create reader");
 
         let lods = reader.lods().expect("Failed to get LODs");
-        // FCB file should have at least one LOD from geometry
-        // LODs are sorted alphabetically
-        if !lods.is_empty() {
-            // Verify they are sorted
-            let mut sorted = lods.clone();
-            sorted.sort();
-            assert_eq!(lods, sorted, "LODs should be sorted");
-        }
+        // The all.fcb file contains geometry with LODs
+        assert!(
+            !lods.is_empty(),
+            "FCB file should have at least one LOD from geometry"
+        );
+
+        // Verify LODs are sorted alphabetically
+        let mut sorted = lods.clone();
+        sorted.sort();
+        assert_eq!(lods, sorted, "LODs should be sorted");
     }
 
     #[test]
@@ -504,11 +508,20 @@ mod fcb_integration_tests {
             })
             .collect();
 
-        for handle in handles {
+        // Get baseline results for comparison
+        let baseline_lods = reader.lods().expect("Failed to get baseline LODs");
+        let baseline_types = reader
+            .city_object_types()
+            .expect("Failed to get baseline types");
+
+        for (i, handle) in handles.into_iter().enumerate() {
             let result = handle.join().expect("Thread panicked");
-            // All threads should succeed and get non-empty results
-            // (since the file has content)
-            assert!(result.is_empty() || !result.is_empty(), "Should not panic");
+            // Verify each thread got the same result as sequential baseline
+            if i % 2 == 0 {
+                assert_eq!(result, baseline_lods, "LODs should match baseline");
+            } else {
+                assert_eq!(result, baseline_types, "Types should match baseline");
+            }
         }
     }
 }

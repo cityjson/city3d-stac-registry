@@ -1,4 +1,3 @@
-#![allow(deprecated)]
 use assert_cmd::Command;
 use std::path::Path;
 
@@ -12,6 +11,7 @@ fn test_data_path(filename: &str) -> std::path::PathBuf {
 }
 
 #[test]
+#[allow(deprecated)] // Using cargo_bin which is deprecated but still works
 fn test_cli_generate_item_from_cjseq() {
     let input = test_data_path("delft.city.jsonl");
     let temp = tempdir().expect("Failed to create temp dir");
@@ -39,6 +39,7 @@ fn test_cli_generate_item_from_cjseq() {
 }
 
 #[test]
+#[allow(deprecated)] // Using cargo_bin which is deprecated but still works
 fn test_cli_generate_item_from_cjseq_railway() {
     let input = test_data_path("railway.city.jsonl");
     let temp = tempdir().expect("Failed to create temp dir");

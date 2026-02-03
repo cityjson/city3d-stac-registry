@@ -1,0 +1,1 @@
+The PR review comments from GitHub Copilot have been addressed. The `FlatCityBufReader` now correctly streams and caches metadata, including accurate counting of city objects. Tautological assertions in tests were fixed, and CI now includes documentation tests. The codebase is fully thoroughly tested and linted.
