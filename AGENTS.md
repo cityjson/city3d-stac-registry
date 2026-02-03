@@ -184,6 +184,98 @@ StacItemBuilder::new("my-item")
 
 See [STAC_EXTENSION.md](./STAC_EXTENSION.md) for full specification.
 
+## Development Setup
+
+### Prerequisites
+
+- Rust 1.70+ (install via [rustup](https://rustup.rs))
+- Git
+
+### First-Time Setup
+
+After cloning the repository, set up git hooks:
+
+```bash
+# Make setup script executable and run it
+chmod +x scripts/setup-hooks.sh
+./scripts/setup-hooks.sh
+```
+
+This configures **pre-commit hooks** that automatically run before each commit:
+
+1. **Format check** (`cargo fmt --check`) - Ensures consistent code formatting
+2. **Lint check** (`cargo clippy`) - Catches common mistakes and enforces best practices
+3. **Quick tests** (`cargo test --lib`) - Runs unit tests to catch regressions
+
+If any check fails, the commit is blocked until the issues are fixed.
+
+### Manual Pre-commit Checks
+
+```bash
+# Run the same checks manually
+cargo fmt --check          # Check formatting
+cargo clippy -- -D warnings # Check linting
+cargo test --lib            # Run unit tests
+
+# Fix formatting automatically
+cargo fmt
+
+# Run all checks at once
+cargo fmt && cargo clippy -- -D warnings && cargo test
+```
+
+### Bypassing Hooks (Emergency Only)
+
+```bash
+git commit --no-verify -m "emergency fix"
+```
+
+### Disabling Hooks
+
+```bash
+git config --unset core.hooksPath
+```
+
+## CI/CD
+
+### GitHub Actions Workflows
+
+| Workflow      | Trigger             | Description                                               |
+| ------------- | ------------------- | --------------------------------------------------------- |
+| `ci.yml`      | Push to main, PRs   | Runs check, format, clippy, test, docs, security audit    |
+| `release.yml` | Version tags (`v*`) | Builds binaries for all platforms, creates GitHub Release |
+
+### CI Jobs
+
+| Job      | Command                 | Purpose                                       |
+| -------- | ----------------------- | --------------------------------------------- |
+| Check    | `cargo check`           | Fast compilation check                        |
+| Format   | `cargo fmt --check`     | Verify code formatting                        |
+| Clippy   | `cargo clippy`          | Linting with warnings as errors               |
+| Test     | `cargo test`            | Run all tests                                 |
+| Build    | `cargo build --release` | Cross-platform builds (Linux, macOS, Windows) |
+| Docs     | `cargo doc`             | Ensure documentation builds                   |
+| Security | `cargo audit`           | Check for vulnerable dependencies             |
+
+### Creating a Release
+
+```bash
+# Create and push a version tag
+git tag v0.1.0
+git push origin v0.1.0
+
+# This triggers the release workflow which:
+# - Builds binaries for Linux, macOS, Windows (AMD64 + ARM64)
+# - Creates a GitHub Release with all artifacts and checksums
+```
+
+### Dependabot
+
+Automated dependency updates run weekly (Mondays) for:
+
+- Cargo dependencies
+- GitHub Actions
+
 ## Quick Reference
 
 ```bash
@@ -193,9 +285,15 @@ cargo build --release
 # Test
 cargo test
 
+# Check everything (same as CI)
+cargo fmt --check && cargo clippy -- -D warnings && cargo test
+
 # Generate STAC Item
 cityjson-stac item building.json -o building_item.json
 
 # Generate STAC Collection
 cityjson-stac collection ./data/ -o ./stac_output
+
+# Debug logging
+RUST_LOG=debug cargo run -- item file.json -o output.json
 ```

@@ -4,16 +4,20 @@ use crate::error::{CityJsonStacError, Result};
 use crate::metadata::{AttributeDefinition, AttributeType, BBox3D, Transform, CRS};
 use crate::reader::CityModelMetadataReader;
 use serde_json::Value;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap};
 use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
+use std::sync::RwLock;
 
 /// Reader for CityJSON format files (.json)
+///
+/// Uses `RwLock` for interior mutability to enable lazy loading
+/// while maintaining thread-safety (`Send + Sync` bounds).
 pub struct CityJSONReader {
     file_path: PathBuf,
-    // Cached parsed data (lazy loaded)
-    data: Option<Value>,
+    /// Cached parsed data (lazy loaded via interior mutability)
+    data: RwLock<Option<Value>>,
 }
 
 impl CityJSONReader {
@@ -28,183 +32,208 @@ impl CityJSONReader {
 
         Ok(Self {
             file_path: file_path.to_path_buf(),
-            data: None,
+            data: RwLock::new(None),
         })
     }
 
-    /// Lazy load and cache JSON data
-    fn ensure_loaded(&mut self) -> Result<&Value> {
-        if self.data.is_none() {
-            let file = File::open(&self.file_path)?;
-            let reader = BufReader::new(file);
-            self.data = Some(serde_json::from_reader(reader)?);
-        }
-        Ok(self.data.as_ref().unwrap())
-    }
-
-    /// Get a reference to the cached data (must call ensure_loaded first)
-    fn data(&mut self) -> Result<&Value> {
-        self.ensure_loaded()
-    }
-
-    /// Extract bbox from metadata or compute from vertices
-    fn extract_bbox(&mut self) -> Result<BBox3D> {
-        let data = self.data()?;
-
-        // Try to get from metadata.geographicalExtent first
-        if let Some(metadata) = data.get("metadata") {
-            if let Some(extent) = metadata.get("geographicalExtent") {
-                if let Some(arr) = extent.as_array() {
-                    if arr.len() == 6 {
-                        return Ok(BBox3D::new(
-                            arr[0].as_f64().unwrap_or(0.0),
-                            arr[1].as_f64().unwrap_or(0.0),
-                            arr[2].as_f64().unwrap_or(0.0),
-                            arr[3].as_f64().unwrap_or(0.0),
-                            arr[4].as_f64().unwrap_or(0.0),
-                            arr[5].as_f64().unwrap_or(0.0),
-                        ));
-                    }
-                }
+    /// Lazy load and cache JSON data using interior mutability
+    fn ensure_loaded(&self) -> Result<()> {
+        // First check if already loaded with a read lock (cheaper)
+        {
+            let data = self
+                .data
+                .read()
+                .map_err(|_| CityJsonStacError::Other("Failed to acquire read lock".to_string()))?;
+            if data.is_some() {
+                return Ok(());
             }
         }
 
-        // Fallback: compute from vertices
-        // Extract transform first to avoid borrow issues
-        let transform = self.extract_transform()?;
-        let data = self.data()?; // Re-borrow after transform extraction
+        // Not loaded, acquire write lock and load
+        let mut data = self
+            .data
+            .write()
+            .map_err(|_| CityJsonStacError::Other("Failed to acquire write lock".to_string()))?;
 
-        if let Some(vertices) = data.get("vertices") {
-            if let Some(vertex_array) = vertices.as_array() {
-                if vertex_array.is_empty() {
-                    return Err(CityJsonStacError::MetadataError(
-                        "No vertices found".to_string(),
+        // Double-check after acquiring write lock
+        if data.is_none() {
+            let file = File::open(&self.file_path)?;
+            let reader = BufReader::new(file);
+            *data = Some(serde_json::from_reader(reader)?);
+        }
+        Ok(())
+    }
+
+    /// Execute a closure with access to the loaded data
+    fn with_data<T, F>(&self, f: F) -> Result<T>
+    where
+        F: FnOnce(&Value) -> Result<T>,
+    {
+        self.ensure_loaded()?;
+        let data = self
+            .data
+            .read()
+            .map_err(|_| CityJsonStacError::Other("Failed to acquire read lock".to_string()))?;
+        let value = data
+            .as_ref()
+            .expect("data should be loaded after ensure_loaded");
+        f(value)
+    }
+}
+
+// Helper function to extract f64 from JSON array with proper error handling
+fn get_f64_from_array(arr: &[Value], idx: usize) -> Result<f64> {
+    arr.get(idx).and_then(|v| v.as_f64()).ok_or_else(|| {
+        CityJsonStacError::InvalidCityJson(format!(
+            "Expected number at index {}, got: {:?}",
+            idx,
+            arr.get(idx)
+        ))
+    })
+}
+
+// Helper function to extract bbox from data
+fn extract_bbox_from_data(data: &Value) -> Result<BBox3D> {
+    // Try to get from metadata.geographicalExtent first
+    if let Some(metadata) = data.get("metadata") {
+        if let Some(extent) = metadata.get("geographicalExtent") {
+            if let Some(arr) = extent.as_array() {
+                if arr.len() == 6 {
+                    return Ok(BBox3D::new(
+                        get_f64_from_array(arr, 0)?,
+                        get_f64_from_array(arr, 1)?,
+                        get_f64_from_array(arr, 2)?,
+                        get_f64_from_array(arr, 3)?,
+                        get_f64_from_array(arr, 4)?,
+                        get_f64_from_array(arr, 5)?,
                     ));
                 }
+            }
+        }
+    }
 
-                let mut xmin = f64::MAX;
-                let mut ymin = f64::MAX;
-                let mut zmin = f64::MAX;
-                let mut xmax = f64::MIN;
-                let mut ymax = f64::MIN;
-                let mut zmax = f64::MIN;
+    // Extract transform for vertex processing
+    let transform = extract_transform_from_data(data)?;
 
-                for vertex in vertex_array {
-                    if let Some(v) = vertex.as_array() {
-                        if v.len() >= 3 {
-                            let mut coords = [
+    // Fallback: compute from vertices
+    if let Some(vertices) = data.get("vertices") {
+        if let Some(vertex_array) = vertices.as_array() {
+            if vertex_array.is_empty() {
+                return Err(CityJsonStacError::MetadataError(
+                    "No vertices found".to_string(),
+                ));
+            }
+
+            let mut xmin = f64::MAX;
+            let mut ymin = f64::MAX;
+            let mut zmin = f64::MAX;
+            let mut xmax = f64::MIN;
+            let mut ymax = f64::MIN;
+            let mut zmax = f64::MIN;
+
+            for vertex in vertex_array {
+                if let Some(v) = vertex.as_array() {
+                    if v.len() >= 3 {
+                        let coords = if let Some(ref t) = transform {
+                            // Apply transform if present (vertices are compressed integers)
+                            let compressed = [
+                                v[0].as_i64().unwrap_or(0) as i32,
+                                v[1].as_i64().unwrap_or(0) as i32,
+                                v[2].as_i64().unwrap_or(0) as i32,
+                            ];
+                            t.apply(&compressed)
+                        } else {
+                            // No transform, vertices are raw floats
+                            [
                                 v[0].as_f64().unwrap_or(0.0),
                                 v[1].as_f64().unwrap_or(0.0),
                                 v[2].as_f64().unwrap_or(0.0),
-                            ];
+                            ]
+                        };
 
-                            // Apply transform if present
-                            if let Some(ref t) = transform {
-                                let compressed = [
-                                    v[0].as_i64().unwrap_or(0) as i32,
-                                    v[1].as_i64().unwrap_or(0) as i32,
-                                    v[2].as_i64().unwrap_or(0) as i32,
-                                ];
-                                coords = t.apply(&compressed);
-                            }
-
-                            xmin = xmin.min(coords[0]);
-                            ymin = ymin.min(coords[1]);
-                            zmin = zmin.min(coords[2]);
-                            xmax = xmax.max(coords[0]);
-                            ymax = ymax.max(coords[1]);
-                            zmax = zmax.max(coords[2]);
-                        }
-                    }
-                }
-
-                return Ok(BBox3D::new(xmin, ymin, zmin, xmax, ymax, zmax));
-            }
-        }
-
-        Err(CityJsonStacError::MetadataError(
-            "Could not determine bounding box".to_string(),
-        ))
-    }
-
-    /// Extract CRS from metadata
-    fn extract_crs(&mut self) -> Result<CRS> {
-        let data = self.data()?;
-
-        if let Some(metadata) = data.get("metadata") {
-            if let Some(ref_system) = metadata.get("referenceSystem") {
-                if let Some(url) = ref_system.as_str() {
-                    if let Some(crs) = CRS::from_cityjson_url(url) {
-                        return Ok(crs);
+                        xmin = xmin.min(coords[0]);
+                        ymin = ymin.min(coords[1]);
+                        zmin = zmin.min(coords[2]);
+                        xmax = xmax.max(coords[0]);
+                        ymax = ymax.max(coords[1]);
+                        zmax = zmax.max(coords[2]);
                     }
                 }
             }
-        }
 
-        // Default to WGS84
-        Ok(CRS::default())
+            return Ok(BBox3D::new(xmin, ymin, zmin, xmax, ymax, zmax));
+        }
     }
 
-    /// Extract transform from data
-    fn extract_transform(&mut self) -> Result<Option<Transform>> {
-        let data = self.data()?;
+    Err(CityJsonStacError::MetadataError(
+        "Could not determine bounding box".to_string(),
+    ))
+}
 
-        if let Some(transform) = data.get("transform") {
-            let scale = transform
-                .get("scale")
-                .and_then(|s| s.as_array())
-                .and_then(|arr| {
-                    if arr.len() == 3 {
-                        Some([
-                            arr[0].as_f64()?,
-                            arr[1].as_f64()?,
-                            arr[2].as_f64()?,
-                        ])
-                    } else {
-                        None
-                    }
-                });
-
-            let translate = transform
-                .get("translate")
-                .and_then(|t| t.as_array())
-                .and_then(|arr| {
-                    if arr.len() == 3 {
-                        Some([
-                            arr[0].as_f64()?,
-                            arr[1].as_f64()?,
-                            arr[2].as_f64()?,
-                        ])
-                    } else {
-                        None
-                    }
-                });
-
-            if let (Some(scale), Some(translate)) = (scale, translate) {
-                return Ok(Some(Transform::new(scale, translate)));
+// Helper function to extract CRS from data
+fn extract_crs_from_data(data: &Value) -> Result<CRS> {
+    if let Some(metadata) = data.get("metadata") {
+        if let Some(ref_system) = metadata.get("referenceSystem") {
+            if let Some(url) = ref_system.as_str() {
+                if let Some(crs) = CRS::from_cityjson_url(url) {
+                    return Ok(crs);
+                }
             }
         }
-
-        Ok(None)
     }
 
-    /// Extract LODs from city objects
-    fn extract_lods(&mut self) -> Result<Vec<String>> {
-        let data = self.data()?;
-        let mut lods = HashSet::new();
+    // Default to WGS84
+    Ok(CRS::default())
+}
 
-        if let Some(city_objects) = data.get("CityObjects") {
-            if let Some(objects) = city_objects.as_object() {
-                for (_id, obj) in objects {
-                    if let Some(geometry) = obj.get("geometry") {
-                        if let Some(geom_array) = geometry.as_array() {
-                            for geom in geom_array {
-                                if let Some(lod) = geom.get("lod") {
-                                    if let Some(lod_num) = lod.as_f64() {
-                                        lods.insert(format!("{}", lod_num));
-                                    } else if let Some(lod_str) = lod.as_str() {
-                                        lods.insert(lod_str.to_string());
-                                    }
+// Helper function to extract transform from data
+fn extract_transform_from_data(data: &Value) -> Result<Option<Transform>> {
+    if let Some(transform) = data.get("transform") {
+        let scale = transform
+            .get("scale")
+            .and_then(|s| s.as_array())
+            .and_then(|arr| {
+                if arr.len() == 3 {
+                    Some([arr[0].as_f64()?, arr[1].as_f64()?, arr[2].as_f64()?])
+                } else {
+                    None
+                }
+            });
+
+        let translate = transform
+            .get("translate")
+            .and_then(|t| t.as_array())
+            .and_then(|arr| {
+                if arr.len() == 3 {
+                    Some([arr[0].as_f64()?, arr[1].as_f64()?, arr[2].as_f64()?])
+                } else {
+                    None
+                }
+            });
+
+        if let (Some(scale), Some(translate)) = (scale, translate) {
+            return Ok(Some(Transform::new(scale, translate)));
+        }
+    }
+
+    Ok(None)
+}
+
+// Helper function to extract LODs from data (uses BTreeSet for automatic sorting)
+fn extract_lods_from_data(data: &Value) -> Result<Vec<String>> {
+    let mut lods = BTreeSet::new();
+
+    if let Some(city_objects) = data.get("CityObjects") {
+        if let Some(objects) = city_objects.as_object() {
+            for (_id, obj) in objects {
+                if let Some(geometry) = obj.get("geometry") {
+                    if let Some(geom_array) = geometry.as_array() {
+                        for geom in geom_array {
+                            if let Some(lod) = geom.get("lod") {
+                                if let Some(lod_num) = lod.as_f64() {
+                                    lods.insert(format!("{}", lod_num));
+                                } else if let Some(lod_str) = lod.as_str() {
+                                    lods.insert(lod_str.to_string());
                                 }
                             }
                         }
@@ -212,124 +241,105 @@ impl CityJSONReader {
                 }
             }
         }
-
-        let mut lods: Vec<String> = lods.into_iter().collect();
-        lods.sort();
-        Ok(lods)
     }
 
-    /// Extract city object types
-    fn extract_city_object_types(&mut self) -> Result<Vec<String>> {
-        let data = self.data()?;
-        let mut types = HashSet::new();
+    // BTreeSet is already sorted, just collect to Vec
+    Ok(lods.into_iter().collect())
+}
 
-        if let Some(city_objects) = data.get("CityObjects") {
-            if let Some(objects) = city_objects.as_object() {
-                for (_id, obj) in objects {
-                    if let Some(obj_type) = obj.get("type") {
-                        if let Some(type_str) = obj_type.as_str() {
-                            types.insert(type_str.to_string());
+// Helper function to extract city object types (uses BTreeSet for automatic sorting)
+fn extract_city_object_types_from_data(data: &Value) -> Result<Vec<String>> {
+    let mut types = BTreeSet::new();
+
+    if let Some(city_objects) = data.get("CityObjects") {
+        if let Some(objects) = city_objects.as_object() {
+            for (_id, obj) in objects {
+                if let Some(obj_type) = obj.get("type") {
+                    if let Some(type_str) = obj_type.as_str() {
+                        types.insert(type_str.to_string());
+                    }
+                }
+            }
+        }
+    }
+
+    // BTreeSet is already sorted, just collect to Vec
+    Ok(types.into_iter().collect())
+}
+
+// Helper function to count city objects
+fn count_city_objects_from_data(data: &Value) -> Result<usize> {
+    if let Some(city_objects) = data.get("CityObjects") {
+        if let Some(objects) = city_objects.as_object() {
+            return Ok(objects.len());
+        }
+    }
+
+    Ok(0)
+}
+
+// Helper function to extract attribute schema
+fn extract_attributes_from_data(data: &Value) -> Result<Vec<AttributeDefinition>> {
+    let mut attribute_map: HashMap<String, AttributeType> = HashMap::new();
+
+    if let Some(city_objects) = data.get("CityObjects") {
+        if let Some(objects) = city_objects.as_object() {
+            for (_id, obj) in objects {
+                if let Some(attributes) = obj.get("attributes") {
+                    if let Some(attrs) = attributes.as_object() {
+                        for (key, value) in attrs {
+                            let attr_type = AttributeType::from_json_value(value);
+                            attribute_map.insert(key.clone(), attr_type);
                         }
                     }
                 }
             }
         }
-
-        let mut types: Vec<String> = types.into_iter().collect();
-        types.sort();
-        Ok(types)
     }
 
-    /// Count city objects
-    fn count_city_objects(&mut self) -> Result<usize> {
-        let data = self.data()?;
+    let mut attributes: Vec<AttributeDefinition> = attribute_map
+        .into_iter()
+        .map(|(name, attr_type)| AttributeDefinition::new(name, attr_type))
+        .collect();
 
-        if let Some(city_objects) = data.get("CityObjects") {
-            if let Some(objects) = city_objects.as_object() {
-                return Ok(objects.len());
-            }
+    attributes.sort_by(|a, b| a.name.cmp(&b.name));
+    Ok(attributes)
+}
+
+// Helper function to extract version
+fn extract_version_from_data(data: &Value) -> Result<String> {
+    if let Some(version) = data.get("version") {
+        if let Some(v_str) = version.as_str() {
+            return Ok(v_str.to_string());
         }
-
-        Ok(0)
     }
 
-    /// Extract attribute schema
-    fn extract_attributes(&mut self) -> Result<Vec<AttributeDefinition>> {
-        let data = self.data()?;
-        let mut attribute_map: HashMap<String, AttributeType> = HashMap::new();
-
-        if let Some(city_objects) = data.get("CityObjects") {
-            if let Some(objects) = city_objects.as_object() {
-                for (_id, obj) in objects {
-                    if let Some(attributes) = obj.get("attributes") {
-                        if let Some(attrs) = attributes.as_object() {
-                            for (key, value) in attrs {
-                                let attr_type = AttributeType::from_json_value(value);
-                                attribute_map.insert(key.clone(), attr_type);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        let mut attributes: Vec<AttributeDefinition> = attribute_map
-            .into_iter()
-            .map(|(name, attr_type)| AttributeDefinition::new(name, attr_type))
-            .collect();
-
-        attributes.sort_by(|a, b| a.name.cmp(&b.name));
-        Ok(attributes)
-    }
+    Ok("1.0".to_string()) // Default version
 }
 
 impl CityModelMetadataReader for CityJSONReader {
     fn bbox(&self) -> Result<BBox3D> {
-        let mut reader = Self {
-            file_path: self.file_path.clone(),
-            data: self.data.clone(),
-        };
-        reader.extract_bbox()
+        self.with_data(extract_bbox_from_data)
     }
 
     fn crs(&self) -> Result<CRS> {
-        let mut reader = Self {
-            file_path: self.file_path.clone(),
-            data: self.data.clone(),
-        };
-        reader.extract_crs()
+        self.with_data(extract_crs_from_data)
     }
 
     fn lods(&self) -> Result<Vec<String>> {
-        let mut reader = Self {
-            file_path: self.file_path.clone(),
-            data: self.data.clone(),
-        };
-        reader.extract_lods()
+        self.with_data(extract_lods_from_data)
     }
 
     fn city_object_types(&self) -> Result<Vec<String>> {
-        let mut reader = Self {
-            file_path: self.file_path.clone(),
-            data: self.data.clone(),
-        };
-        reader.extract_city_object_types()
+        self.with_data(extract_city_object_types_from_data)
     }
 
     fn city_object_count(&self) -> Result<usize> {
-        let mut reader = Self {
-            file_path: self.file_path.clone(),
-            data: self.data.clone(),
-        };
-        reader.count_city_objects()
+        self.with_data(count_city_objects_from_data)
     }
 
     fn attributes(&self) -> Result<Vec<AttributeDefinition>> {
-        let mut reader = Self {
-            file_path: self.file_path.clone(),
-            data: self.data.clone(),
-        };
-        reader.extract_attributes()
+        self.with_data(extract_attributes_from_data)
     }
 
     fn encoding(&self) -> &'static str {
@@ -337,19 +347,7 @@ impl CityModelMetadataReader for CityJSONReader {
     }
 
     fn version(&self) -> Result<String> {
-        let mut reader = Self {
-            file_path: self.file_path.clone(),
-            data: self.data.clone(),
-        };
-        let data = reader.data()?;
-
-        if let Some(version) = data.get("version") {
-            if let Some(v_str) = version.as_str() {
-                return Ok(v_str.to_string());
-            }
-        }
-
-        Ok("1.0".to_string()) // Default version
+        self.with_data(extract_version_from_data)
     }
 
     fn file_path(&self) -> &Path {
@@ -357,21 +355,11 @@ impl CityModelMetadataReader for CityJSONReader {
     }
 
     fn transform(&self) -> Result<Option<Transform>> {
-        let mut reader = Self {
-            file_path: self.file_path.clone(),
-            data: self.data.clone(),
-        };
-        reader.extract_transform()
+        self.with_data(extract_transform_from_data)
     }
 
     fn metadata(&self) -> Result<Option<Value>> {
-        let mut reader = Self {
-            file_path: self.file_path.clone(),
-            data: self.data.clone(),
-        };
-        let data = reader.data()?;
-
-        Ok(data.get("metadata").cloned())
+        self.with_data(|data| Ok(data.get("metadata").cloned()))
     }
 }
 

@@ -1,9 +1,9 @@
 //! STAC generation module
 
-mod models;
-mod item;
 mod collection;
+mod item;
+mod models;
 
-pub use models::{StacItem, StacCollection, Link, Asset, Extent};
-pub use item::StacItemBuilder;
 pub use collection::StacCollectionBuilder;
+pub use item::StacItemBuilder;
+pub use models::{Asset, Extent, Link, StacCollection, StacItem};

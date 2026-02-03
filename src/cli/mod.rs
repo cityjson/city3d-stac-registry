@@ -131,7 +131,7 @@ pub fn run() -> Result<()> {
             max_depth,
             skip_errors,
             pretty,
-        } => handle_collection_command(
+        } => handle_collection_command(CollectionConfig {
             directory,
             output,
             id,
@@ -142,7 +142,7 @@ pub fn run() -> Result<()> {
             max_depth,
             skip_errors,
             pretty,
-        ),
+        }),
     }
 }
 
@@ -176,8 +176,7 @@ fn handle_item_command(
 
     // Apply custom options
     if let Some(custom_id) = id {
-        builder = StacItemBuilder::new(custom_id)
-            .cityjson_metadata(reader.as_ref())?;
+        builder = StacItemBuilder::new(custom_id).cityjson_metadata(reader.as_ref())?;
 
         if let Ok(bbox) = reader.bbox() {
             builder = builder.bbox(bbox).geometry_from_bbox();
@@ -220,7 +219,8 @@ fn handle_item_command(
     Ok(())
 }
 
-fn handle_collection_command(
+/// Configuration for collection generation
+struct CollectionConfig {
     directory: PathBuf,
     output: PathBuf,
     id: Option<String>,
@@ -231,11 +231,13 @@ fn handle_collection_command(
     max_depth: Option<usize>,
     skip_errors: bool,
     pretty: bool,
-) -> Result<()> {
-    log::info!("Scanning directory: {}", directory.display());
+}
+
+fn handle_collection_command(config: CollectionConfig) -> Result<()> {
+    log::info!("Scanning directory: {}", config.directory.display());
 
     // Find all supported files
-    let files = traversal::find_files(&directory, recursive, max_depth)?;
+    let files = traversal::find_files(&config.directory, config.recursive, config.max_depth)?;
 
     if files.is_empty() {
         return Err(crate::error::CityJsonStacError::NoFilesFound);
@@ -257,7 +259,7 @@ fn handle_collection_command(
                 match StacItemBuilder::from_file(file, reader.as_ref()) {
                     Ok(builder) => match builder.build() {
                         Ok(item) => {
-                            let json = if pretty {
+                            let json = if config.pretty {
                                 serde_json::to_string_pretty(&item)?
                             } else {
                                 serde_json::to_string(&item)?
@@ -267,7 +269,7 @@ fn handle_collection_command(
                             print!(".");
                         }
                         Err(e) => {
-                            if skip_errors {
+                            if config.skip_errors {
                                 errors.push((file.clone(), e.to_string()));
                                 log::warn!("Skipping {}: {}", file.display(), e);
                                 print!("!");
@@ -277,7 +279,7 @@ fn handle_collection_command(
                         }
                     },
                     Err(e) => {
-                        if skip_errors {
+                        if config.skip_errors {
                             errors.push((file.clone(), e.to_string()));
                             log::warn!("Skipping {}: {}", file.display(), e);
                             print!("!");
@@ -288,7 +290,7 @@ fn handle_collection_command(
                 }
             }
             Err(e) => {
-                if skip_errors {
+                if config.skip_errors {
                     errors.push((file.clone(), e.to_string()));
                     log::warn!("Skipping {}: {}", file.display(), e);
                     print!("!");
@@ -301,8 +303,9 @@ fn handle_collection_command(
     println!(); // New line after progress dots
 
     // Build collection
-    let collection_id = id.unwrap_or_else(|| {
-        directory
+    let collection_id = config.id.unwrap_or_else(|| {
+        config
+            .directory
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("collection")
@@ -310,20 +313,20 @@ fn handle_collection_command(
     });
 
     let mut collection_builder = StacCollectionBuilder::new(&collection_id)
-        .license(license)
+        .license(config.license)
         .aggregate_cityjson_metadata(&readers)?;
 
-    if let Some(t) = title {
+    if let Some(t) = config.title {
         collection_builder = collection_builder.title(t);
     }
 
-    if let Some(d) = description {
+    if let Some(d) = config.description {
         collection_builder = collection_builder.description(d);
     }
 
     // Create output directory
-    std::fs::create_dir_all(&output)?;
-    let items_dir = output.join("items");
+    std::fs::create_dir_all(&config.output)?;
+    let items_dir = config.output.join("items");
     std::fs::create_dir_all(&items_dir)?;
 
     // Write items and add links to collection
@@ -342,7 +345,10 @@ fn handle_collection_command(
         // Add item link to collection
         collection_builder = collection_builder.item_link(
             format!("./items/{}", item_filename),
-            file_path.file_name().and_then(|n| n.to_str()).map(String::from),
+            file_path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .map(String::from),
         );
     }
 
@@ -351,13 +357,13 @@ fn handle_collection_command(
 
     // Build and write collection
     let collection = collection_builder.build()?;
-    let collection_json = if pretty {
+    let collection_json = if config.pretty {
         serde_json::to_string_pretty(&collection)?
     } else {
         serde_json::to_string(&collection)?
     };
 
-    let collection_path = output.join("collection.json");
+    let collection_path = config.output.join("collection.json");
     std::fs::write(&collection_path, collection_json)?;
 
     // Print summary

@@ -104,45 +104,36 @@ impl StacItemBuilder {
         // Add cj:lods
         if let Ok(lods) = reader.lods() {
             if !lods.is_empty() {
-                self.properties.insert(
-                    "cj:lods".to_string(),
-                    serde_json::to_value(lods)?,
-                );
+                self.properties
+                    .insert("cj:lods".to_string(), serde_json::to_value(lods)?);
             }
         }
 
         // Add cj:co_types
         if let Ok(types) = reader.city_object_types() {
             if !types.is_empty() {
-                self.properties.insert(
-                    "cj:co_types".to_string(),
-                    serde_json::to_value(types)?,
-                );
+                self.properties
+                    .insert("cj:co_types".to_string(), serde_json::to_value(types)?);
             }
         }
 
         // Add cj:attributes
         if let Ok(attrs) = reader.attributes() {
             if !attrs.is_empty() {
-                self.properties.insert(
-                    "cj:attributes".to_string(),
-                    serde_json::to_value(attrs)?,
-                );
+                self.properties
+                    .insert("cj:attributes".to_string(), serde_json::to_value(attrs)?);
             }
         }
 
         // Add cj:transform
         if let Ok(Some(transform)) = reader.transform() {
-            self.properties.insert(
-                "cj:transform".to_string(),
-                serde_json::to_value(transform)?,
-            );
+            self.properties
+                .insert("cj:transform".to_string(), serde_json::to_value(transform)?);
         }
 
         // Add cj:metadata
         if let Ok(Some(metadata)) = reader.metadata() {
-            self.properties
-                .insert("cj:metadata".to_string(), metadata);
+            self.properties.insert("cj:metadata".to_string(), metadata);
         }
 
         // Add proj:epsg from CRS
@@ -183,28 +174,22 @@ impl StacItemBuilder {
 
     /// Add a self link
     pub fn self_link(mut self, href: impl Into<String>) -> Self {
-        self.links.push(
-            Link::new("self", href)
-                .with_type("application/json"),
-        );
+        self.links
+            .push(Link::new("self", href).with_type("application/json"));
         self
     }
 
     /// Add a parent link
     pub fn parent_link(mut self, href: impl Into<String>) -> Self {
-        self.links.push(
-            Link::new("parent", href)
-                .with_type("application/json"),
-        );
+        self.links
+            .push(Link::new("parent", href).with_type("application/json"));
         self
     }
 
     /// Add a collection link
     pub fn collection_link(mut self, href: impl Into<String>) -> Self {
-        self.links.push(
-            Link::new("collection", href)
-                .with_type("application/json"),
-        );
+        self.links
+            .push(Link::new("collection", href).with_type("application/json"));
         self
     }
 
@@ -285,10 +270,7 @@ impl StacItemBuilder {
             _ => "application/octet-stream",
         };
 
-        builder = builder.data_asset(
-            file_path.to_string_lossy().to_string(),
-            media_type,
-        );
+        builder = builder.data_asset(file_path.to_string_lossy().to_string(), media_type);
 
         Ok(builder)
     }
@@ -297,7 +279,7 @@ impl StacItemBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::metadata::{AttributeDefinition, AttributeType, CRS};
+    use crate::metadata::BBox3D;
     use crate::reader::CityJSONReader;
     use std::io::Write;
     use tempfile::NamedTempFile;
@@ -337,7 +319,10 @@ mod tests {
         let item = StacItemBuilder::new("test-item")
             .title("Test Item")
             .description("A test item")
-            .property("cj:encoding".to_string(), Value::String("CityJSON".to_string()))
+            .property(
+                "cj:encoding".to_string(),
+                Value::String("CityJSON".to_string()),
+            )
             .build()
             .unwrap();
 
@@ -383,7 +368,10 @@ mod tests {
         let item = StacItemBuilder::new("test")
             .bbox(bbox)
             .geometry_from_bbox()
-            .property("cj:encoding".to_string(), Value::String("CityJSON".to_string()))
+            .property(
+                "cj:encoding".to_string(),
+                Value::String("CityJSON".to_string()),
+            )
             .build()
             .unwrap();
 

@@ -28,7 +28,9 @@ impl BBox3D {
 
     /// Convert to STAC bbox array format [xmin, ymin, zmin, xmax, ymax, zmax]
     pub fn to_array(&self) -> [f64; 6] {
-        [self.xmin, self.ymin, self.zmin, self.xmax, self.ymax, self.zmax]
+        [
+            self.xmin, self.ymin, self.zmin, self.xmax, self.ymax, self.zmax,
+        ]
     }
 
     /// Merge two bounding boxes (union)

@@ -52,20 +52,14 @@ mod tests {
 
     #[test]
     fn test_transform_creation() {
-        let transform = Transform::new(
-            [0.001, 0.001, 0.001],
-            [4629170.0, 5804690.0, 0.0],
-        );
+        let transform = Transform::new([0.001, 0.001, 0.001], [4629170.0, 5804690.0, 0.0]);
         assert_eq!(transform.scale, [0.001, 0.001, 0.001]);
         assert_eq!(transform.translate, [4629170.0, 5804690.0, 0.0]);
     }
 
     #[test]
     fn test_transform_apply() {
-        let transform = Transform::new(
-            [0.001, 0.001, 0.001],
-            [1000.0, 2000.0, 0.0],
-        );
+        let transform = Transform::new([0.001, 0.001, 0.001], [1000.0, 2000.0, 0.0]);
 
         let compressed = [100, 200, 300];
         let real = transform.apply(&compressed);
@@ -77,15 +71,9 @@ mod tests {
 
     #[test]
     fn test_transform_apply_batch() {
-        let transform = Transform::new(
-            [0.001, 0.001, 0.001],
-            [1000.0, 2000.0, 0.0],
-        );
+        let transform = Transform::new([0.001, 0.001, 0.001], [1000.0, 2000.0, 0.0]);
 
-        let compressed = vec![
-            [100, 200, 300],
-            [150, 250, 350],
-        ];
+        let compressed = vec![[100, 200, 300], [150, 250, 350]];
 
         let real = transform.apply_batch(&compressed);
         assert_eq!(real.len(), 2);
@@ -95,10 +83,7 @@ mod tests {
 
     #[test]
     fn test_transform_inverse() {
-        let transform = Transform::new(
-            [0.001, 0.001, 0.001],
-            [1000.0, 2000.0, 0.0],
-        );
+        let transform = Transform::new([0.001, 0.001, 0.001], [1000.0, 2000.0, 0.0]);
 
         let real = [1000.1, 2000.2, 0.3];
         let compressed = transform.inverse(&real);
@@ -108,10 +93,7 @@ mod tests {
 
     #[test]
     fn test_transform_roundtrip() {
-        let transform = Transform::new(
-            [0.001, 0.001, 0.001],
-            [1000.0, 2000.0, 0.0],
-        );
+        let transform = Transform::new([0.001, 0.001, 0.001], [1000.0, 2000.0, 0.0]);
 
         let original = [100, 200, 300];
         let real = transform.apply(&original);
@@ -122,10 +104,7 @@ mod tests {
 
     #[test]
     fn test_transform_serialization() {
-        let transform = Transform::new(
-            [0.001, 0.001, 0.001],
-            [1000.0, 2000.0, 0.0],
-        );
+        let transform = Transform::new([0.001, 0.001, 0.001], [1000.0, 2000.0, 0.0]);
 
         let json = serde_json::to_string(&transform).unwrap();
         let deserialized: Transform = serde_json::from_str(&json).unwrap();

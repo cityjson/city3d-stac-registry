@@ -1,11 +1,11 @@
 //! Metadata structures for CityJSON datasets
 
+mod attributes;
 mod bbox;
 mod crs;
-mod attributes;
 mod transform;
 
+pub use attributes::{AttributeDefinition, AttributeType};
 pub use bbox::BBox3D;
 pub use crs::CRS;
-pub use attributes::{AttributeDefinition, AttributeType};
 pub use transform::Transform;

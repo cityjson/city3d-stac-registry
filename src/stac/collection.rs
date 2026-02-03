@@ -107,17 +107,14 @@ impl StacCollectionBuilder {
 
     /// Add a self link
     pub fn self_link(mut self, href: impl Into<String>) -> Self {
-        self.links.push(
-            Link::new("self", href)
-                .with_type("application/json"),
-        );
+        self.links
+            .push(Link::new("self", href).with_type("application/json"));
         self
     }
 
     /// Add an item link
     pub fn item_link(mut self, href: impl Into<String>, title: Option<String>) -> Self {
-        let mut link = Link::new("item", href)
-            .with_type("application/json");
+        let mut link = Link::new("item", href).with_type("application/json");
 
         if let Some(t) = title {
             link = link.with_title(t);
@@ -147,16 +144,11 @@ impl StacCollectionBuilder {
         );
 
         // Collect all versions
-        let versions: HashSet<String> = readers
-            .iter()
-            .filter_map(|r| r.version().ok())
-            .collect();
+        let versions: HashSet<String> = readers.iter().filter_map(|r| r.version().ok()).collect();
         if !versions.is_empty() {
             let version_vec: Vec<String> = versions.into_iter().collect();
-            self.summaries.insert(
-                "cj:version".to_string(),
-                serde_json::to_value(version_vec)?,
-            );
+            self.summaries
+                .insert("cj:version".to_string(), serde_json::to_value(version_vec)?);
         }
 
         // Aggregate LODs
@@ -183,10 +175,8 @@ impl StacCollectionBuilder {
         if !all_types.is_empty() {
             let mut types: Vec<String> = all_types.into_iter().collect();
             types.sort();
-            self.summaries.insert(
-                "cj:co_types".to_string(),
-                serde_json::to_value(types)?,
-            );
+            self.summaries
+                .insert("cj:co_types".to_string(), serde_json::to_value(types)?);
         }
 
         // City object count statistics
@@ -206,8 +196,7 @@ impl StacCollectionBuilder {
                 "total": total
             });
 
-            self.summaries
-                .insert("cj:city_objects".to_string(), stats);
+            self.summaries.insert("cj:city_objects".to_string(), stats);
         }
 
         // Aggregate EPSG codes
@@ -219,10 +208,8 @@ impl StacCollectionBuilder {
 
         if !epsg_codes.is_empty() {
             let codes: Vec<u32> = epsg_codes.into_iter().collect();
-            self.summaries.insert(
-                "proj:epsg".to_string(),
-                serde_json::to_value(codes)?,
-            );
+            self.summaries
+                .insert("proj:epsg".to_string(), serde_json::to_value(codes)?);
         }
 
         // Merge all bounding boxes for spatial extent

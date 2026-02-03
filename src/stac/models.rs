@@ -150,7 +150,7 @@ impl Asset {
 }
 
 /// STAC Extent
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Extent {
     pub spatial: SpatialExtent,
 
@@ -158,39 +158,16 @@ pub struct Extent {
     pub temporal: Option<TemporalExtent>,
 }
 
-impl Default for Extent {
-    fn default() -> Self {
-        Self {
-            spatial: SpatialExtent::default(),
-            temporal: None,
-        }
-    }
-}
-
 /// Spatial extent
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct SpatialExtent {
     pub bbox: Vec<Vec<f64>>,
 }
 
-impl Default for SpatialExtent {
-    fn default() -> Self {
-        Self { bbox: Vec::new() }
-    }
-}
-
 /// Temporal extent
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct TemporalExtent {
     pub interval: Vec<Vec<Option<String>>>,
-}
-
-impl Default for TemporalExtent {
-    fn default() -> Self {
-        Self {
-            interval: Vec::new(),
-        }
-    }
 }
 
 /// Provider information
@@ -240,7 +217,10 @@ mod tests {
     #[test]
     fn test_stac_item_serialization() {
         let mut properties = HashMap::new();
-        properties.insert("datetime".to_string(), Value::String("2023-01-01T00:00:00Z".to_string()));
+        properties.insert(
+            "datetime".to_string(),
+            Value::String("2023-01-01T00:00:00Z".to_string()),
+        );
 
         let mut assets = HashMap::new();
         assets.insert("data".to_string(), Asset::new("./data.json"));
