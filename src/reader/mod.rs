@@ -67,6 +67,16 @@ pub trait CityModelMetadataReader: Send + Sync {
     ///
     /// Returns free-form metadata object from CityJSON
     fn metadata(&self) -> Result<Option<serde_json::Value>>;
+
+    /// Get CityJSON extensions used in the file
+    ///
+    /// Returns URLs to extension schema files (Application Domain Extensions).
+    /// Extensions in CityJSON allow extending the core data model with:
+    /// - New properties at the root level
+    /// - New attributes for existing City Objects
+    /// - New semantic objects
+    /// - New City Object types (prefixed with "+")
+    fn extensions(&self) -> Result<Vec<String>>;
 }
 
 /// Factory function to create appropriate reader for a file

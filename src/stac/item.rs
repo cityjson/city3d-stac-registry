@@ -136,6 +136,16 @@ impl StacItemBuilder {
             self.properties.insert("cj:metadata".to_string(), metadata);
         }
 
+        // Add cj:extensions (CityJSON Application Domain Extensions)
+        if let Ok(extensions) = reader.extensions() {
+            if !extensions.is_empty() {
+                self.properties.insert(
+                    "cj:extensions".to_string(),
+                    serde_json::to_value(extensions)?,
+                );
+            }
+        }
+
         // Add proj:epsg from CRS
         if let Ok(crs) = reader.crs() {
             if let Some(epsg) = crs.to_stac_epsg() {

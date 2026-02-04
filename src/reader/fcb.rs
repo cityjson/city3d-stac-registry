@@ -51,6 +51,7 @@ struct CachedHeaderData {
     transform: Option<(f64, f64, f64, f64, f64, f64)>, // scale_x, scale_y, scale_z, translate_x, translate_y, translate_z
     columns: Vec<FcbColumn>,
     metadata_json: Option<serde_json::Value>,
+    extensions: Vec<String>,
 }
 
 /// Simplified column representation extracted from FCB header
@@ -154,6 +155,17 @@ impl FlatCityBufReader {
             // Get version
             let version = header.version().to_string();
 
+            // Extract extensions
+            let mut extensions = Vec::new();
+            if let Some(extensions_vec) = header.extensions() {
+                for extension in extensions_vec.iter() {
+                    if let Some(url) = extension.url() {
+                        extensions.push(url.to_string());
+                    }
+                }
+            }
+            extensions.sort();
+
             *data = Some(CachedHeaderData {
                 version,
                 geographical_extent,
@@ -161,6 +173,7 @@ impl FlatCityBufReader {
                 transform,
                 columns,
                 metadata_json,
+                extensions,
             });
         }
         Ok(())
@@ -516,6 +529,10 @@ impl CityModelMetadataReader for FlatCityBufReader {
 
     fn metadata(&self) -> Result<Option<serde_json::Value>> {
         self.with_header_data(|data| Ok(data.metadata_json.clone()))
+    }
+
+    fn extensions(&self) -> Result<Vec<String>> {
+        self.with_header_data(|data| Ok(data.extensions.clone()))
     }
 }
 

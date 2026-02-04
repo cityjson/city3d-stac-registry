@@ -172,15 +172,16 @@ StacItemBuilder::new("my-item")
 
 ## STAC Extension Properties (cj: prefix)
 
-| Property          | Type          | Description          |
-| ----------------- | ------------- | -------------------- |
-| `cj:encoding`     | string        | Format name          |
-| `cj:version`      | string        | CityJSON version     |
-| `cj:city_objects` | integer       | Object count         |
-| `cj:lods`         | array[string] | Levels of detail     |
-| `cj:co_types`     | array[string] | City object types    |
-| `cj:attributes`   | array[object] | Attribute schema     |
-| `cj:transform`    | object        | Coordinate transform |
+| Property          | Type          | Description           |
+| ----------------- | ------------- | --------------------- |
+| `cj:encoding`     | string        | Format name           |
+| `cj:version`      | string        | CityJSON version      |
+| `cj:city_objects` | integer       | Object count          |
+| `cj:lods`         | array[string] | Levels of detail      |
+| `cj:co_types`     | array[string] | City object types     |
+| `cj:attributes`   | array[object] | Attribute schema      |
+| `cj:transform`    | object        | Coordinate transform  |
+| `cj:extensions`   | array[string] | Extension URLs (ADEs) |
 
 See [STAC_EXTENSION.md](./STAC_EXTENSION.md) for full specification.
 
