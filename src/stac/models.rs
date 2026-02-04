@@ -150,12 +150,20 @@ impl Asset {
 }
 
 /// STAC Extent
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Extent {
     pub spatial: SpatialExtent,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub temporal: Option<TemporalExtent>,
+    pub temporal: TemporalExtent,
+}
+
+impl Default for Extent {
+    fn default() -> Self {
+        Self {
+            spatial: SpatialExtent::default(),
+            temporal: TemporalExtent::default(),
+        }
+    }
 }
 
 /// Spatial extent
@@ -165,9 +173,18 @@ pub struct SpatialExtent {
 }
 
 /// Temporal extent
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TemporalExtent {
     pub interval: Vec<Vec<Option<String>>>,
+}
+
+impl Default for TemporalExtent {
+    fn default() -> Self {
+        Self {
+            // Default to open-ended interval starting from current time
+            interval: vec![vec![Some(chrono::Utc::now().to_rfc3339()), None]],
+        }
+    }
 }
 
 /// Provider information

@@ -84,12 +84,10 @@ impl StacCollectionBuilder {
         let start_str = start.map(|dt| dt.to_rfc3339());
         let end_str = end.map(|dt| dt.to_rfc3339());
 
-        let temporal = self
-            .extent
-            .temporal
-            .get_or_insert_with(TemporalExtent::default);
-
-        temporal.interval.push(vec![start_str, end_str]);
+        // Replace the default temporal with the specified one
+        self.extent.temporal = TemporalExtent {
+            interval: vec![vec![start_str, end_str]],
+        };
         self
     }
 
@@ -380,8 +378,7 @@ mod tests {
             .build()
             .unwrap();
 
-        assert!(collection.extent.temporal.is_some());
-        let temporal = collection.extent.temporal.unwrap();
-        assert_eq!(temporal.interval.len(), 1);
+        assert!(!collection.extent.temporal.interval.is_empty());
+        assert_eq!(collection.extent.temporal.interval.len(), 1);
     }
 }

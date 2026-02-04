@@ -56,7 +56,7 @@ default = []
 parallel = ["rayon"]
 
 [[bin]]
-name = "cityjson-stac"
+name = "cjstac"
 path = "src/main.rs"
 
 [lib]

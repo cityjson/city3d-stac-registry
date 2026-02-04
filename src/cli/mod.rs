@@ -8,7 +8,7 @@ use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(name = "cityjson-stac")]
+#[command(name = "cjstac")]
 #[command(author, version, about = "Generate STAC metadata for CityJSON datasets", long_about = None)]
 struct Cli {
     #[command(subcommand)]
@@ -314,6 +314,7 @@ fn handle_collection_command(config: CollectionConfig) -> Result<()> {
 
     let mut collection_builder = StacCollectionBuilder::new(&collection_id)
         .license(config.license)
+        .temporal_extent(Some(chrono::Utc::now()), None)
         .aggregate_cityjson_metadata(&readers)?;
 
     if let Some(t) = config.title {
