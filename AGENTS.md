@@ -289,12 +289,34 @@ cargo test
 # Check everything (same as CI)
 cargo fmt --check && cargo clippy -- -D warnings && cargo test
 
-# Generate STAC Item
+# Generate STAC Item (relative href)
 cityjson-stac item building.json -o building_item.json
+
+# Generate STAC Item with absolute URL
+cityjson-stac item building.json --base-url https://data.example.com/files -o building_item.json
 
 # Generate STAC Collection
 cityjson-stac collection ./data/ -o ./stac_output
 
+# Generate STAC Collection with absolute URLs
+cityjson-stac collection ./data/ -o ./stac_output --base-url https://data.example.com/files
+
 # Debug logging
 RUST_LOG=debug cargo run -- item file.json -o output.json
 ```
+
+### CLI Options
+
+| Option       | Commands         | Description                                                                                                 |
+| ------------ | ---------------- | ----------------------------------------------------------------------------------------------------------- |
+| `--base-url` | item, collection | Base URL for asset hrefs. Without it, hrefs are relative (filename only). With it, hrefs are absolute URLs. |
+
+### Filename Collision Handling
+
+When processing a collection with files that have the same stem but different extensions (e.g., `delft.city.json` and `delft.city.jsonl`), item IDs and filenames get format-specific suffixes to avoid collisions:
+
+| Format                 | Suffix   | Example            |
+| ---------------------- | -------- | ------------------ |
+| CityJSON (`.json`)     | `_cj`    | `delft.city_cj`    |
+| CityJSONSeq (`.jsonl`) | `_cjseq` | `delft.city_cjseq` |
+| FlatCityBuf (`.fcb`)   | `_fcb`   | `delft.city_fcb`   |

@@ -46,6 +46,11 @@ enum Commands {
         #[arg(short, long)]
         collection: Option<String>,
 
+        /// Base URL for asset href (e.g., "https://example.com/data/")
+        /// If provided, asset hrefs will be absolute URLs
+        #[arg(long)]
+        base_url: Option<String>,
+
         /// Pretty-print JSON
         #[arg(long, default_value_t = true)]
         pretty: bool,
@@ -88,6 +93,11 @@ enum Commands {
         #[arg(long, default_value_t = true)]
         skip_errors: bool,
 
+        /// Base URL for asset href (e.g., "https://example.com/data/")
+        /// If provided, asset hrefs will be absolute URLs
+        #[arg(long)]
+        base_url: Option<String>,
+
         /// Pretty-print JSON
         #[arg(long, default_value_t = true)]
         pretty: bool,
@@ -117,8 +127,18 @@ pub fn run() -> Result<()> {
             title,
             description,
             collection,
+            base_url,
             pretty,
-        } => handle_item_command(file, output, id, title, description, collection, pretty),
+        } => handle_item_command(
+            file,
+            output,
+            id,
+            title,
+            description,
+            collection,
+            base_url,
+            pretty,
+        ),
 
         Commands::Collection {
             directory,
@@ -130,6 +150,7 @@ pub fn run() -> Result<()> {
             recursive,
             max_depth,
             skip_errors,
+            base_url,
             pretty,
         } => handle_collection_command(CollectionConfig {
             directory,
@@ -141,11 +162,13 @@ pub fn run() -> Result<()> {
             recursive,
             max_depth,
             skip_errors,
+            base_url,
             pretty,
         }),
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn handle_item_command(
     file: PathBuf,
     output: Option<PathBuf>,
@@ -153,6 +176,7 @@ fn handle_item_command(
     title: Option<String>,
     description: Option<String>,
     collection: Option<String>,
+    base_url: Option<String>,
     pretty: bool,
 ) -> Result<()> {
     log::info!("Processing file: {}", file.display());
@@ -172,7 +196,7 @@ fn handle_item_command(
     log::debug!("Using {} reader", reader.encoding());
 
     // Build STAC Item
-    let mut builder = StacItemBuilder::from_file(&file, reader.as_ref())?;
+    let mut builder = StacItemBuilder::from_file(&file, reader.as_ref(), base_url.as_deref())?;
 
     // Apply custom options
     if let Some(custom_id) = id {
@@ -230,6 +254,7 @@ struct CollectionConfig {
     recursive: bool,
     max_depth: Option<usize>,
     skip_errors: bool,
+    base_url: Option<String>,
     pretty: bool,
 }
 
@@ -245,9 +270,19 @@ fn handle_collection_command(config: CollectionConfig) -> Result<()> {
 
     println!("Found {} files", files.len());
 
+    // Detect filename collisions: count how many times each file stem appears
+    let mut stem_counts: std::collections::HashMap<String, usize> =
+        std::collections::HashMap::new();
+    for file in &files {
+        if let Some(stem) = file.file_stem().and_then(|s| s.to_str()) {
+            *stem_counts.entry(stem.to_string()).or_insert(0) += 1;
+        }
+    }
+
     // Process each file and collect readers
     let mut readers: Vec<Box<dyn crate::reader::CityModelMetadataReader>> = Vec::new();
-    let mut items_data: Vec<(PathBuf, String)> = Vec::new(); // (file_path, item_json)
+    // (file_path, item_json, item_id) - we now track item_id separately
+    let mut items_data: Vec<(PathBuf, String, String)> = Vec::new();
     let mut errors: Vec<(PathBuf, String)> = Vec::new();
 
     for file in &files {
@@ -255,16 +290,34 @@ fn handle_collection_command(config: CollectionConfig) -> Result<()> {
             Ok(reader) => {
                 log::debug!("Processing: {}", file.display());
 
-                // Generate STAC Item for this file
-                match StacItemBuilder::from_file(file, reader.as_ref()) {
+                // Check if this file stem has collisions
+                let stem = file
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("unknown");
+                let has_collision = stem_counts.get(stem).is_some_and(|&count| count > 1);
+
+                // Generate STAC Item - use format suffix if there are collisions
+                let builder_result = if has_collision {
+                    StacItemBuilder::from_file_with_format_suffix(
+                        file,
+                        reader.as_ref(),
+                        config.base_url.as_deref(),
+                    )
+                } else {
+                    StacItemBuilder::from_file(file, reader.as_ref(), config.base_url.as_deref())
+                };
+
+                match builder_result {
                     Ok(builder) => match builder.build() {
                         Ok(item) => {
+                            let item_id = item.id.clone();
                             let json = if config.pretty {
                                 serde_json::to_string_pretty(&item)?
                             } else {
                                 serde_json::to_string(&item)?
                             };
-                            items_data.push((file.clone(), json));
+                            items_data.push((file.clone(), json, item_id));
                             readers.push(reader);
                             print!(".");
                         }
@@ -331,14 +384,8 @@ fn handle_collection_command(config: CollectionConfig) -> Result<()> {
     std::fs::create_dir_all(&items_dir)?;
 
     // Write items and add links to collection
-    for (file_path, item_json) in &items_data {
-        let item_filename = format!(
-            "{}_item.json",
-            file_path
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .unwrap_or("item")
-        );
+    for (file_path, item_json, item_id) in &items_data {
+        let item_filename = format!("{}_item.json", item_id);
 
         let item_path = items_dir.join(&item_filename);
         std::fs::write(&item_path, item_json)?;

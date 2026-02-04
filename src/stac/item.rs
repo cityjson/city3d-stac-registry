@@ -255,7 +255,18 @@ impl StacItemBuilder {
     }
 
     /// Helper to create item from file path
-    pub fn from_file(file_path: &Path, reader: &dyn CityModelMetadataReader) -> Result<Self> {
+    ///
+    /// # Arguments
+    /// * `file_path` - Path to the CityJSON file
+    /// * `reader` - Reader instance for the file
+    /// * `base_url` - Optional base URL for asset hrefs. If provided, asset hrefs will be
+    ///   absolute URLs (e.g., "https://example.com/data/file.json").
+    ///   If None, hrefs will be relative paths (just the filename).
+    pub fn from_file(
+        file_path: &Path,
+        reader: &dyn CityModelMetadataReader,
+        base_url: Option<&str>,
+    ) -> Result<Self> {
         let id = file_path
             .file_stem()
             .and_then(|s| s.to_str())
@@ -280,7 +291,97 @@ impl StacItemBuilder {
             _ => "application/octet-stream",
         };
 
-        builder = builder.data_asset(file_path.to_string_lossy().to_string(), media_type);
+        // Generate asset href based on base_url
+        let file_name = file_path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("data");
+
+        let href = match base_url {
+            Some(base) => {
+                // Ensure base URL ends with a slash
+                let normalized_base = if base.ends_with('/') {
+                    base.to_string()
+                } else {
+                    format!("{}/", base)
+                };
+                format!("{}{}", normalized_base, file_name)
+            }
+            None => file_name.to_string(),
+        };
+
+        builder = builder.data_asset(href, media_type);
+
+        Ok(builder)
+    }
+
+    /// Helper to create item from file path with format suffix in ID
+    ///
+    /// This variant generates IDs with format suffixes (e.g., "delft_cj", "delft_cjseq", "delft_fcb")
+    /// to handle filename collisions where multiple formats have the same stem.
+    ///
+    /// # Arguments
+    /// * `file_path` - Path to the CityJSON file
+    /// * `reader` - Reader instance for the file
+    /// * `base_url` - Optional base URL for asset hrefs
+    pub fn from_file_with_format_suffix(
+        file_path: &Path,
+        reader: &dyn CityModelMetadataReader,
+        base_url: Option<&str>,
+    ) -> Result<Self> {
+        let stem = file_path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("unknown");
+
+        // Generate format-specific suffix
+        let suffix = match reader.encoding() {
+            "CityJSON" => "_cj",
+            "CityJSONSeq" => "_cjseq",
+            "FlatCityBuf" => "_fcb",
+            _ => "",
+        };
+
+        let id = format!("{}{}", stem, suffix);
+
+        let mut builder = Self::new(id);
+
+        // Set bbox
+        if let Ok(bbox) = reader.bbox() {
+            builder = builder.bbox(bbox.clone()).geometry_from_bbox();
+        }
+
+        // Add CityJSON metadata
+        builder = builder.cityjson_metadata(reader)?;
+
+        // Add data asset
+        let media_type = match reader.encoding() {
+            "CityJSON" => "application/json",
+            "CityJSONSeq" => "application/json-seq",
+            "FlatCityBuf" => "application/octet-stream",
+            _ => "application/octet-stream",
+        };
+
+        // Generate asset href based on base_url
+        let file_name = file_path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("data");
+
+        let href = match base_url {
+            Some(base) => {
+                // Ensure base URL ends with a slash
+                let normalized_base = if base.ends_with('/') {
+                    base.to_string()
+                } else {
+                    format!("{}/", base)
+                };
+                format!("{}{}", normalized_base, file_name)
+            }
+            None => file_name.to_string(),
+        };
+
+        builder = builder.data_asset(href, media_type);
 
         Ok(builder)
     }
@@ -363,7 +464,7 @@ mod tests {
         let temp_file = create_test_cityjson();
         let reader = CityJSONReader::new(temp_file.path()).unwrap();
 
-        let builder = StacItemBuilder::from_file(temp_file.path(), &reader).unwrap();
+        let builder = StacItemBuilder::from_file(temp_file.path(), &reader, None).unwrap();
         let item = builder.build().unwrap();
 
         assert!(item.bbox.is_some());

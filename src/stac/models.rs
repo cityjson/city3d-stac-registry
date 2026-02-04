@@ -150,20 +150,11 @@ impl Asset {
 }
 
 /// STAC Extent
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Extent {
     pub spatial: SpatialExtent,
 
     pub temporal: TemporalExtent,
-}
-
-impl Default for Extent {
-    fn default() -> Self {
-        Self {
-            spatial: SpatialExtent::default(),
-            temporal: TemporalExtent::default(),
-        }
-    }
 }
 
 /// Spatial extent

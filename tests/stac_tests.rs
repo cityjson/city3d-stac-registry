@@ -178,7 +178,8 @@ mod stac_item_from_file_tests {
         let path = test_data_path("delft.city.json");
         let reader = CityJSONReader::new(&path).expect("Failed to create reader");
 
-        let builder = StacItemBuilder::from_file(&path, &reader).expect("Failed to create builder");
+        let builder =
+            StacItemBuilder::from_file(&path, &reader, None).expect("Failed to create builder");
         let item = builder.build().expect("Failed to build item");
 
         // Check CityJSON extension properties
@@ -201,7 +202,8 @@ mod stac_item_from_file_tests {
         let path = test_data_path("railway.city.json");
         let reader = CityJSONReader::new(&path).expect("Failed to create reader");
 
-        let builder = StacItemBuilder::from_file(&path, &reader).expect("Failed to create builder");
+        let builder =
+            StacItemBuilder::from_file(&path, &reader, None).expect("Failed to create builder");
         let item = builder.build().expect("Failed to build item");
 
         // Railway should have city objects
