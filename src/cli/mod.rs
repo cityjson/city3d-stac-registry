@@ -102,6 +102,51 @@ enum Commands {
         #[arg(long, default_value_t = true)]
         pretty: bool,
     },
+
+    /// Generate STAC Collection from a list of existing STAC item files
+    ///
+    /// This command is useful when STAC items are generated individually (e.g., for
+    /// assets stored in Object Storage) and then need to be aggregated into a collection.
+    /// It reads the CityJSON extension properties from each item and merges them.
+    #[command(visible_alias = "aggregate")]
+    UpdateCollection {
+        /// STAC item JSON files to aggregate
+        #[arg(required = true)]
+        items: Vec<PathBuf>,
+
+        /// Output file path for the collection (collection.json)
+        #[arg(short, long, default_value = "./collection.json")]
+        output: PathBuf,
+
+        /// Collection ID
+        #[arg(long)]
+        id: Option<String>,
+
+        /// Collection title
+        #[arg(long)]
+        title: Option<String>,
+
+        /// Collection description
+        #[arg(short, long)]
+        description: Option<String>,
+
+        /// Data license
+        #[arg(short, long, default_value = "proprietary")]
+        license: String,
+
+        /// Base URL for item links (e.g., "https://example.com/stac/items/")
+        /// If provided, item links will be absolute URLs
+        #[arg(long)]
+        items_base_url: Option<String>,
+
+        /// Skip items with parsing errors
+        #[arg(long, default_value_t = true)]
+        skip_errors: bool,
+
+        /// Pretty-print JSON
+        #[arg(long, default_value_t = true)]
+        pretty: bool,
+    },
 }
 
 /// Run the CLI application
@@ -163,6 +208,28 @@ pub fn run() -> Result<()> {
             max_depth,
             skip_errors,
             base_url,
+            pretty,
+        }),
+
+        Commands::UpdateCollection {
+            items,
+            output,
+            id,
+            title,
+            description,
+            license,
+            items_base_url,
+            skip_errors,
+            pretty,
+        } => handle_update_collection_command(UpdateCollectionConfig {
+            items,
+            output,
+            id,
+            title,
+            description,
+            license,
+            items_base_url,
+            skip_errors,
             pretty,
         }),
     }
@@ -421,6 +488,156 @@ fn handle_collection_command(config: CollectionConfig) -> Result<()> {
     }
     println!("Collection: {}", collection_path.display());
     println!("Items: {}", items_dir.display());
+
+    Ok(())
+}
+
+/// Configuration for update-collection/aggregate command
+struct UpdateCollectionConfig {
+    items: Vec<PathBuf>,
+    output: PathBuf,
+    id: Option<String>,
+    title: Option<String>,
+    description: Option<String>,
+    license: String,
+    items_base_url: Option<String>,
+    skip_errors: bool,
+    pretty: bool,
+}
+
+fn handle_update_collection_command(config: UpdateCollectionConfig) -> Result<()> {
+    log::info!(
+        "Aggregating {} STAC items into collection",
+        config.items.len()
+    );
+
+    if config.items.is_empty() {
+        return Err(crate::error::CityJsonStacError::StacError(
+            "No STAC item files provided".to_string(),
+        ));
+    }
+
+    // Parse all STAC items
+    let mut parsed_items: Vec<crate::stac::StacItem> = Vec::new();
+    let mut errors: Vec<(PathBuf, String)> = Vec::new();
+
+    for item_path in &config.items {
+        match std::fs::read_to_string(item_path) {
+            Ok(content) => match serde_json::from_str::<crate::stac::StacItem>(&content) {
+                Ok(item) => {
+                    log::debug!("Parsed STAC item: {} from {}", item.id, item_path.display());
+                    parsed_items.push(item);
+                    print!(".");
+                }
+                Err(e) => {
+                    if config.skip_errors {
+                        errors.push((item_path.clone(), e.to_string()));
+                        log::warn!("Skipping {}: {}", item_path.display(), e);
+                        print!("!");
+                    } else {
+                        return Err(crate::error::CityJsonStacError::JsonError(e));
+                    }
+                }
+            },
+            Err(e) => {
+                if config.skip_errors {
+                    errors.push((item_path.clone(), e.to_string()));
+                    log::warn!("Skipping {}: {}", item_path.display(), e);
+                    print!("!");
+                } else {
+                    return Err(crate::error::CityJsonStacError::IoError(e));
+                }
+            }
+        }
+    }
+    println!(); // New line after progress dots
+
+    if parsed_items.is_empty() {
+        return Err(crate::error::CityJsonStacError::StacError(
+            "No valid STAC items could be parsed".to_string(),
+        ));
+    }
+
+    // Generate collection ID from first item or output filename
+    let collection_id = config.id.unwrap_or_else(|| {
+        config
+            .output
+            .file_stem()
+            .and_then(|n| n.to_str())
+            .unwrap_or("collection")
+            .to_string()
+    });
+
+    // Build collection by aggregating item metadata
+    let mut collection_builder = StacCollectionBuilder::new(&collection_id)
+        .license(config.license)
+        .temporal_extent(Some(chrono::Utc::now()), None)
+        .aggregate_from_items(&parsed_items)?;
+
+    if let Some(t) = config.title {
+        collection_builder = collection_builder.title(t);
+    }
+
+    if let Some(d) = config.description {
+        collection_builder = collection_builder.description(d);
+    }
+
+    // Add item links
+    for (item_path, item) in config.items.iter().zip(parsed_items.iter()) {
+        let fallback_filename = format!("{}.json", item.id);
+        let item_filename = item_path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or(&fallback_filename);
+
+        let href = match &config.items_base_url {
+            Some(base) => {
+                // Ensure base URL ends with a slash
+                let normalized_base = if base.ends_with('/') {
+                    base.to_string()
+                } else {
+                    format!("{}/", base)
+                };
+                format!("{}{}", normalized_base, item_filename)
+            }
+            None => {
+                // Use relative path from collection to item
+                format!("./{}", item_filename)
+            }
+        };
+
+        collection_builder = collection_builder.item_link(href, Some(item.id.clone()));
+    }
+
+    // Add self link
+    collection_builder = collection_builder.self_link("./collection.json");
+
+    // Build and write collection
+    let collection = collection_builder.build()?;
+    let collection_json = if config.pretty {
+        serde_json::to_string_pretty(&collection)?
+    } else {
+        serde_json::to_string(&collection)?
+    };
+
+    // Create parent directory if needed
+    if let Some(parent) = config.output.parent() {
+        if !parent.as_os_str().is_empty() {
+            std::fs::create_dir_all(parent)?;
+        }
+    }
+
+    std::fs::write(&config.output, collection_json)?;
+
+    // Print summary
+    println!(
+        "\n✓ Aggregated {} items into collection",
+        parsed_items.len()
+    );
+    if !errors.is_empty() {
+        println!("⚠ {} items skipped due to errors", errors.len());
+    }
+    println!("Collection: {}", config.output.display());
 
     Ok(())
 }

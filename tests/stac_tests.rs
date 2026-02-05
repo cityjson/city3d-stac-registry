@@ -458,3 +458,212 @@ mod asset_tests {
         );
     }
 }
+
+mod stac_collection_aggregate_from_items_tests {
+    use super::*;
+    use cityjson_stac::stac::StacItem;
+    use std::collections::HashMap;
+
+    /// Helper to create a test STAC item with CityJSON properties
+    fn create_test_stac_item(
+        id: &str,
+        encoding: &str,
+        lods: Vec<&str>,
+        co_types: Vec<&str>,
+        city_objects: i64,
+        epsg: Option<i64>,
+        bbox: Option<Vec<f64>>,
+    ) -> StacItem {
+        let mut properties: HashMap<String, Value> = HashMap::new();
+
+        properties.insert(
+            "datetime".to_string(),
+            Value::String("2024-01-01T00:00:00Z".to_string()),
+        );
+        properties.insert(
+            "cj:encoding".to_string(),
+            Value::String(encoding.to_string()),
+        );
+        properties.insert("cj:version".to_string(), Value::String("2.0".to_string()));
+        properties.insert(
+            "cj:city_objects".to_string(),
+            Value::Number(serde_json::Number::from(city_objects)),
+        );
+
+        if !lods.is_empty() {
+            properties.insert("cj:lods".to_string(), serde_json::to_value(lods).unwrap());
+        }
+
+        if !co_types.is_empty() {
+            properties.insert(
+                "cj:co_types".to_string(),
+                serde_json::to_value(co_types).unwrap(),
+            );
+        }
+
+        if let Some(epsg_code) = epsg {
+            properties.insert(
+                "proj:epsg".to_string(),
+                Value::Number(serde_json::Number::from(epsg_code)),
+            );
+        }
+
+        StacItem {
+            stac_version: "1.0.0".to_string(),
+            stac_extensions: vec![],
+            item_type: "Feature".to_string(),
+            id: id.to_string(),
+            bbox,
+            geometry: None,
+            properties,
+            assets: HashMap::new(),
+            links: vec![],
+        }
+    }
+
+    #[test]
+    fn test_aggregate_from_single_item() {
+        let item = create_test_stac_item(
+            "test-item",
+            "CityJSON",
+            vec!["2"],
+            vec!["Building"],
+            100,
+            Some(7415),
+            Some(vec![0.0, 0.0, 0.0, 10.0, 10.0, 10.0]),
+        );
+
+        let collection = StacCollectionBuilder::new("test")
+            .aggregate_from_items(&[item])
+            .expect("Failed to aggregate")
+            .build()
+            .expect("Failed to build collection");
+
+        // Should have spatial extent
+        assert!(!collection.extent.spatial.bbox.is_empty());
+
+        // Should have summaries
+        let summaries = collection.summaries.unwrap();
+        assert!(summaries.contains_key("cj:encoding"));
+
+        let encodings = summaries.get("cj:encoding").unwrap().as_array().unwrap();
+        assert!(encodings.iter().any(|e| e.as_str().unwrap() == "CityJSON"));
+    }
+
+    #[test]
+    fn test_aggregate_from_multiple_items() {
+        let item1 = create_test_stac_item(
+            "building-item",
+            "CityJSON",
+            vec!["2", "2.2"],
+            vec!["Building", "BuildingPart"],
+            50,
+            Some(7415),
+            Some(vec![0.0, 0.0, 0.0, 10.0, 10.0, 10.0]),
+        );
+
+        let item2 = create_test_stac_item(
+            "railway-item",
+            "CityJSONSeq",
+            vec!["1", "3"],
+            vec!["Railway", "Bridge"],
+            150,
+            Some(4326),
+            Some(vec![10.0, 5.0, -5.0, 20.0, 15.0, 20.0]),
+        );
+
+        let collection = StacCollectionBuilder::new("test")
+            .aggregate_from_items(&[item1, item2])
+            .expect("Failed to aggregate")
+            .build()
+            .expect("Failed to build collection");
+
+        let summaries = collection.summaries.unwrap();
+
+        // Should have both encodings
+        let encodings = summaries.get("cj:encoding").unwrap().as_array().unwrap();
+        assert_eq!(encodings.len(), 2);
+
+        // Should have aggregated LODs
+        let lods = summaries.get("cj:lods").unwrap().as_array().unwrap();
+        assert!(lods.len() >= 4); // "1", "2", "2.2", "3"
+
+        // Should have aggregated co_types
+        let types = summaries.get("cj:co_types").unwrap().as_array().unwrap();
+        assert!(types.len() >= 4);
+
+        // Should have city object statistics
+        let stats = summaries.get("cj:city_objects").unwrap();
+        assert_eq!(stats["min"], 50);
+        assert_eq!(stats["max"], 150);
+        assert_eq!(stats["total"], 200);
+
+        // Should have both EPSG codes
+        let epsg = summaries.get("proj:epsg").unwrap().as_array().unwrap();
+        assert_eq!(epsg.len(), 2);
+
+        // Should have merged bbox
+        let bbox = &collection.extent.spatial.bbox[0];
+        assert_eq!(bbox[0], 0.0); // min x
+        assert_eq!(bbox[3], 20.0); // max x
+    }
+
+    #[test]
+    fn test_aggregate_handles_2d_bbox() {
+        // Item with 4-element 2D bbox
+        let item = create_test_stac_item(
+            "test-item",
+            "CityJSON",
+            vec![],
+            vec![],
+            10,
+            None,
+            Some(vec![0.0, 0.0, 10.0, 10.0]), // 2D bbox
+        );
+
+        let collection = StacCollectionBuilder::new("test")
+            .aggregate_from_items(&[item])
+            .expect("Failed to aggregate")
+            .build()
+            .expect("Failed to build collection");
+
+        // Should still have spatial extent
+        assert!(!collection.extent.spatial.bbox.is_empty());
+    }
+
+    #[test]
+    fn test_aggregate_handles_missing_properties() {
+        // Item with minimal properties
+        let mut properties: HashMap<String, Value> = HashMap::new();
+        properties.insert(
+            "datetime".to_string(),
+            Value::String("2024-01-01T00:00:00Z".to_string()),
+        );
+        properties.insert(
+            "cj:encoding".to_string(),
+            Value::String("CityJSON".to_string()),
+        );
+
+        let item = StacItem {
+            stac_version: "1.0.0".to_string(),
+            stac_extensions: vec![],
+            item_type: "Feature".to_string(),
+            id: "minimal-item".to_string(),
+            bbox: Some(vec![0.0, 0.0, 0.0, 10.0, 10.0, 10.0]),
+            geometry: None,
+            properties,
+            assets: HashMap::new(),
+            links: vec![],
+        };
+
+        // Should not panic
+        let collection = StacCollectionBuilder::new("test")
+            .aggregate_from_items(&[item])
+            .expect("Failed to aggregate")
+            .build()
+            .expect("Failed to build collection");
+
+        // Should have spatial extent
+        assert!(!collection.extent.spatial.bbox.is_empty());
+    }
+}

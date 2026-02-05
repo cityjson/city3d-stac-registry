@@ -240,6 +240,166 @@ impl StacCollectionBuilder {
         Ok(self)
     }
 
+    /// Aggregate CityJSON metadata from pre-parsed STAC items
+    ///
+    /// This method is useful when STAC items were generated separately (e.g., for assets
+    /// stored in Object Storage) and need to be aggregated into a collection.
+    /// It extracts CityJSON extension properties (cj:*) from item properties and merges them.
+    pub fn aggregate_from_items(mut self, items: &[crate::stac::models::StacItem]) -> Result<Self> {
+        use crate::stac::models::StacItem;
+
+        // Helper to extract string array from item properties
+        fn get_string_array(item: &StacItem, key: &str) -> Vec<String> {
+            item.properties
+                .get(key)
+                .and_then(|v| v.as_array())
+                .map(|arr| {
+                    arr.iter()
+                        .filter_map(|v| v.as_str().map(String::from))
+                        .collect()
+                })
+                .unwrap_or_default()
+        }
+
+        // Helper to extract string from item properties
+        fn get_string(item: &StacItem, key: &str) -> Option<String> {
+            item.properties
+                .get(key)
+                .and_then(|v| v.as_str())
+                .map(String::from)
+        }
+
+        // Helper to extract integer from item properties
+        fn get_int(item: &StacItem, key: &str) -> Option<i64> {
+            item.properties.get(key).and_then(|v| v.as_i64())
+        }
+
+        // Collect all encodings
+        let encodings: HashSet<String> = items
+            .iter()
+            .filter_map(|item| get_string(item, "cj:encoding"))
+            .collect();
+        if !encodings.is_empty() {
+            let encoding_vec: Vec<String> = encodings.into_iter().collect();
+            self.summaries.insert(
+                "cj:encoding".to_string(),
+                serde_json::to_value(encoding_vec)?,
+            );
+        }
+
+        // Collect all versions
+        let versions: HashSet<String> = items
+            .iter()
+            .filter_map(|item| get_string(item, "cj:version"))
+            .collect();
+        if !versions.is_empty() {
+            let version_vec: Vec<String> = versions.into_iter().collect();
+            self.summaries
+                .insert("cj:version".to_string(), serde_json::to_value(version_vec)?);
+        }
+
+        // Aggregate LODs
+        let all_lods: HashSet<String> = items
+            .iter()
+            .flat_map(|item| get_string_array(item, "cj:lods"))
+            .collect();
+        if !all_lods.is_empty() {
+            let mut lods: Vec<String> = all_lods.into_iter().collect();
+            lods.sort();
+            self.summaries
+                .insert("cj:lods".to_string(), serde_json::to_value(lods)?);
+        }
+
+        // Aggregate city object types
+        let all_types: HashSet<String> = items
+            .iter()
+            .flat_map(|item| get_string_array(item, "cj:co_types"))
+            .collect();
+        if !all_types.is_empty() {
+            let mut types: Vec<String> = all_types.into_iter().collect();
+            types.sort();
+            self.summaries
+                .insert("cj:co_types".to_string(), serde_json::to_value(types)?);
+        }
+
+        // City object count statistics
+        let counts: Vec<i64> = items
+            .iter()
+            .filter_map(|item| get_int(item, "cj:city_objects"))
+            .collect();
+        if !counts.is_empty() {
+            let min = *counts.iter().min().unwrap();
+            let max = *counts.iter().max().unwrap();
+            let total: i64 = counts.iter().sum();
+
+            let stats = serde_json::json!({
+                "min": min,
+                "max": max,
+                "total": total
+            });
+
+            self.summaries.insert("cj:city_objects".to_string(), stats);
+        }
+
+        // Aggregate EPSG codes from proj:epsg property
+        let epsg_codes: HashSet<u32> = items
+            .iter()
+            .filter_map(|item| get_int(item, "proj:epsg"))
+            .filter_map(|v| u32::try_from(v).ok())
+            .collect();
+        if !epsg_codes.is_empty() {
+            let codes: Vec<u32> = epsg_codes.into_iter().collect();
+            self.summaries
+                .insert("proj:epsg".to_string(), serde_json::to_value(codes)?);
+        }
+
+        // Aggregate CityJSON extensions
+        let all_extensions: HashSet<String> = items
+            .iter()
+            .flat_map(|item| get_string_array(item, "cj:extensions"))
+            .collect();
+        if !all_extensions.is_empty() {
+            let mut extensions: Vec<String> = all_extensions.into_iter().collect();
+            extensions.sort();
+            self.summaries.insert(
+                "cj:extensions".to_string(),
+                serde_json::to_value(extensions)?,
+            );
+        }
+
+        // Merge spatial extents from item bboxes
+        let bboxes: Vec<Vec<f64>> = items.iter().filter_map(|item| item.bbox.clone()).collect();
+
+        if !bboxes.is_empty() {
+            // Parse bbox into BBox3D (handle both 4-element and 6-element bboxes)
+            let parsed_bboxes: Vec<BBox3D> = bboxes
+                .iter()
+                .filter_map(|bbox| {
+                    if bbox.len() == 6 {
+                        Some(BBox3D::new(
+                            bbox[0], bbox[1], bbox[2], bbox[3], bbox[4], bbox[5],
+                        ))
+                    } else if bbox.len() >= 4 {
+                        // 2D bbox - use 0.0 for z values
+                        Some(BBox3D::new(bbox[0], bbox[1], 0.0, bbox[2], bbox[3], 0.0))
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+
+            if !parsed_bboxes.is_empty() {
+                let mut merged = parsed_bboxes[0].clone();
+                for bbox in &parsed_bboxes[1..] {
+                    merged = merged.merge(bbox);
+                }
+                self = self.spatial_extent(merged);
+            }
+        }
+
+        Ok(self)
+    }
+
     /// Build the STAC Collection
     pub fn build(self) -> Result<StacCollection> {
         // Validate spatial extent

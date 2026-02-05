@@ -20,3 +20,5 @@ Thumbs.db
 # Test outputs
 *.log
 test_output/
+
+stac_catalog/

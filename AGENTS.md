@@ -151,10 +151,13 @@ StacItemBuilder::new("my-item")
 
 ### CLI Commands
 
-| Command      | Description                         |
-| ------------ | ----------------------------------- |
-| `item`       | Generate STAC Item from single file |
-| `collection` | Generate STAC Collection from dir   |
+| Command             | Description                                   |
+| ------------------- | --------------------------------------------- |
+| `item`              | Generate STAC Item from single file           |
+| `collection`        | Generate STAC Collection from directory       |
+| `update-collection` | Aggregate STAC Collection from existing items |
+
+The `update-collection` command (alias: `aggregate`) is useful for Object Storage scenarios where STAC items are generated individually and then aggregated into a collection.
 
 ### Testing
 
@@ -301,15 +304,22 @@ cityjson-stac collection ./data/ -o ./stac_output
 # Generate STAC Collection with absolute URLs
 cityjson-stac collection ./data/ -o ./stac_output --base-url https://data.example.com/files
 
+# Aggregate STAC Collection from existing items (for Object Storage workflows)
+cityjson-stac update-collection item1.json item2.json item3.json -o collection.json
+
+# Aggregate with absolute item URLs
+cityjson-stac update-collection items/*.json --items-base-url https://example.com/stac/items -o collection.json
+
 # Debug logging
 RUST_LOG=debug cargo run -- item file.json -o output.json
 ```
 
 ### CLI Options
 
-| Option       | Commands         | Description                                                                                                 |
-| ------------ | ---------------- | ----------------------------------------------------------------------------------------------------------- |
-| `--base-url` | item, collection | Base URL for asset hrefs. Without it, hrefs are relative (filename only). With it, hrefs are absolute URLs. |
+| Option             | Commands          | Description                                                                                                 |
+| ------------------ | ----------------- | ----------------------------------------------------------------------------------------------------------- |
+| `--base-url`       | item, collection  | Base URL for asset hrefs. Without it, hrefs are relative (filename only). With it, hrefs are absolute URLs. |
+| `--items-base-url` | update-collection | Base URL for item links in the collection. Without it, links are relative to the collection.                |
 
 ### Filename Collision Handling
 
