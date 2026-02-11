@@ -273,14 +273,23 @@ mod cli_collection_tests {
 
     #[test]
     fn test_cli_collection_single_file_error() {
-        // Collection command expects a directory, not a single file
+        // Collection command now supports individual files as inputs
         let input = test_data_path("delft.city.json");
+        let temp = tempdir().expect("Failed to create temp dir");
+        let output = temp.path().join("stac_output");
 
         let mut cmd = Command::cargo_bin("cjstac").unwrap();
-        cmd.args(["collection", input.to_str().unwrap(), "--id", "test"])
-            .assert()
-            .failure()
-            .stderr(predicate::str::contains("Not a directory"));
+        cmd.args([
+            "collection",
+            input.to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+            "--id",
+            "test",
+        ])
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("Scanning 1 input(s)"));
     }
 }
 

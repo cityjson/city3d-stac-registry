@@ -1,6 +1,7 @@
 //! Command-line interface
 
-use crate::error::Result;
+use crate::config::{CollectionCliArgs, CollectionConfigFile};
+use crate::error::{CityJsonStacError, Result};
 use crate::reader::get_reader;
 use crate::stac::{StacCollectionBuilder, StacItemBuilder};
 use crate::traversal;
@@ -58,12 +59,17 @@ enum Commands {
 
     /// Generate STAC Collection from directory
     Collection {
-        /// Directory to scan
-        directory: PathBuf,
+        /// Input paths (directories, files, or glob patterns like "data/*.json")
+        #[arg(num_args = 0..)]
+        inputs: Vec<PathBuf>,
 
         /// Output directory
         #[arg(short, long, default_value = "./stac_output")]
         output: PathBuf,
+
+        /// YAML configuration file for collection metadata
+        #[arg(short = 'C', long)]
+        config: Option<PathBuf>,
 
         /// Collection ID
         #[arg(long)]
@@ -80,6 +86,14 @@ enum Commands {
         /// Data license
         #[arg(short, long, default_value = "proprietary")]
         license: String,
+
+        /// Glob patterns to include (e.g., "*.json", "*.jsonl")
+        #[arg(long)]
+        include: Vec<String>,
+
+        /// Glob patterns to exclude (e.g., "*test*", "*.bak")
+        #[arg(long)]
+        exclude: Vec<String>,
 
         /// Scan subdirectories recursively
         #[arg(short, long, default_value_t = true)]
@@ -117,6 +131,10 @@ enum Commands {
         /// Output file path for the collection (collection.json)
         #[arg(short, long, default_value = "./collection.json")]
         output: PathBuf,
+
+        /// YAML configuration file for collection metadata
+        #[arg(short = 'C', long)]
+        config: Option<PathBuf>,
 
         /// Collection ID
         #[arg(long)]
@@ -186,34 +204,52 @@ pub fn run() -> Result<()> {
         ),
 
         Commands::Collection {
-            directory,
+            inputs,
             output,
+            config,
             id,
             title,
             description,
             license,
+            include,
+            exclude,
             recursive,
             max_depth,
             skip_errors,
             base_url,
             pretty,
-        } => handle_collection_command(CollectionConfig {
-            directory,
-            output,
-            id,
-            title,
-            description,
-            license,
-            recursive,
-            max_depth,
-            skip_errors,
-            base_url,
-            pretty,
-        }),
+        } => {
+            // Check if no inputs provided via CLI and no config file
+            if inputs.is_empty() && config.is_none() {
+                // No inputs in CLI and no config file - show error
+                eprintln!("Error: No inputs provided. Specify inputs via CLI arguments or in a config file.");
+                eprintln!("Usage: cjstac collection [OPTIONS] <INPUTS>...");
+                eprintln!("       cjstac collection --config <CONFIG_FILE>");
+                std::process::exit(1);
+            }
+
+            handle_collection_command(CollectionConfig {
+                inputs,
+                output,
+                config,
+                id,
+                title,
+                description,
+                license,
+                include,
+                exclude,
+                recursive,
+                max_depth,
+                skip_errors,
+                base_url,
+                pretty,
+            })
+        }
 
         Commands::UpdateCollection {
             items,
             output,
+            config,
             id,
             title,
             description,
@@ -224,6 +260,7 @@ pub fn run() -> Result<()> {
         } => handle_update_collection_command(UpdateCollectionConfig {
             items,
             output,
+            config,
             id,
             title,
             description,
@@ -312,12 +349,15 @@ fn handle_item_command(
 
 /// Configuration for collection generation
 struct CollectionConfig {
-    directory: PathBuf,
+    inputs: Vec<PathBuf>,
     output: PathBuf,
+    config: Option<PathBuf>,
     id: Option<String>,
     title: Option<String>,
     description: Option<String>,
     license: String,
+    include: Vec<String>,
+    exclude: Vec<String>,
     recursive: bool,
     max_depth: Option<usize>,
     skip_errors: bool,
@@ -326,10 +366,52 @@ struct CollectionConfig {
 }
 
 fn handle_collection_command(config: CollectionConfig) -> Result<()> {
-    log::info!("Scanning directory: {}", config.directory.display());
+    // Load config file if provided
+    let base_config = if let Some(config_path) = &config.config {
+        CollectionConfigFile::from_file(config_path)?
+    } else {
+        CollectionConfigFile::default()
+    };
 
-    // Find all supported files
-    let files = traversal::find_files(&config.directory, config.recursive, config.max_depth)?;
+    // Merge with CLI args
+    let merged_config = base_config.merge_with_cli(&CollectionCliArgs {
+        id: config.id.clone(),
+        title: config.title.clone(),
+        description: config.description.clone(),
+        license: if config.license != "proprietary" {
+            Some(config.license.clone())
+        } else {
+            None
+        },
+    });
+
+    // Determine final inputs: CLI inputs take precedence, fall back to config inputs
+    let final_inputs = if !config.inputs.is_empty() {
+        // CLI inputs provided - use them
+        config.inputs.clone()
+    } else if let Some(config_inputs) = merged_config.inputs {
+        // No CLI inputs, but config file has inputs
+        config_inputs
+            .iter()
+            .map(|s| PathBuf::from(s.as_str()))
+            .collect()
+    } else {
+        // No inputs anywhere - this should have been caught earlier
+        return Err(CityJsonStacError::StacError(
+            "No inputs provided".to_string(),
+        ));
+    };
+
+    log::info!("Scanning {} input(s)", final_inputs.len());
+
+    // Find all supported files with pattern matching
+    let files = traversal::find_files_with_patterns(
+        &final_inputs,
+        &config.include,
+        &config.exclude,
+        config.recursive,
+        config.max_depth,
+    )?;
 
     if files.is_empty() {
         return Err(crate::error::CityJsonStacError::NoFilesFound);
@@ -423,26 +505,42 @@ fn handle_collection_command(config: CollectionConfig) -> Result<()> {
     println!(); // New line after progress dots
 
     // Build collection
-    let collection_id = config.id.unwrap_or_else(|| {
-        config
-            .directory
-            .file_name()
-            .and_then(|n| n.to_str())
+    let collection_id = merged_config.id.unwrap_or_else(|| {
+        // For multiple inputs, try to use the first input's name
+        // or fall back to "collection"
+        final_inputs
+            .first()
+            .and_then(|p| p.file_name().and_then(|n| n.to_str()))
             .unwrap_or("collection")
             .to_string()
     });
 
+    let license = merged_config
+        .license
+        .unwrap_or_else(|| config.license.clone());
+
     let mut collection_builder = StacCollectionBuilder::new(&collection_id)
-        .license(config.license)
+        .license(license)
         .temporal_extent(Some(chrono::Utc::now()), None)
         .aggregate_cityjson_metadata(&readers)?;
 
-    if let Some(t) = config.title {
+    // Apply config-based metadata
+    if let Some(t) = merged_config.title {
         collection_builder = collection_builder.title(t);
     }
 
-    if let Some(d) = config.description {
+    if let Some(d) = merged_config.description {
         collection_builder = collection_builder.description(d);
+    }
+
+    if let Some(keywords) = merged_config.keywords {
+        collection_builder = collection_builder.keywords(keywords);
+    }
+
+    if let Some(providers) = merged_config.providers {
+        for provider in providers {
+            collection_builder = collection_builder.provider(provider.into());
+        }
     }
 
     // Create output directory
@@ -496,6 +594,7 @@ fn handle_collection_command(config: CollectionConfig) -> Result<()> {
 struct UpdateCollectionConfig {
     items: Vec<PathBuf>,
     output: PathBuf,
+    config: Option<PathBuf>,
     id: Option<String>,
     title: Option<String>,
     description: Option<String>,
@@ -506,6 +605,25 @@ struct UpdateCollectionConfig {
 }
 
 fn handle_update_collection_command(config: UpdateCollectionConfig) -> Result<()> {
+    // Load config file if provided
+    let base_config = if let Some(config_path) = &config.config {
+        CollectionConfigFile::from_file(config_path)?
+    } else {
+        CollectionConfigFile::default()
+    };
+
+    // Merge with CLI args
+    let merged_config = base_config.merge_with_cli(&CollectionCliArgs {
+        id: config.id.clone(),
+        title: config.title.clone(),
+        description: config.description.clone(),
+        license: if config.license != "proprietary" {
+            Some(config.license.clone())
+        } else {
+            None
+        },
+    });
+
     log::info!(
         "Aggregating {} STAC items into collection",
         config.items.len()
@@ -559,7 +677,7 @@ fn handle_update_collection_command(config: UpdateCollectionConfig) -> Result<()
     }
 
     // Generate collection ID from first item or output filename
-    let collection_id = config.id.unwrap_or_else(|| {
+    let collection_id = merged_config.id.unwrap_or_else(|| {
         config
             .output
             .file_stem()
@@ -568,18 +686,33 @@ fn handle_update_collection_command(config: UpdateCollectionConfig) -> Result<()
             .to_string()
     });
 
+    let license = merged_config
+        .license
+        .unwrap_or_else(|| config.license.clone());
+
     // Build collection by aggregating item metadata
     let mut collection_builder = StacCollectionBuilder::new(&collection_id)
-        .license(config.license)
+        .license(license)
         .temporal_extent(Some(chrono::Utc::now()), None)
         .aggregate_from_items(&parsed_items)?;
 
-    if let Some(t) = config.title {
+    // Apply config-based metadata
+    if let Some(t) = merged_config.title {
         collection_builder = collection_builder.title(t);
     }
 
-    if let Some(d) = config.description {
+    if let Some(d) = merged_config.description {
         collection_builder = collection_builder.description(d);
+    }
+
+    if let Some(keywords) = merged_config.keywords {
+        collection_builder = collection_builder.keywords(keywords);
+    }
+
+    if let Some(providers) = merged_config.providers {
+        for provider in providers {
+            collection_builder = collection_builder.provider(provider.into());
+        }
     }
 
     // Add item links
