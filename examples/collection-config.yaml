@@ -1,0 +1,75 @@
+# Example YAML configuration file for STAC collection metadata
+# Usage: cjstac collection --config examples/collection-config.yaml -o ./stac_output
+# Or override inputs via CLI: cjstac collection data/*.json --config examples/collection-config.yaml -o ./stac_output
+
+# Input paths (files, directories, or glob patterns)
+# These are used if no inputs are provided via CLI
+inputs:
+  - "tests/data/delft.city.json"
+  - "tests/data/railway.city.json"
+  # You can also use glob patterns:
+  # - "data/*.city.json"
+  # - "data/**/*.json"
+  # - "/path/to/dataset"
+
+# Collection identifier (optional - defaults to directory name)
+id: 3dbag
+
+# Collection title (optional)
+title: 3DBAG
+
+# Collection description (optional - supports multiline)
+description: |
+  Complete 3D city model of the Netherlands containing buildings.
+
+# Data license (SPDX identifier)
+# See https://spdx.org/licenses/ for common identifiers
+license: CC-BY-4.0
+
+# Keywords/tags for the collection (optional)
+keywords:
+  - 3d city model
+  - Netherlands
+
+# Providers - organizations that produced or manage the data (optional)
+providers:
+  - name: 3DBAG
+    url: https://3dbag.nl
+    roles:
+      - producer
+      - licensor
+    description: 3DBAG
+
+  - name: TU Delft
+    url: https://3d.bk.tudelft.nl
+    roles:
+      - processor
+      - host
+    description: TU Delft 3D geoinformation group
+
+# Custom spatial extent (optional - overrides auto-detected extent)
+# If omitted, extent will be automatically calculated from all files
+#extent:
+#  spatial:
+#    bbox: [4.42, 51.88, 0.0, 4.6, 51.98, 100.0]
+#    crs: EPSG:7415
+#  temporal:
+#    start: "2023-01-01T00:00:00Z"
+#    end: null  # null for open-ended interval
+
+# Custom summaries to add (optional - merged with auto-detected)
+#summaries:
+#  custom:field: "custom value"
+#  eo:cloud_cover: 5
+
+# Additional links to add to the collection (optional)
+#links:
+#  - rel: license
+#    href: https://creativecommons.org/licenses/by/4.0/
+#    type: text/html
+#    title: CC-BY-4.0 License
+#
+#  - rel: about
+#    href: https://rotterdam.nl/3d-model
+#    type: text/html
+#    title: Project Homepage
