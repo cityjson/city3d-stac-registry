@@ -137,6 +137,9 @@ impl Link {
 }
 
 /// STAC Asset
+///
+/// Supports File Extension fields (file:size, file:checksum, file:values)
+/// https://stac-extensions.github.io/file/v2.1.0/schema.json
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Asset {
     pub href: String,
@@ -152,6 +155,25 @@ pub struct Asset {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub roles: Option<Vec<String>>,
+
+    /// File Extension: size of the file in bytes
+    #[serde(skip_serializing_if = "Option::is_none", rename = "file:size")]
+    pub file_size: Option<u64>,
+
+    /// File Extension: checksum of the file
+    #[serde(skip_serializing_if = "Option::is_none", rename = "file:checksum")]
+    pub file_checksum: Option<Checksum>,
+}
+
+/// File checksum (File Extension)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Checksum {
+    /// The multihash checksum value
+    pub value: String,
+
+    /// The checksum algorithm namespace (e.g., "md5", "sha256")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub namespace: Option<String>,
 }
 
 impl Asset {
@@ -162,6 +184,8 @@ impl Asset {
             title: None,
             description: None,
             roles: None,
+            file_size: None,
+            file_checksum: None,
         }
     }
 
@@ -177,6 +201,18 @@ impl Asset {
 
     pub fn with_roles(mut self, roles: Vec<String>) -> Self {
         self.roles = Some(roles);
+        self
+    }
+
+    /// Set the file size (File Extension)
+    pub fn with_file_size(mut self, size: u64) -> Self {
+        self.file_size = Some(size);
+        self
+    }
+
+    /// Set the file checksum (File Extension)
+    pub fn with_file_checksum(mut self, checksum: Checksum) -> Self {
+        self.file_checksum = Some(checksum);
         self
     }
 }

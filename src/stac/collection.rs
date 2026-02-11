@@ -450,12 +450,26 @@ impl StacCollectionBuilder {
             ));
         }
 
+        // Build stac_extensions list dynamically based on which extensions are used
+        let mut stac_extensions =
+            vec!["https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json".to_string()];
+
+        // Add Projection Extension if proj:epsg is in summaries
+        if self.summaries.contains_key("proj:epsg") {
+            stac_extensions.push(
+                "https://stac-extensions.github.io/projection/v2.0.0/schema.json".to_string(),
+            );
+        }
+
+        // Add Stats Extension if we have statistics (min/max for city_objects)
+        if self.summaries.contains_key("city3d:city_objects") {
+            stac_extensions
+                .push("https://stac-extensions.github.io/stats/v0.2.0/schema.json".to_string());
+        }
+
         Ok(StacCollection {
             stac_version: "1.0.0".to_string(),
-            stac_extensions: vec![
-                "https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json".to_string(),
-                "https://stac-extensions.github.io/projection/v2.0.0/schema.json".to_string(),
-            ],
+            stac_extensions,
             collection_type: "Collection".to_string(),
             id: self.id,
             title: self.title,

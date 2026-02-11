@@ -17,6 +17,8 @@ pub struct StacItemBuilder {
     properties: HashMap<String, Value>,
     assets: HashMap<String, Asset>,
     links: Vec<Link>,
+    /// Track if File Extension is used (for stac_extensions list)
+    uses_file_extension: bool,
 }
 
 impl StacItemBuilder {
@@ -37,6 +39,7 @@ impl StacItemBuilder {
             properties,
             assets: HashMap::new(),
             links: Vec::new(),
+            uses_file_extension: false,
         }
     }
 
@@ -170,6 +173,16 @@ impl StacItemBuilder {
         Ok(self)
     }
 
+    /// Add file size property (File Extension)
+    pub fn file_size(mut self, size: u64) -> Self {
+        self.properties.insert(
+            "file:size".to_string(),
+            Value::Number(serde_json::Number::from(size)),
+        );
+        self.uses_file_extension = true;
+        self
+    }
+
     /// Add a data asset pointing to the source file
     pub fn data_asset(mut self, href: impl Into<String>, media_type: &str) -> Self {
         let asset = Asset::new(href)
@@ -223,12 +236,26 @@ impl StacItemBuilder {
             ));
         }
 
+        // Build stac_extensions list dynamically based on which extensions are used
+        let mut stac_extensions =
+            vec!["https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json".to_string()];
+
+        // Add Projection Extension if proj:epsg is present
+        if self.properties.contains_key("proj:epsg") {
+            stac_extensions.push(
+                "https://stac-extensions.github.io/projection/v2.0.0/schema.json".to_string(),
+            );
+        }
+
+        // Add File Extension if file:size is present
+        if self.uses_file_extension {
+            stac_extensions
+                .push("https://stac-extensions.github.io/file/v2.1.0/schema.json".to_string());
+        }
+
         Ok(StacItem {
             stac_version: "1.0.0".to_string(),
-            stac_extensions: vec![
-                "https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json".to_string(),
-                "https://stac-extensions.github.io/projection/v2.0.0/schema.json".to_string(),
-            ],
+            stac_extensions,
             item_type: "Feature".to_string(),
             id: self.id,
             bbox: self.bbox,
@@ -293,6 +320,11 @@ impl StacItemBuilder {
 
         // Add CityJSON metadata
         builder = builder.cityjson_metadata(reader)?;
+
+        // Add file size (File Extension)
+        if let Ok(metadata) = std::fs::metadata(file_path) {
+            builder = builder.file_size(metadata.len());
+        }
 
         // Add data asset
         let media_type = match reader.encoding() {
@@ -364,6 +396,11 @@ impl StacItemBuilder {
 
         // Add CityJSON metadata
         builder = builder.cityjson_metadata(reader)?;
+
+        // Add file size (File Extension)
+        if let Ok(metadata) = std::fs::metadata(file_path) {
+            builder = builder.file_size(metadata.len());
+        }
 
         // Add data asset
         let media_type = match reader.encoding() {

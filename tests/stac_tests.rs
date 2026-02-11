@@ -152,6 +152,7 @@ mod stac_item_builder_tests {
 
     #[test]
     fn test_item_builder_stac_extensions() {
+        // Test with only city3d:encoding - no projection extension
         let item = StacItemBuilder::new("test-id")
             .property(
                 "city3d:encoding".to_string(),
@@ -165,7 +166,30 @@ mod stac_item_builder_tests {
             .stac_extensions
             .iter()
             .any(|e| e.contains("3d-city-models")));
-        // Should include projection extension
+        // Should NOT include projection extension (no proj:epsg property)
+        assert!(!item
+            .stac_extensions
+            .iter()
+            .any(|e| e.contains("projection")));
+
+        // Test with proj:epsg - projection extension should be included
+        let item = StacItemBuilder::new("test-id")
+            .property(
+                "city3d:encoding".to_string(),
+                Value::String("CityJSON".to_string()),
+            )
+            .property(
+                "proj:epsg".to_string(),
+                Value::Number(serde_json::Number::from(4326)),
+            )
+            .build()
+            .expect("Failed to build item");
+
+        // Should include both extensions
+        assert!(item
+            .stac_extensions
+            .iter()
+            .any(|e| e.contains("3d-city-models")));
         assert!(item
             .stac_extensions
             .iter()
