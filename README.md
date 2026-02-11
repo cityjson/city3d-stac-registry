@@ -1,4 +1,4 @@
-# cityjson-stac
+# cjstac
 
 A command-line tool for generating STAC (SpatioTemporal Asset Catalog) metadata from CityJSON datasets.
 
@@ -32,25 +32,25 @@ STAC is the widely-adopted metadata standard for geospatial data, but it lacks n
 ### From source
 
 ```bash
-git clone https://github.com/cityjson/cityjson-stac.git
-cd cityjson-stac
+git clone https://github.com/cityjson/cjstac.git
+cd cjstac
 cargo build --release
 ```
 
-The binary will be available at `./target/release/cityjson-stac`.
+The binary will be available at `./target/release/cjstac`.
 
 ## Quick Start
 
 ### Generate STAC Item from a single file
 
 ```bash
-cityjson-stac item building.json -o building_stac.json
+cjstac item building.json -o building_stac.json
 ```
 
 With custom metadata:
 
 ```bash
-cityjson-stac item building.json \
+cjstac item building.json \
   --title "City Hall Building Model" \
   --description "LOD2 model with semantic attributes" \
   -o building_item.json
@@ -59,7 +59,7 @@ cityjson-stac item building.json \
 ### Generate STAC Collection from a directory
 
 ```bash
-cityjson-stac collection ./data/ \
+cjstac collection ./data/ \
   --title "Rotterdam 3D City Model" \
   --description "Buildings, terrain, and infrastructure in LOD2" \
   --license "CC-BY-4.0" \
@@ -98,7 +98,7 @@ The command will:
 Generate a STAC Item from a single CityJSON file.
 
 ```bash
-cityjson-stac item <FILE> [OPTIONS]
+cjstac item <FILE> [OPTIONS]
 ```
 
 **Arguments:**
@@ -123,19 +123,19 @@ cityjson-stac item <FILE> [OPTIONS]
 
 ```bash
 # Basic usage (output: building.item.json)
-cityjson-stac item building.json
+cjstac item building.json
 
 # With custom output path
-cityjson-stac item building.json -o output/building_stac.json
+cjstac item building.json -o output/building_stac.json
 
 # With metadata
-cityjson-stac item building.json \
+cjstac item building.json \
   --title "City Hall Building Model" \
   --description "LOD2 model with semantic attributes" \
   -o building_item.json
 
 # With absolute URL for assets (useful for Object Storage)
-cityjson-stac item building.json \
+cjstac item building.json \
   --base-url https://data.example.com/cityjson/ \
   -o building_item.json
 ```
@@ -147,7 +147,7 @@ cityjson-stac item building.json \
 Scan a directory for CityJSON files and generate a STAC Collection with Items.
 
 ```bash
-cityjson-stac collection <DIRECTORY> [OPTIONS]
+cjstac collection <DIRECTORY> [OPTIONS]
 ```
 
 **Arguments:**
@@ -186,25 +186,25 @@ stac_output/
 
 ```bash
 # Basic usage
-cityjson-stac collection ./data/
+cjstac collection ./data/
 
 # With metadata and custom output
-cityjson-stac collection ./data/ \
+cjstac collection ./data/ \
   --title "Rotterdam 3D City Model" \
   --description "Buildings, terrain, and infrastructure in LOD2" \
   --license "CC-BY-4.0" \
   -o ./stac_catalog
 
 # With absolute URLs for assets
-cityjson-stac collection ./data/ \
+cjstac collection ./data/ \
   --base-url https://data.example.com/cityjson/ \
   -o ./stac_catalog
 
 # Non-recursive with depth limit
-cityjson-stac collection ./data/ --max-depth 2
+cjstac collection ./data/ --max-depth 2
 
 # With verbose logging
-cityjson-stac collection ./data/ -v
+cjstac collection ./data/ -v
 ```
 
 ---
@@ -214,8 +214,8 @@ cityjson-stac collection ./data/ -v
 Generate a STAC Collection by aggregating metadata from existing STAC Item files. This is useful for **Object Storage** workflows where STAC Items are generated individually and then need to be combined into a collection.
 
 ```bash
-cityjson-stac update-collection <ITEMS>... [OPTIONS]
-cityjson-stac aggregate <ITEMS>... [OPTIONS]  # alias
+cjstac update-collection <ITEMS>... [OPTIONS]
+cjstac aggregate <ITEMS>... [OPTIONS]  # alias
 ```
 
 **Arguments:**
@@ -239,33 +239,35 @@ cityjson-stac aggregate <ITEMS>... [OPTIONS]  # alias
 
 **Aggregated Metadata:**
 
-The command aggregates the following CityJSON extension properties from all items:
+The command aggregates the following 3D City Models extension properties from all items:
 
-| Property          | Aggregation Method                      |
-| ----------------- | --------------------------------------- |
-| `cj:encoding`     | Unique list of all encodings            |
-| `cj:version`      | Unique list of all versions             |
-| `cj:lods`         | Merged, sorted list of all LODs         |
-| `cj:co_types`     | Merged, sorted list of all object types |
-| `cj:city_objects` | Statistics: min, max, total             |
-| `cj:extensions`   | Merged, sorted list of extensions       |
-| `proj:epsg`       | Unique list of all EPSG codes           |
-| `bbox` (spatial)  | Merged bounding box of all items        |
+| Property                | Aggregation Method                      |
+| ----------------------- | --------------------------------------- |
+| `city3d:encoding`       | Unique list of all encodings            |
+| `city3d:version`        | Unique list of all versions             |
+| `city3d:lods`           | Merged, sorted list of all LODs         |
+| `city3d:co_types`       | Merged, sorted list of all object types |
+| `city3d:city_objects`   | Statistics: min, max, total             |
+| `city3d:semantic_surfaces` | True if any item has them           |
+| `city3d:textures`       | True if any item has them               |
+| `city3d:materials`      | True if any item has them               |
+| `proj:epsg`             | Unique list of all EPSG codes           |
+| `bbox` (spatial)        | Merged bounding box of all items        |
 
 **Examples:**
 
 ```bash
 # Aggregate items with relative links
-cityjson-stac update-collection item1.json item2.json item3.json -o collection.json
+cjstac update-collection item1.json item2.json item3.json -o collection.json
 
 # Using glob pattern
-cityjson-stac update-collection items/*.json -o collection.json
+cjstac update-collection items/*.json -o collection.json
 
 # Using the alias
-cityjson-stac aggregate items/*.json -o collection.json
+cjstac aggregate items/*.json -o collection.json
 
 # With collection metadata
-cityjson-stac update-collection items/*.json \
+cjstac update-collection items/*.json \
   --id "rotterdam-3d" \
   --title "Rotterdam 3D City Model" \
   --description "LOD2 buildings from Rotterdam" \
@@ -273,7 +275,7 @@ cityjson-stac update-collection items/*.json \
   -o collection.json
 
 # With absolute URLs for item links (useful for Object Storage)
-cityjson-stac update-collection items/*.json \
+cjstac update-collection items/*.json \
   --items-base-url https://example.com/stac/items/ \
   -o collection.json
 ```
@@ -282,12 +284,12 @@ cityjson-stac update-collection items/*.json \
 
 ```bash
 # Step 1: Generate STAC Items individually (can be parallelized)
-cityjson-stac item building1.json --base-url https://storage.example.com/data/ -o items/building1.json
-cityjson-stac item building2.json --base-url https://storage.example.com/data/ -o items/building2.json
-cityjson-stac item building3.json --base-url https://storage.example.com/data/ -o items/building3.json
+cjstac item building1.json --base-url https://storage.example.com/data/ -o items/building1.json
+cjstac item building2.json --base-url https://storage.example.com/data/ -o items/building2.json
+cjstac item building3.json --base-url https://storage.example.com/data/ -o items/building3.json
 
 # Step 2: Aggregate all items into a collection
-cityjson-stac update-collection items/*.json \
+cjstac update-collection items/*.json \
   --items-base-url https://storage.example.com/stac/items/ \
   --title "City Buildings Collection" \
   -o collection.json

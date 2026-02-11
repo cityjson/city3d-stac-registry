@@ -284,7 +284,7 @@ fn handle_item_command(
 
     // Add collection link if specified
     if let Some(coll_id) = collection {
-        builder = builder.collection_link(format!("./{}.json", coll_id));
+        builder = builder.collection_link(format!("./{coll_id}.json"));
     }
 
     // Generate output path
@@ -452,14 +452,14 @@ fn handle_collection_command(config: CollectionConfig) -> Result<()> {
 
     // Write items and add links to collection
     for (file_path, item_json, item_id) in &items_data {
-        let item_filename = format!("{}_item.json", item_id);
+        let item_filename = format!("{item_id}_item.json");
 
         let item_path = items_dir.join(&item_filename);
         std::fs::write(&item_path, item_json)?;
 
         // Add item link to collection
         collection_builder = collection_builder.item_link(
-            format!("./items/{}", item_filename),
+            format!("./items/{item_filename}"),
             file_path
                 .file_name()
                 .and_then(|n| n.to_str())
@@ -596,13 +596,13 @@ fn handle_update_collection_command(config: UpdateCollectionConfig) -> Result<()
                 let normalized_base = if base.ends_with('/') {
                     base.to_string()
                 } else {
-                    format!("{}/", base)
+                    format!("{base}/")
                 };
-                format!("{}{}", normalized_base, item_filename)
+                format!("{normalized_base}{item_filename}")
             }
             None => {
                 // Use relative path from collection to item
-                format!("./{}", item_filename)
+                format!("./{item_filename}")
             }
         };
 

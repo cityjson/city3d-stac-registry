@@ -57,7 +57,7 @@ impl CRS {
     /// Get the CRS as a CityJSON-compatible URL
     pub fn to_cityjson_url(&self) -> Option<String> {
         self.epsg
-            .map(|code| format!("https://www.opengis.net/def/crs/EPSG/0/{}", code))
+            .map(|code| format!("https://www.opengis.net/def/crs/EPSG/0/{code}"))
     }
 }
 

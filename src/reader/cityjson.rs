@@ -231,7 +231,7 @@ fn extract_lods_from_data(data: &Value) -> Result<Vec<String>> {
                         for geom in geom_array {
                             if let Some(lod) = geom.get("lod") {
                                 if let Some(lod_num) = lod.as_f64() {
-                                    lods.insert(format!("{}", lod_num));
+                                    lods.insert(format!("{lod_num}"));
                                 } else if let Some(lod_str) = lod.as_str() {
                                     lods.insert(lod_str.to_string());
                                 }
@@ -394,6 +394,45 @@ impl CityModelMetadataReader for CityJSONReader {
 
     fn extensions(&self) -> Result<Vec<String>> {
         self.with_data(extract_extensions_from_data)
+    }
+
+    fn semantic_surfaces(&self) -> Result<bool> {
+        self.with_data(|data| {
+            // Check if any geometry has semantic surfaces
+            // CityJSON 2.0 stores semantic surfaces in the "semantics" object
+            // which is present alongside geometry boundaries
+            if let Some(city_objects) = data.get("CityObjects") {
+                if let Some(objects) = city_objects.as_object() {
+                    for (_id, obj) in objects {
+                        if let Some(geometry) = obj.get("geometry") {
+                            if let Some(geom_array) = geometry.as_array() {
+                                for geom in geom_array {
+                                    // Check for semantics property which indicates semantic surfaces
+                                    if geom.get("semantics").is_some() {
+                                        return Ok(true);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Ok(false)
+        })
+    }
+
+    fn textures(&self) -> Result<bool> {
+        self.with_data(|data| {
+            // Check for textures in the root-level textures object
+            Ok(data.get("textures").is_some())
+        })
+    }
+
+    fn materials(&self) -> Result<bool> {
+        self.with_data(|data| {
+            // Check for materials in the root-level materials object
+            Ok(data.get("materials").is_some())
+        })
     }
 }
 

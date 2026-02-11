@@ -46,14 +46,17 @@ mod e2e_single_file_tests {
         assert_eq!(geom["type"], "Polygon");
 
         // Validate CityJSON extension properties
-        assert_eq!(item.properties["cj:encoding"], "CityJSON");
-        assert_eq!(item.properties["cj:version"], "2.0");
+        assert_eq!(item.properties["city3d:encoding"], "CityJSON");
+        assert_eq!(item.properties["city3d:version"], "2.0");
 
         // Validate projection extension
         assert_eq!(item.properties["proj:epsg"], 7415);
 
         // Validate required STAC extensions
-        assert!(item.stac_extensions.iter().any(|e| e.contains("cityjson")));
+        assert!(item
+            .stac_extensions
+            .iter()
+            .any(|e| e.contains("3d-city-models")));
         assert!(item
             .stac_extensions
             .iter()
@@ -74,13 +77,13 @@ mod e2e_single_file_tests {
             .expect("Failed to build item");
 
         // Railway has city objects
-        assert!(item.properties["cj:city_objects"].as_u64().unwrap() > 0);
+        assert!(item.properties["city3d:city_objects"].as_u64().unwrap() > 0);
 
         // Railway has LODs
-        assert!(item.properties.contains_key("cj:lods"));
+        assert!(item.properties.contains_key("city3d:lods"));
 
         // Railway has object types
-        assert!(item.properties.contains_key("cj:co_types"));
+        assert!(item.properties.contains_key("city3d:co_types"));
     }
 
     #[test]
@@ -102,7 +105,7 @@ mod e2e_single_file_tests {
         // Validate structure
         assert_eq!(deserialized["stac_version"], "1.0.0");
         assert_eq!(deserialized["type"], "Feature");
-        assert!(deserialized["properties"]["cj:encoding"].is_string());
+        assert!(deserialized["properties"]["city3d:encoding"].is_string());
     }
 
     #[test]
@@ -183,7 +186,7 @@ mod e2e_collection_tests {
 
         // Summaries should contain merged metadata
         let summaries = collection.summaries.as_ref().unwrap();
-        let encodings = summaries["cj:encoding"].as_array().unwrap();
+        let encodings = summaries["city3d:encoding"].as_array().unwrap();
         assert!(encodings.iter().any(|e| e == "CityJSON"));
     }
 
@@ -313,7 +316,7 @@ mod e2e_workflow_tests {
 
         // Verify version matches
         let source_version = source_json["version"].as_str().unwrap();
-        let item_version = item.properties["cj:version"].as_str().unwrap();
+        let item_version = item.properties["city3d:version"].as_str().unwrap();
         assert_eq!(source_version, item_version);
 
         // Verify bbox matches geographicalExtent

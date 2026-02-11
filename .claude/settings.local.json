@@ -18,7 +18,18 @@
       "Bash(cargo build:*)",
       "Bash(cargo run:*)",
       "Bash(curl:*)",
-      "Bash(for:*)"
+      "Bash(for:*)",
+      "mcp__serena__get_symbols_overview",
+      "mcp__zread__read_file",
+      "Bash(git submodule add:*)",
+      "Bash(git checkout:*)",
+      "Bash(cargo check:*)",
+      "Bash(cargo clean:*)",
+      "mcp__serena__list_dir",
+      "mcp__zread__search_doc",
+      "mcp__zread__get_repo_structure",
+      "Bash(cargo install:*)",
+      "Bash(cargo typify:*)"
     ]
   }
 }

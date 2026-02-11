@@ -27,7 +27,7 @@ mod cli_help_tests {
 
     #[test]
     fn test_cli_help() {
-        let mut cmd = Command::cargo_bin("cityjson-stac").unwrap();
+        let mut cmd = Command::cargo_bin("cjstac").unwrap();
         cmd.arg("--help")
             .assert()
             .success()
@@ -37,13 +37,13 @@ mod cli_help_tests {
 
     #[test]
     fn test_cli_version() {
-        let mut cmd = Command::cargo_bin("cityjson-stac").unwrap();
+        let mut cmd = Command::cargo_bin("cjstac").unwrap();
         cmd.arg("--version").assert().success();
     }
 
     #[test]
     fn test_cli_item_help() {
-        let mut cmd = Command::cargo_bin("cityjson-stac").unwrap();
+        let mut cmd = Command::cargo_bin("cjstac").unwrap();
         cmd.args(["item", "--help"])
             .assert()
             .success()
@@ -52,7 +52,7 @@ mod cli_help_tests {
 
     #[test]
     fn test_cli_collection_help() {
-        let mut cmd = Command::cargo_bin("cityjson-stac").unwrap();
+        let mut cmd = Command::cargo_bin("cjstac").unwrap();
         cmd.args(["collection", "--help"])
             .assert()
             .success()
@@ -69,7 +69,7 @@ mod cli_item_tests {
         let temp = tempdir().expect("Failed to create temp dir");
         let output = temp.path().join("item.json");
 
-        let mut cmd = Command::cargo_bin("cityjson-stac").unwrap();
+        let mut cmd = Command::cargo_bin("cjstac").unwrap();
         cmd.args([
             "item",
             input.to_str().unwrap(),
@@ -84,7 +84,7 @@ mod cli_item_tests {
         let content = std::fs::read_to_string(&output).expect("Failed to read output");
         assert!(content.contains("stac_version"));
         assert!(content.contains("Feature"));
-        assert!(content.contains("cj:encoding"));
+        assert!(content.contains("city3d:encoding"));
     }
 
     #[test]
@@ -93,7 +93,7 @@ mod cli_item_tests {
         let temp = tempdir().expect("Failed to create temp dir");
         let output = temp.path().join("item.json");
 
-        let mut cmd = Command::cargo_bin("cityjson-stac").unwrap();
+        let mut cmd = Command::cargo_bin("cjstac").unwrap();
         cmd.args([
             "item",
             input.to_str().unwrap(),
@@ -111,7 +111,7 @@ mod cli_item_tests {
         let temp = tempdir().expect("Failed to create temp dir");
         let output = temp.path().join("item.json");
 
-        let mut cmd = Command::cargo_bin("cityjson-stac").unwrap();
+        let mut cmd = Command::cargo_bin("cjstac").unwrap();
         cmd.args([
             "item",
             input.to_str().unwrap(),
@@ -130,7 +130,7 @@ mod cli_item_tests {
 
     #[test]
     fn test_cli_item_nonexistent_file() {
-        let mut cmd = Command::cargo_bin("cityjson-stac").unwrap();
+        let mut cmd = Command::cargo_bin("cjstac").unwrap();
         cmd.args(["item", "/nonexistent/path/data.json"])
             .assert()
             .failure();
@@ -142,7 +142,7 @@ mod cli_item_tests {
         let temp = tempdir().expect("Failed to create temp dir");
         let output = temp.path().join("railway.json");
 
-        let mut cmd = Command::cargo_bin("cityjson-stac").unwrap();
+        let mut cmd = Command::cargo_bin("cjstac").unwrap();
         cmd.args([
             "item",
             input.to_str().unwrap(),
@@ -154,8 +154,8 @@ mod cli_item_tests {
 
         // Check that output contains railway-specific metadata
         let content = std::fs::read_to_string(&output).expect("Failed to read output");
-        assert!(content.contains("cj:city_objects"));
-        assert!(content.contains("cj:lods"));
+        assert!(content.contains("city3d:city_objects"));
+        assert!(content.contains("city3d:lods"));
     }
 }
 
@@ -168,7 +168,7 @@ mod cli_collection_tests {
         let temp = tempdir().expect("Failed to create temp dir");
         let output_dir = temp.path().join("output");
 
-        let mut cmd = Command::cargo_bin("cityjson-stac").unwrap();
+        let mut cmd = Command::cargo_bin("cjstac").unwrap();
         cmd.args([
             "collection",
             input.to_str().unwrap(),
@@ -198,7 +198,7 @@ mod cli_collection_tests {
         let temp = tempdir().expect("Failed to create temp dir");
         let output_dir = temp.path().join("output");
 
-        let mut cmd = Command::cargo_bin("cityjson-stac").unwrap();
+        let mut cmd = Command::cargo_bin("cjstac").unwrap();
         cmd.args([
             "collection",
             input.to_str().unwrap(),
@@ -219,7 +219,7 @@ mod cli_collection_tests {
         let temp = tempdir().expect("Failed to create temp dir");
         let output_dir = temp.path().join("output");
 
-        let mut cmd = Command::cargo_bin("cityjson-stac").unwrap();
+        let mut cmd = Command::cargo_bin("cjstac").unwrap();
         cmd.args([
             "collection",
             input.to_str().unwrap(),
@@ -244,7 +244,7 @@ mod cli_collection_tests {
         let temp = tempdir().expect("Failed to create temp dir");
         let output_dir = temp.path().join("output");
 
-        let mut cmd = Command::cargo_bin("cityjson-stac").unwrap();
+        let mut cmd = Command::cargo_bin("cjstac").unwrap();
         cmd.args([
             "collection",
             input.to_str().unwrap(),
@@ -265,7 +265,7 @@ mod cli_collection_tests {
 
     #[test]
     fn test_cli_collection_nonexistent_path() {
-        let mut cmd = Command::cargo_bin("cityjson-stac").unwrap();
+        let mut cmd = Command::cargo_bin("cjstac").unwrap();
         cmd.args(["collection", "/nonexistent/path", "--id", "test"])
             .assert()
             .failure();
@@ -276,7 +276,7 @@ mod cli_collection_tests {
         // Collection command expects a directory, not a single file
         let input = test_data_path("delft.city.json");
 
-        let mut cmd = Command::cargo_bin("cityjson-stac").unwrap();
+        let mut cmd = Command::cargo_bin("cjstac").unwrap();
         cmd.args(["collection", input.to_str().unwrap(), "--id", "test"])
             .assert()
             .failure()
@@ -293,7 +293,7 @@ mod cli_verbose_tests {
         let temp = tempdir().expect("Failed to create temp dir");
         let output = temp.path().join("item.json");
 
-        let mut cmd = Command::cargo_bin("cityjson-stac").unwrap();
+        let mut cmd = Command::cargo_bin("cjstac").unwrap();
         cmd.args([
             "--verbose",
             "item",
@@ -311,7 +311,7 @@ mod cli_edge_cases {
 
     #[test]
     fn test_cli_no_subcommand() {
-        let mut cmd = Command::cargo_bin("cityjson-stac").unwrap();
+        let mut cmd = Command::cargo_bin("cjstac").unwrap();
         cmd.assert()
             .failure()
             .stderr(predicate::str::contains("Usage"));
@@ -319,7 +319,7 @@ mod cli_edge_cases {
 
     #[test]
     fn test_cli_unknown_subcommand() {
-        let mut cmd = Command::cargo_bin("cityjson-stac").unwrap();
+        let mut cmd = Command::cargo_bin("cjstac").unwrap();
         cmd.arg("unknown").assert().failure();
     }
 }

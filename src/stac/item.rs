@@ -79,70 +79,81 @@ impl StacItemBuilder {
         self
     }
 
-    /// Add CityJSON extension properties from metadata reader
+    /// Add 3D City Models extension properties from metadata reader
+    ///
+    /// Uses the STAC 3D City Models Extension (city3d: prefix)
+    /// https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json
     pub fn cityjson_metadata(mut self, reader: &dyn CityModelMetadataReader) -> Result<Self> {
-        // Add cj:encoding
+        // Add city3d:encoding (required field)
         self.properties.insert(
-            "cj:encoding".to_string(),
+            "city3d:encoding".to_string(),
             Value::String(reader.encoding().to_string()),
         );
 
-        // Add cj:version
+        // Add city3d:version
         if let Ok(version) = reader.version() {
             self.properties
-                .insert("cj:version".to_string(), Value::String(version));
+                .insert("city3d:version".to_string(), Value::String(version));
         }
 
-        // Add cj:city_objects
+        // Add city3d:encoding_version (optional, for encodings with their own versioning)
+        // For FlatCityBuf, we could extract a specific encoding version here
+
+        // Add city3d:city_objects
         if let Ok(count) = reader.city_object_count() {
             self.properties.insert(
-                "cj:city_objects".to_string(),
+                "city3d:city_objects".to_string(),
                 Value::Number(serde_json::Number::from(count)),
             );
         }
 
-        // Add cj:lods
+        // Add city3d:lods
         if let Ok(lods) = reader.lods() {
             if !lods.is_empty() {
                 self.properties
-                    .insert("cj:lods".to_string(), serde_json::to_value(lods)?);
+                    .insert("city3d:lods".to_string(), serde_json::to_value(lods)?);
             }
         }
 
-        // Add cj:co_types
+        // Add city3d:co_types
         if let Ok(types) = reader.city_object_types() {
             if !types.is_empty() {
                 self.properties
-                    .insert("cj:co_types".to_string(), serde_json::to_value(types)?);
+                    .insert("city3d:co_types".to_string(), serde_json::to_value(types)?);
             }
         }
 
-        // Add cj:attributes
+        // Add city3d:attributes
         if let Ok(attrs) = reader.attributes() {
             if !attrs.is_empty() {
-                self.properties
-                    .insert("cj:attributes".to_string(), serde_json::to_value(attrs)?);
+                self.properties.insert(
+                    "city3d:attributes".to_string(),
+                    serde_json::to_value(attrs)?,
+                );
             }
         }
 
-        // Add cj:transform
-        if let Ok(Some(transform)) = reader.transform() {
-            self.properties
-                .insert("cj:transform".to_string(), serde_json::to_value(transform)?);
+        // Add city3d:semantic_surfaces
+        if let Ok(has_semantic_surfaces) = reader.semantic_surfaces() {
+            if has_semantic_surfaces {
+                self.properties
+                    .insert("city3d:semantic_surfaces".to_string(), Value::Bool(true));
+            }
         }
 
-        // Add cj:metadata
-        if let Ok(Some(metadata)) = reader.metadata() {
-            self.properties.insert("cj:metadata".to_string(), metadata);
+        // Add city3d:textures
+        if let Ok(has_textures) = reader.textures() {
+            if has_textures {
+                self.properties
+                    .insert("city3d:textures".to_string(), Value::Bool(true));
+            }
         }
 
-        // Add cj:extensions (CityJSON Application Domain Extensions)
-        if let Ok(extensions) = reader.extensions() {
-            if !extensions.is_empty() {
-                self.properties.insert(
-                    "cj:extensions".to_string(),
-                    serde_json::to_value(extensions)?,
-                );
+        // Add city3d:materials
+        if let Ok(has_materials) = reader.materials() {
+            if has_materials {
+                self.properties
+                    .insert("city3d:materials".to_string(), Value::Bool(true));
             }
         }
 
@@ -205,18 +216,18 @@ impl StacItemBuilder {
 
     /// Build the STAC Item
     pub fn build(self) -> Result<StacItem> {
-        // Validate that we have required CityJSON extension properties
-        if !self.properties.contains_key("cj:encoding") {
+        // Validate that we have required 3D City Models extension properties
+        if !self.properties.contains_key("city3d:encoding") {
             return Err(CityJsonStacError::StacError(
-                "Missing required cj:encoding property".to_string(),
+                "Missing required city3d:encoding property".to_string(),
             ));
         }
 
         Ok(StacItem {
             stac_version: "1.0.0".to_string(),
             stac_extensions: vec![
-                "https://raw.githubusercontent.com/cityjson/cityjson-stac/main/stac-extension/schema.json".to_string(),
-                "https://stac-extensions.github.io/projection/v1.1.0/schema.json".to_string(),
+                "https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json".to_string(),
+                "https://stac-extensions.github.io/projection/v2.0.0/schema.json".to_string(),
             ],
             item_type: "Feature".to_string(),
             id: self.id,
@@ -303,9 +314,9 @@ impl StacItemBuilder {
                 let normalized_base = if base.ends_with('/') {
                     base.to_string()
                 } else {
-                    format!("{}/", base)
+                    format!("{base}/")
                 };
-                format!("{}{}", normalized_base, file_name)
+                format!("{normalized_base}{file_name}")
             }
             None => file_name.to_string(),
         };
@@ -342,7 +353,7 @@ impl StacItemBuilder {
             _ => "",
         };
 
-        let id = format!("{}{}", stem, suffix);
+        let id = format!("{stem}{suffix}");
 
         let mut builder = Self::new(id);
 
@@ -374,9 +385,9 @@ impl StacItemBuilder {
                 let normalized_base = if base.ends_with('/') {
                     base.to_string()
                 } else {
-                    format!("{}/", base)
+                    format!("{base}/")
                 };
-                format!("{}{}", normalized_base, file_name)
+                format!("{normalized_base}{file_name}")
             }
             None => file_name.to_string(),
         };
@@ -431,7 +442,7 @@ mod tests {
             .title("Test Item")
             .description("A test item")
             .property(
-                "cj:encoding".to_string(),
+                "city3d:encoding".to_string(),
                 Value::String("CityJSON".to_string()),
             )
             .build()
@@ -453,9 +464,9 @@ mod tests {
             .build()
             .unwrap();
 
-        assert_eq!(item.properties.get("cj:encoding").unwrap(), "CityJSON");
-        assert_eq!(item.properties.get("cj:version").unwrap(), "2.0");
-        assert_eq!(item.properties.get("cj:city_objects").unwrap(), 1);
+        assert_eq!(item.properties.get("city3d:encoding").unwrap(), "CityJSON");
+        assert_eq!(item.properties.get("city3d:version").unwrap(), "2.0");
+        assert_eq!(item.properties.get("city3d:city_objects").unwrap(), 1);
         assert_eq!(item.properties.get("proj:epsg").unwrap(), 7415);
     }
 
@@ -480,7 +491,7 @@ mod tests {
             .bbox(bbox)
             .geometry_from_bbox()
             .property(
-                "cj:encoding".to_string(),
+                "city3d:encoding".to_string(),
                 Value::String("CityJSON".to_string()),
             )
             .build()

@@ -1,14 +1,16 @@
-# CityJSON STAC Extension Specification
+# STAC 3D City Models Extension
 
-**Extension Name:** CityJSON  
-**Extension Prefix:** `cj`  
-**Extension Version:** 1.0.0  
-**Scope:** Item, Collection  
-**Maturity:** Proposal
+**Extension Name:** 3D City Models
+**Extension Prefix:** `city3d`
+**Extension Version:** 0.1.0
+**Extension URL:** https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json
+**Scope:** Item, Collection
 
 ## Purpose
 
-This extension defines properties for STAC Items and Collections describing 3D city model datasets in CityJSON and related formats. All extension properties use the `cj:` prefix.
+This extension defines properties for STAC Items and Collections describing 3D city model datasets. It supports multiple encoding formats including CityJSON, CityGML, and other 3D geospatial formats.
+
+This tool implements the official [STAC 3D City Models Extension](https://stac-extensions.github.io/3d-city-models/) specification.
 
 ---
 
@@ -16,17 +18,20 @@ This extension defines properties for STAC Items and Collections describing 3D c
 
 Properties in the STAC Item `properties` object:
 
-| Field Name        | Type          | Required | Description                                      |
-| ----------------- | ------------- | -------- | ------------------------------------------------ |
-| `cj:encoding`     | string        | Yes      | Format: `CityJSON`, `CityJSONSeq`, `FlatCityBuf` |
-| `cj:version`      | string        | Yes      | CityJSON version (e.g., "2.0", "1.1")            |
-| `cj:city_objects` | integer       | Yes      | Number of city objects                           |
-| `cj:lods`         | array[string] | Yes      | Available levels of detail (e.g., ["1", "2"])    |
-| `cj:co_types`     | array[string] | Yes      | City object types (e.g., ["Building", "Road"])   |
-| `cj:attributes`   | array[object] | No       | Attribute schema definitions                     |
-| `cj:transform`    | object        | No       | Coordinate transformation parameters             |
-| `cj:metadata`     | object        | No       | Additional CityJSON metadata                     |
-| `cj:extensions`   | array[string] | No       | CityJSON extension schema URLs (ADEs)            |
+| Field Name                  | Type          | Required | Description                                      |
+| --------------------------- | ------------- | -------- | ------------------------------------------------ |
+| `city3d:encoding`           | string        | Yes*     | Encoding format (see list below)                |
+| `city3d:version`            | string        | No       | Specification version (e.g., "2.0", "3.0")      |
+| `city3d:encoding_version`   | string        | No       | Encoding-specific version                       |
+| `city3d:city_objects`       | integer       | No       | Number of city objects                           |
+| `city3d:lods`               | array[string] | No       | Available levels of detail                      |
+| `city3d:co_types`           | array[string] | No       | City object types present                        |
+| `city3d:attributes`         | array[object] | No       | Attribute schema definitions                     |
+| `city3d:semantic_surfaces`  | boolean       | No       | Has semantic surface information                 |
+| `city3d:textures`           | boolean       | No       | Has texture information                          |
+| `city3d:materials`          | boolean       | No       | Has material information                         |
+
+*At least one `city3d:*` field is required.
 
 ---
 
@@ -34,19 +39,23 @@ Properties in the STAC Item `properties` object:
 
 Properties in the STAC Collection `summaries` object:
 
-| Field Name        | Type          | Required | Description                             |
-| ----------------- | ------------- | -------- | --------------------------------------- |
-| `cj:encoding`     | array[string] | Yes      | All encoding formats in collection      |
-| `cj:city_objects` | object        | Yes      | Statistics: `{min, max, total}`         |
-| `cj:lods`         | array[string] | Yes      | All LODs across collection              |
-| `cj:co_types`     | array[string] | Yes      | All city object types across collection |
-| `cj:extensions`   | array[string] | No       | All extension URLs across collection    |
+| Field Name                  | Type          | Description                             |
+| --------------------------- | ------------- | --------------------------------------- |
+| `city3d:encoding`           | array/string  | All encoding formats in collection      |
+| `city3d:version`            | array[string] | All versions in collection              |
+| `city3d:encoding_version`   | array[string] | All encoding versions                    |
+| `city3d:lods`               | array[string] | All LODs across collection              |
+| `city3d:co_types`           | array[string] | All city object types across collection |
+| `city3d:city_objects`       | object        | Statistics: `{min, max, total}`         |
+| `city3d:semantic_surfaces`  | boolean       | True if any item has them                |
+| `city3d:textures`           | boolean       | True if any item has them                |
+| `city3d:materials`          | boolean       | True if any item has them                |
 
 ---
 
 ## Property Details
 
-### `cj:encoding`
+### `city3d:encoding`
 
 Encoding format of the 3D city model data.
 
@@ -55,12 +64,24 @@ Encoding format of the 3D city model data.
 - `"CityJSON"` - Standard CityJSON (.json)
 - `"CityJSONSeq"` - CityJSON Text Sequences (.jsonl)
 - `"FlatCityBuf"` - FlatBuffers-based format (.fcb)
+- `"CityParquet"` - Parquet-based format
+- `"CityGML"` - OGC CityGML format
+- `"KML/COLLADA"` - KML with COLLADA
+- `"3Tiles"` - 3D Tiles format
+- `"I3S"` - Esri I3S format
+- `"OBJ"` - Wavefront OBJ
+- `"GLTF"` - glTF format
+- `"GLB"` - Binary glTF
 
-### `cj:version`
+### `city3d:version`
 
-CityJSON specification version. Pattern: semantic version (e.g., "2.0", "1.1").
+Specification version of the format. Pattern: semantic version (e.g., "2.0", "1.1", "3.0").
 
-### `cj:city_objects`
+### `city3d:encoding_version`
+
+Version of the specific encoding format when it has its own versioning independent of the base specification. For example, FlatCityBuf may have version "0.2.0" regardless of CityJSON version.
+
+### `city3d:city_objects`
 
 **Item:** Integer count of city objects.
 
@@ -74,99 +95,76 @@ CityJSON specification version. Pattern: semantic version (e.g., "2.0", "1.1").
 }
 ```
 
-### `cj:lods`
+### `city3d:lods`
 
-Levels of Detail available. Supports decimal values (e.g., "2.2").
-
-```json
-"cj:lods": ["1", "2", "2.2", "3"]
-```
-
-### `cj:co_types`
-
-CityJSON object types present.
-
-**Common Types:** Building, BuildingPart, Road, Railway, TINRelief, WaterBody, PlantCover, LandUse, Bridge, Tunnel, GenericCityObject
+Levels of Detail available. Supports decimal values per Biljecki et al. specification (e.g., "2.2").
 
 ```json
-"cj:co_types": ["Building", "BuildingPart", "TINRelief"]
+"city3d:lods": ["1", "2", "2.2", "3"]
 ```
 
-### `cj:attributes`
+### `city3d:co_types`
 
-Attribute schema definitions.
+City object types present. Includes both standard types and extension types (prefixed with "+").
+
+**Standard Types:** Building, BuildingPart, BuildingInstallation, BuildingConstructionElement, BuildingFurniture, BuildingStorey, BuildingRoom, BuildingUnit, Bridge, BridgePart, BridgeInstallation, BridgeConstructionElement, BridgeRoom, BridgeFurniture, CityFurniture, CityObjectGroup, GenericCityObject, LandUse, OtherConstruction, PlantCover, SolitaryVegetationObject, Railway, Road, TINRelief, TransportSquare, Tunnel, TunnelPart, TunnelInstallation, TunnelConstructionElement, TunnelHollowSpace, TunnelFurniture, WaterBody, WaterSurface, WaterGround
+
+```json
+"city3d:co_types": ["Building", "BuildingPart", "TINRelief"]
+```
+
+### `city3d:attributes`
+
+Attribute schema definitions for semantic attributes on city objects.
 
 | Property    | Type    | Required | Description                                  |
 | ----------- | ------- | -------- | -------------------------------------------- |
 | name        | string  | Yes      | Attribute name                               |
-| type        | string  | Yes      | String, Number, Boolean, Date, Array, Object |
+| type        | string  | Yes      | STRING, NUMBER, BOOLEAN, DATE, ARRAY, OBJECT |
 | description | string  | No       | Human-readable description                   |
 | required    | boolean | No       | Whether always present                       |
 
 ```json
-"cj:attributes": [
-  { "name": "yearOfConstruction", "type": "Number" },
-  { "name": "function", "type": "String", "description": "Building usage" }
+"city3d:attributes": [
+  { "name": "yearOfConstruction", "type": "NUMBER" },
+  { "name": "function", "type": "STRING", "description": "Building usage" }
 ]
 ```
 
-### `cj:transform`
+### `city3d:semantic_surfaces`
 
-Coordinate transformation for vertex compression.
+Boolean indicating whether the dataset contains semantic surfaces (e.g., roofs, walls, ground surfaces) that provide detailed geometry breakdown with specific semantic meaning.
 
-| Property  | Type          | Description           |
-| --------- | ------------- | --------------------- |
-| scale     | array[number] | Scale factors [x,y,z] |
-| translate | array[number] | Offsets [x,y,z]       |
+### `city3d:textures`
 
-```json
-"cj:transform": {
-  "scale": [0.001, 0.001, 0.001],
-  "translate": [4629170.0, 5804690.0, 0.0]
-}
-```
+Boolean indicating whether the dataset includes texture information for visual appearance of surfaces.
 
-### `cj:metadata`
+### `city3d:materials`
 
-Free-form additional CityJSON metadata.
+Boolean indicating whether the dataset includes material information (e.g., color, shininess, transparency) for surface appearance.
 
-```json
-"cj:metadata": {
-  "referenceDate": "2023-05-15",
-  "dataSource": "LiDAR survey 2023"
-}
-```
+---
 
-### `cj:extensions`
+## Referenced Extensions
 
-CityJSON Extension schema URLs (Application Domain Extensions).
+This extension incorporates properties from these STAC extensions via `$ref`:
 
-CityJSON Extensions allow extending the core data model with:
-
-- New properties at the root level
-- New attributes for existing City Objects
-- New semantic objects
-- New City Object types (prefixed with "+")
-
-```json
-"cj:extensions": [
-  "https://www.cityjson.org/extensions/noise.ext.json",
-  "https://3dbag.nl/extensions/3dbag.ext.json"
-]
-```
+- **[Projection v2.0.0](https://stac-extensions.github.io/projection/v2.0.0/schema.json)**: `proj:epsg`, `proj:wkt2`, `proj:projjson`, `proj:centroid`, `proj:geometry`
+- **[File v2.1.0](https://stac-extensions.github.io/file/v2.1.0/schema.json)**: `file:size`, `file:checksum`, `file:values`
+- **[Stats v0.2.0](https://stac-extensions.github.io/stats/v0.2.0/schema.json)**: `stats:...`
 
 ---
 
 ## Examples
 
-### STAC Item
+### STAC Item (CityJSON)
 
 ```json
 {
   "stac_version": "1.0.0",
   "stac_extensions": [
-    "https://raw.githubusercontent.com/cityjson/cityjson-stac/main/stac-extension/schema.json",
-    "https://stac-extensions.github.io/projection/v1.1.0/schema.json"
+    "https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json",
+    "https://stac-extensions.github.io/projection/v2.0.0/schema.json"
   ],
   "type": "Feature",
   "id": "rotterdam_buildings_lod2",
@@ -174,27 +172,18 @@ CityJSON Extensions allow extending the core data model with:
   "geometry": {
     "type": "Polygon",
     "coordinates": [
-      [
-        [4.46, 51.91],
-        [4.49, 51.91],
-        [4.49, 51.93],
-        [4.46, 51.93],
-        [4.46, 51.91]
-      ]
+      [[4.46, 51.91], [4.49, 51.91], [4.49, 51.93], [4.46, 51.93], [4.46, 51.91]]
     ]
   },
   "properties": {
     "datetime": "2023-05-15T00:00:00Z",
     "proj:epsg": 7415,
-    "cj:encoding": "CityJSON",
-    "cj:version": "2.0",
-    "cj:city_objects": 1523,
-    "cj:lods": ["2", "2.2"],
-    "cj:co_types": ["Building", "BuildingPart"],
-    "cj:transform": {
-      "scale": [0.001, 0.001, 0.001],
-      "translate": [4629170.0, 5804690.0, 0.0]
-    }
+    "city3d:encoding": "CityJSON",
+    "city3d:version": "2.0",
+    "city3d:city_objects": 1523,
+    "city3d:lods": ["2", "2.2"],
+    "city3d:co_types": ["Building", "BuildingPart", "BuildingInstallation"],
+    "city3d:semantic_surfaces": true
   },
   "assets": {
     "data": {
@@ -216,7 +205,8 @@ CityJSON Extensions allow extending the core data model with:
 {
   "stac_version": "1.0.0",
   "stac_extensions": [
-    "https://raw.githubusercontent.com/cityjson/cityjson-stac/main/stac-extension/schema.json"
+    "https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json",
+    "https://stac-extensions.github.io/projection/v2.0.0/schema.json"
   ],
   "type": "Collection",
   "id": "rotterdam_3dcity_2023",
@@ -229,10 +219,13 @@ CityJSON Extensions allow extending the core data model with:
   },
   "summaries": {
     "proj:epsg": [7415],
-    "cj:encoding": ["CityJSON", "FlatCityBuf"],
-    "cj:city_objects": { "min": 45, "max": 5000, "total": 125432 },
-    "cj:lods": ["0", "1", "2", "3"],
-    "cj:co_types": ["Building", "BuildingPart", "TINRelief", "WaterBody"]
+    "city3d:encoding": ["CityJSON", "FlatCityBuf"],
+    "city3d:version": ["2.0"],
+    "city3d:city_objects": { "min": 45, "max": 5000, "total": 125432 },
+    "city3d:lods": ["0", "1", "2", "2.2", "3"],
+    "city3d:co_types": ["Building", "BuildingPart", "TINRelief", "WaterBody"],
+    "city3d:semantic_surfaces": true,
+    "city3d:textures": false
   },
   "links": [
     { "rel": "self", "href": "./collection.json" },
@@ -243,34 +236,35 @@ CityJSON Extensions allow extending the core data model with:
 
 ---
 
-## Compatible STAC Extensions
-
-- **[Projection Extension](https://stac-extensions.github.io/projection/)**: `proj:epsg`, `proj:wkt2`
-- **[File Extension](https://stac-extensions.github.io/file/)**: `file:size`, `file:checksum`
-
----
-
 ## Best Practices
 
 1. **3D Bounding Box**: Use 6-element bbox `[xmin, ymin, zmin, xmax, ymax, zmax]`
 2. **Geometry**: Provide 2D footprint polygon in WGS84 for map display
 3. **Temporal**: Use `datetime` for single timestamp, or `start/end_datetime` for ranges
 4. **Assets**: Include primary data file with `"roles": ["data"]`
+5. **Semantic Surfaces**: Set `city3d:semantic_surfaces: true` when surfaces are explicitly defined
+6. **Textures/Materials**: Only set these flags when appearance information is actually present
 
 ---
 
-## Schema URL
+## Schema Validation
+
+The JSON Schema for this extension is:
 
 ```
-https://raw.githubusercontent.com/cityjson/cityjson-stac/main/stac-extension/schema.json
+https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json
+```
+
+Local development copy available at:
+```
+stac-cityjson-extension/json-schema/schema.json
 ```
 
 ---
 
-## Changelog
+## External References
 
-### v1.0.0 (Proposal)
-
-- Initial specification
-- Support for CityJSON, CityJSONSeq, FlatCityBuf formats
-- Item and Collection level properties
+- [STAC Specification](https://stacspec.org/)
+- [3D City Models Extension Repository](https://github.com/stac-extensions/3d-city-models)
+- [CityJSON Specification](https://www.cityjson.org/specs/)
+- [CityGML Standard](https://www.ogc.org/standards/citygml)

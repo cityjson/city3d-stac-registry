@@ -1,8 +1,8 @@
 {
   "stac_version": "1.0.0",
   "stac_extensions": [
-    "https://raw.githubusercontent.com/cityjson/cityjson-stac/main/stac-extension/schema.json",
-    "https://stac-extensions.github.io/projection/v1.1.0/schema.json"
+    "https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json",
+    "https://stac-extensions.github.io/projection/v2.0.0/schema.json"
   ],
   "type": "Collection",
   "id": "rotterdam_3dcity_2023",
@@ -40,15 +40,15 @@
   },
   "summaries": {
     "proj:epsg": [7415],
-    "cj:encoding": ["CityJSON", "FlatCityBuf"],
-    "cj:version": ["2.0"],
-    "cj:city_objects": {
+    "city3d:encoding": ["CityJSON", "FlatCityBuf"],
+    "city3d:version": ["2.0"],
+    "city3d:city_objects": {
       "min": 45,
       "max": 5234,
       "total": 125432
     },
-    "cj:lods": ["0", "1", "2", "2.2", "3"],
-    "cj:co_types": [
+    "city3d:lods": ["0", "1", "2", "2.2", "3"],
+    "city3d:co_types": [
       "Building",
       "BuildingPart",
       "BuildingInstallation",
@@ -64,6 +64,9 @@
       "Bridge",
       "BridgePart"
     ],
+    "city3d:semantic_surfaces": true,
+    "city3d:textures": false,
+    "city3d:materials": true,
     "datetime": {
       "minimum": "2023-05-15T00:00:00Z",
       "maximum": "2023-05-15T00:00:00Z"
