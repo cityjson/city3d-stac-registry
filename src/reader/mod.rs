@@ -77,6 +77,22 @@ pub trait CityModelMetadataReader: Send + Sync {
     /// - New semantic objects
     /// - New City Object types (prefixed with "+")
     fn extensions(&self) -> Result<Vec<String>>;
+
+    /// Check if dataset contains semantic surfaces
+    ///
+    /// Semantic surfaces provide detailed geometry breakdown with specific
+    /// semantic meaning (e.g., roofs, walls, ground surfaces).
+    fn semantic_surfaces(&self) -> Result<bool>;
+
+    /// Check if dataset includes texture information
+    ///
+    /// Textures provide visual appearance of surfaces through image data.
+    fn textures(&self) -> Result<bool>;
+
+    /// Check if dataset includes material information
+    ///
+    /// Materials define surface appearance properties like color, shininess, transparency.
+    fn materials(&self) -> Result<bool>;
 }
 
 /// Factory function to create appropriate reader for a file
@@ -123,8 +139,7 @@ pub fn get_reader(file_path: &Path) -> Result<Box<dyn CityModelMetadataReader>> 
             ))
         }
         _ => Err(CityJsonStacError::UnsupportedFormat(format!(
-            "Unknown extension: {}",
-            extension
+            "Unknown extension: {extension}",
         ))),
     }
 }

@@ -5,12 +5,22 @@ default:
     @just --list
 
 # Generate STAC types from JSON schemas
-gen:
-    cargo build
-    @echo "Generated types in target/debug/build/cityjson_stac-*/out/stac_types.rs"
+#
+# Note: STAC types are manually maintained in src/stac/models.rs
+# These types are derived from STAC v1.0.0 JSON schemas and match
+# the official STAC specification structure.
+#
+# To modify STAC types:
+# 1. Edit src/stac/models.rs
+# 2. Run `cargo build` to recompile with changes
+# 3. Run tests to verify changes
 
-# Clean and regenerate
-regen: clean-gen gen
+# Build the project
+build:
+    cargo build
+
+# Clean and rebuild
+regen: clean-gen build
 
 # Clean generated files
 clean-gen:
@@ -40,6 +50,7 @@ devcon:
     devcontainer up --workspace-folder .
     devcontainer exec --workspace-folder . bash
 
+# rebuild dev container
 devcon-build:
     devcontainer build --workspace-folder . --no-cache
     just devcon

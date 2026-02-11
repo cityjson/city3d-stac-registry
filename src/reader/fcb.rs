@@ -104,7 +104,7 @@ impl FlatCityBufReader {
             let reader = BufReader::new(file);
 
             let fcb_reader = FcbReader::open(reader)
-                .map_err(|e| CityJsonStacError::Other(format!("Failed to open FCB file: {}", e)))?;
+                .map_err(|e| CityJsonStacError::Other(format!("Failed to open FCB file: {e}")))?;
 
             let header = fcb_reader.header();
 
@@ -263,7 +263,7 @@ impl FlatCityBufReader {
         if let Some(rs) = header.reference_system() {
             let epsg_code = rs.code();
             // Construct the CityJSON-style reference system URL
-            let ref_system_url = format!("https://www.opengis.net/def/crs/EPSG/0/{}", epsg_code);
+            let ref_system_url = format!("https://www.opengis.net/def/crs/EPSG/0/{epsg_code}");
             metadata.insert(
                 "referenceSystem".to_string(),
                 serde_json::Value::String(ref_system_url),
@@ -336,7 +336,7 @@ impl FlatCityBufReader {
         let reader = BufReader::new(file);
 
         let fcb_reader = FcbReader::open(reader)
-            .map_err(|e| CityJsonStacError::Other(format!("Failed to open FCB file: {}", e)))?;
+            .map_err(|e| CityJsonStacError::Other(format!("Failed to open FCB file: {e}")))?;
 
         // Use BTreeSet for automatic deduplication and sorting
         let mut lods: BTreeSet<String> = BTreeSet::new();
@@ -347,12 +347,12 @@ impl FlatCityBufReader {
         // Use the sequential (streaming) iterator
         let mut feature_iter = fcb_reader
             .select_all_seq()
-            .map_err(|e| CityJsonStacError::Other(format!("Failed to select features: {}", e)))?;
+            .map_err(|e| CityJsonStacError::Other(format!("Failed to select features: {e}")))?;
 
         // Stream through features one at a time
         while let Some(iter) = feature_iter
             .next()
-            .map_err(|e| CityJsonStacError::Other(format!("Failed to read feature: {}", e)))?
+            .map_err(|e| CityJsonStacError::Other(format!("Failed to read feature: {e}")))?
         {
             let feature = iter.cur_feature();
 
@@ -533,6 +533,83 @@ impl CityModelMetadataReader for FlatCityBufReader {
 
     fn extensions(&self) -> Result<Vec<String>> {
         self.with_header_data(|data| Ok(data.extensions.clone()))
+    }
+
+    fn semantic_surfaces(&self) -> Result<bool> {
+        // FlatCityBuf stores semantic surface information in geometry
+        // We need to stream through features to check for this
+        let file = File::open(&self.file_path)?;
+        let reader = BufReader::new(file);
+
+        let fcb_reader = FcbReader::open(reader)
+            .map_err(|e| CityJsonStacError::Other(format!("Failed to open FCB file: {e}")))?;
+
+        let mut feature_iter = fcb_reader
+            .select_all_seq()
+            .map_err(|e| CityJsonStacError::Other(format!("Failed to select features: {e}")))?;
+
+        while let Some(iter) = feature_iter
+            .next()
+            .map_err(|e| CityJsonStacError::Other(format!("Failed to read feature: {e}")))?
+        {
+            let feature = iter.cur_feature();
+
+            if let Some(objects) = feature.objects() {
+                for obj in objects.iter() {
+                    if let Some(geometries) = obj.geometry() {
+                        for geom in geometries.iter() {
+                            // Check if geometry has semantic surfaces
+                            // In FCB, this would be indicated by presence of semantic information
+                            if geom.semantics().is_some() {
+                                return Ok(true);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(false)
+    }
+
+    fn textures(&self) -> Result<bool> {
+        // Check if FCB header indicates presence of textures
+        self.with_header_data(|data| {
+            // FCB doesn't directly store textures flag, we check metadata
+            if let Some(ref metadata) = data.metadata_json {
+                if let Some(obj) = metadata.as_object() {
+                    if obj.get("appearance").is_some() {
+                        // Check if appearance contains texture data
+                        if let Some(appearance) = obj.get("appearance") {
+                            if let Some(app_obj) = appearance.as_object() {
+                                if app_obj.get("textures").is_some() {
+                                    return Ok(true);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Ok(false)
+        })
+    }
+
+    fn materials(&self) -> Result<bool> {
+        // Check if FCB header indicates presence of materials
+        self.with_header_data(|data| {
+            if let Some(ref metadata) = data.metadata_json {
+                if let Some(obj) = metadata.as_object() {
+                    if let Some(appearance) = obj.get("appearance") {
+                        if let Some(app_obj) = appearance.as_object() {
+                            if app_obj.get("materials").is_some() {
+                                return Ok(true);
+                            }
+                        }
+                    }
+                }
+            }
+            Ok(false)
+        })
     }
 }
 

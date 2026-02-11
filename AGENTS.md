@@ -92,8 +92,9 @@ cityjson-stac/
 │   │   └── collection.rs    # STAC Collection builder
 │   └── traversal/
 │       └── mod.rs           # Directory scanning
-├── stac-extension/
-│   └── schema.json          # STAC extension JSON Schema
+├── stac-cityjson-extension/  # Official STAC 3D City Models Extension (submodule)
+│   └── json-schema/
+│       └── schema.json     # Extension JSON Schema
 └── docs/
     └── examples/            # Example STAC outputs
 ```
@@ -113,7 +114,7 @@ cityjson-stac/
 
 ### Project Documentation
 
-- [STAC_EXTENSION.md](./STAC_EXTENSION.md) - Custom CityJSON STAC extension specification
+- [STAC_EXTENSION.md](./STAC_EXTENSION.md) - STAC 3D City Models Extension specification
 - [DESIGN_DOC.md](./DESIGN_DOC.md) - Detailed technical architecture
 
 ## Coding Guidelines
@@ -173,18 +174,27 @@ The `update-collection` command (alias: `aggregate`) is useful for Object Storag
 3. Register in factory at `src/reader/mod.rs`
 4. Add file extension matching in `get_reader()`
 
-## STAC Extension Properties (cj: prefix)
+## STAC Extension Properties (city3d: prefix)
 
-| Property          | Type          | Description           |
-| ----------------- | ------------- | --------------------- |
-| `cj:encoding`     | string        | Format name           |
-| `cj:version`      | string        | CityJSON version      |
-| `cj:city_objects` | integer       | Object count          |
-| `cj:lods`         | array[string] | Levels of detail      |
-| `cj:co_types`     | array[string] | City object types     |
-| `cj:attributes`   | array[object] | Attribute schema      |
-| `cj:transform`    | object        | Coordinate transform  |
-| `cj:extensions`   | array[string] | Extension URLs (ADEs) |
+The tool uses the [STAC 3D City Models Extension](https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json).
+
+| Property                | Type          | Description                      |
+| ----------------------- | ------------- | -------------------------------- |
+| `city3d:encoding`       | string        | Format name (required)           |
+| `city3d:version`        | string        | Specification version            |
+| `city3d:encoding_version` | string      | Encoding-specific version         |
+| `city3d:city_objects`   | integer/stats | Object count                     |
+| `city3d:lods`           | array[string] | Levels of detail                 |
+| `city3d:co_types`       | array[string] | City object types                |
+| `city3d:attributes`     | array[object] | Attribute schema                 |
+| `city3d:semantic_surfaces` | boolean    | Has semantic surfaces             |
+| `city3d:textures`       | boolean       | Has texture information          |
+| `city3d:materials`      | boolean       | Has material information          |
+
+The extension also references:
+- [Projection v2.0.0](https://stac-extensions.github.io/projection/v2.0.0/schema.json)
+- [File v2.1.0](https://stac-extensions.github.io/file/v2.1.0/schema.json)
+- [Stats v0.2.0](https://stac-extensions.github.io/stats/v0.2.0/schema.json)
 
 See [STAC_EXTENSION.md](./STAC_EXTENSION.md) for full specification.
 

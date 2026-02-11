@@ -17,7 +17,7 @@ fn test_cli_generate_item_from_cjseq() {
     let temp = tempdir().expect("Failed to create temp dir");
     let output = temp.path().join("item.json");
 
-    let mut cmd = Command::cargo_bin("cityjson-stac").unwrap();
+    let mut cmd = Command::cargo_bin("cjstac").unwrap();
     cmd.args([
         "item",
         input.to_str().unwrap(),
@@ -45,7 +45,7 @@ fn test_cli_generate_item_from_cjseq_railway() {
     let temp = tempdir().expect("Failed to create temp dir");
     let output = temp.path().join("railway_item.json");
 
-    let mut cmd = Command::cargo_bin("cityjson-stac").unwrap();
+    let mut cmd = Command::cargo_bin("cjstac").unwrap();
     cmd.args([
         "item",
         input.to_str().unwrap(),

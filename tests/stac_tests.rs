@@ -21,7 +21,7 @@ mod stac_item_builder_tests {
     fn test_item_builder_new() {
         let item = StacItemBuilder::new("test-id")
             .property(
-                "cj:encoding".to_string(),
+                "city3d:encoding".to_string(),
                 Value::String("CityJSON".to_string()),
             )
             .build()
@@ -38,7 +38,7 @@ mod stac_item_builder_tests {
         let item = StacItemBuilder::new("test-id")
             .bbox(bbox)
             .property(
-                "cj:encoding".to_string(),
+                "city3d:encoding".to_string(),
                 Value::String("CityJSON".to_string()),
             )
             .build()
@@ -58,7 +58,7 @@ mod stac_item_builder_tests {
             .bbox(bbox)
             .geometry_from_bbox()
             .property(
-                "cj:encoding".to_string(),
+                "city3d:encoding".to_string(),
                 Value::String("CityJSON".to_string()),
             )
             .build()
@@ -75,7 +75,7 @@ mod stac_item_builder_tests {
             .title("Test Building")
             .description("A test building dataset")
             .property(
-                "cj:encoding".to_string(),
+                "city3d:encoding".to_string(),
                 Value::String("CityJSON".to_string()),
             )
             .build()
@@ -92,7 +92,7 @@ mod stac_item_builder_tests {
     fn test_item_builder_has_datetime() {
         let item = StacItemBuilder::new("test-id")
             .property(
-                "cj:encoding".to_string(),
+                "city3d:encoding".to_string(),
                 Value::String("CityJSON".to_string()),
             )
             .build()
@@ -106,7 +106,7 @@ mod stac_item_builder_tests {
     fn test_item_builder_with_data_asset() {
         let item = StacItemBuilder::new("test-id")
             .property(
-                "cj:encoding".to_string(),
+                "city3d:encoding".to_string(),
                 Value::String("CityJSON".to_string()),
             )
             .data_asset("./data.json", "application/json")
@@ -123,7 +123,7 @@ mod stac_item_builder_tests {
     fn test_item_builder_with_links() {
         let item = StacItemBuilder::new("test-id")
             .property(
-                "cj:encoding".to_string(),
+                "city3d:encoding".to_string(),
                 Value::String("CityJSON".to_string()),
             )
             .self_link("./item.json")
@@ -142,27 +142,54 @@ mod stac_item_builder_tests {
 
     #[test]
     fn test_item_builder_requires_encoding() {
-        // Without cj:encoding, build should fail
+        // Without city3d:encoding, build should fail
         let result = StacItemBuilder::new("test-id").build();
 
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();
-        assert!(err.contains("cj:encoding"));
+        assert!(err.contains("city3d:encoding"));
     }
 
     #[test]
     fn test_item_builder_stac_extensions() {
+        // Test with only city3d:encoding - no projection extension
         let item = StacItemBuilder::new("test-id")
             .property(
-                "cj:encoding".to_string(),
+                "city3d:encoding".to_string(),
                 Value::String("CityJSON".to_string()),
             )
             .build()
             .expect("Failed to build item");
 
-        // Should include CityJSON extension
-        assert!(item.stac_extensions.iter().any(|e| e.contains("cityjson")));
-        // Should include projection extension
+        // Should include 3D City Models extension
+        assert!(item
+            .stac_extensions
+            .iter()
+            .any(|e| e.contains("3d-city-models")));
+        // Should NOT include projection extension (no proj:epsg property)
+        assert!(!item
+            .stac_extensions
+            .iter()
+            .any(|e| e.contains("projection")));
+
+        // Test with proj:epsg - projection extension should be included
+        let item = StacItemBuilder::new("test-id")
+            .property(
+                "city3d:encoding".to_string(),
+                Value::String("CityJSON".to_string()),
+            )
+            .property(
+                "proj:epsg".to_string(),
+                Value::Number(serde_json::Number::from(4326)),
+            )
+            .build()
+            .expect("Failed to build item");
+
+        // Should include both extensions
+        assert!(item
+            .stac_extensions
+            .iter()
+            .any(|e| e.contains("3d-city-models")));
         assert!(item
             .stac_extensions
             .iter()
@@ -183,8 +210,8 @@ mod stac_item_from_file_tests {
         let item = builder.build().expect("Failed to build item");
 
         // Check CityJSON extension properties
-        assert_eq!(item.properties.get("cj:encoding").unwrap(), "CityJSON");
-        assert_eq!(item.properties.get("cj:version").unwrap(), "2.0");
+        assert_eq!(item.properties.get("city3d:encoding").unwrap(), "CityJSON");
+        assert_eq!(item.properties.get("city3d:version").unwrap(), "2.0");
         assert_eq!(item.properties.get("proj:epsg").unwrap(), 7415);
 
         // Check bbox is set
@@ -207,16 +234,16 @@ mod stac_item_from_file_tests {
         let item = builder.build().expect("Failed to build item");
 
         // Railway should have city objects
-        let city_objects = item.properties.get("cj:city_objects");
+        let city_objects = item.properties.get("city3d:city_objects");
         assert!(city_objects.is_some());
         assert!(city_objects.unwrap().as_u64().unwrap() > 0);
 
         // Railway should have LODs
-        let lods = item.properties.get("cj:lods");
+        let lods = item.properties.get("city3d:lods");
         assert!(lods.is_some());
 
         // Railway should have object types
-        let types = item.properties.get("cj:co_types");
+        let types = item.properties.get("city3d:co_types");
         assert!(types.is_some());
     }
 }
@@ -299,14 +326,14 @@ mod stac_collection_builder_tests {
     fn test_collection_builder_with_summary() {
         let bbox = BBox3D::new(0.0, 0.0, 0.0, 10.0, 10.0, 10.0);
         let collection = StacCollectionBuilder::new("test")
-            .summary("cj:lods", serde_json::json!(["1", "2", "2.2"]))
+            .summary("city3d:lods", serde_json::json!(["1", "2", "2.2"]))
             .spatial_extent(bbox)
             .build()
             .expect("Failed to build collection");
 
         assert!(collection.summaries.is_some());
         let summaries = collection.summaries.unwrap();
-        assert!(summaries.contains_key("cj:lods"));
+        assert!(summaries.contains_key("city3d:lods"));
     }
 
     #[test]
@@ -345,7 +372,7 @@ mod stac_collection_aggregate_tests {
         // Should have summaries
         assert!(collection.summaries.is_some());
         let summaries = collection.summaries.unwrap();
-        assert!(summaries.contains_key("cj:encoding"));
+        assert!(summaries.contains_key("city3d:encoding"));
     }
 
     #[test]
@@ -368,7 +395,11 @@ mod stac_collection_aggregate_tests {
         let summaries = collection.summaries.unwrap();
 
         // Both use CityJSON encoding
-        let encodings = summaries.get("cj:encoding").unwrap().as_array().unwrap();
+        let encodings = summaries
+            .get("city3d:encoding")
+            .unwrap()
+            .as_array()
+            .unwrap();
         assert!(encodings.iter().any(|e| e.as_str().unwrap() == "CityJSON"));
 
         // Should have merged bbox
@@ -481,22 +512,28 @@ mod stac_collection_aggregate_from_items_tests {
             Value::String("2024-01-01T00:00:00Z".to_string()),
         );
         properties.insert(
-            "cj:encoding".to_string(),
+            "city3d:encoding".to_string(),
             Value::String(encoding.to_string()),
         );
-        properties.insert("cj:version".to_string(), Value::String("2.0".to_string()));
         properties.insert(
-            "cj:city_objects".to_string(),
+            "city3d:version".to_string(),
+            Value::String("2.0".to_string()),
+        );
+        properties.insert(
+            "city3d:city_objects".to_string(),
             Value::Number(serde_json::Number::from(city_objects)),
         );
 
         if !lods.is_empty() {
-            properties.insert("cj:lods".to_string(), serde_json::to_value(lods).unwrap());
+            properties.insert(
+                "city3d:lods".to_string(),
+                serde_json::to_value(lods).unwrap(),
+            );
         }
 
         if !co_types.is_empty() {
             properties.insert(
-                "cj:co_types".to_string(),
+                "city3d:co_types".to_string(),
                 serde_json::to_value(co_types).unwrap(),
             );
         }
@@ -544,9 +581,13 @@ mod stac_collection_aggregate_from_items_tests {
 
         // Should have summaries
         let summaries = collection.summaries.unwrap();
-        assert!(summaries.contains_key("cj:encoding"));
+        assert!(summaries.contains_key("city3d:encoding"));
 
-        let encodings = summaries.get("cj:encoding").unwrap().as_array().unwrap();
+        let encodings = summaries
+            .get("city3d:encoding")
+            .unwrap()
+            .as_array()
+            .unwrap();
         assert!(encodings.iter().any(|e| e.as_str().unwrap() == "CityJSON"));
     }
 
@@ -581,19 +622,27 @@ mod stac_collection_aggregate_from_items_tests {
         let summaries = collection.summaries.unwrap();
 
         // Should have both encodings
-        let encodings = summaries.get("cj:encoding").unwrap().as_array().unwrap();
+        let encodings = summaries
+            .get("city3d:encoding")
+            .unwrap()
+            .as_array()
+            .unwrap();
         assert_eq!(encodings.len(), 2);
 
         // Should have aggregated LODs
-        let lods = summaries.get("cj:lods").unwrap().as_array().unwrap();
+        let lods = summaries.get("city3d:lods").unwrap().as_array().unwrap();
         assert!(lods.len() >= 4); // "1", "2", "2.2", "3"
 
         // Should have aggregated co_types
-        let types = summaries.get("cj:co_types").unwrap().as_array().unwrap();
+        let types = summaries
+            .get("city3d:co_types")
+            .unwrap()
+            .as_array()
+            .unwrap();
         assert!(types.len() >= 4);
 
         // Should have city object statistics
-        let stats = summaries.get("cj:city_objects").unwrap();
+        let stats = summaries.get("city3d:city_objects").unwrap();
         assert_eq!(stats["min"], 50);
         assert_eq!(stats["max"], 150);
         assert_eq!(stats["total"], 200);
@@ -640,7 +689,7 @@ mod stac_collection_aggregate_from_items_tests {
             Value::String("2024-01-01T00:00:00Z".to_string()),
         );
         properties.insert(
-            "cj:encoding".to_string(),
+            "city3d:encoding".to_string(),
             Value::String("CityJSON".to_string()),
         );
 

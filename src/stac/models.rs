@@ -1,10 +1,42 @@
 //! STAC data models
+//!
+//! This file contains STAC type definitions that are derived from
+//! [STAC Specification v1.0.0](https://github.com/radiantearth/stac-spec) JSON schemas.
+//!
+//! The types match the official STAC specification structure with serde
+//! annotations for proper JSON serialization/deserialization.
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
+/// City object count - either integer or statistics object
+///
+/// For STAC Items, this is typically a single integer.
+/// For STAC Collections, this can be statistics with min/max/total.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum CityObjectsCount {
+    Integer(u64),
+    Statistics { min: u64, max: u64, total: u64 },
+}
+
+impl From<u64> for CityObjectsCount {
+    fn from(value: u64) -> Self {
+        CityObjectsCount::Integer(value)
+    }
+}
+
+impl From<(u64, u64, u64)> for CityObjectsCount {
+    fn from((min, max, total): (u64, u64, u64)) -> Self {
+        CityObjectsCount::Statistics { min, max, total }
+    }
+}
+
 /// STAC Item
+///
+/// Corresponds to the STAC Item specification:
+/// https://github.com/radiantearth/stac-spec/blob/master/item-spec/item-spec.md
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StacItem {
     #[serde(rename = "stac_version")]
@@ -105,6 +137,9 @@ impl Link {
 }
 
 /// STAC Asset
+///
+/// Supports File Extension fields (file:size, file:checksum, file:values)
+/// https://stac-extensions.github.io/file/v2.1.0/schema.json
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Asset {
     pub href: String,
@@ -120,6 +155,25 @@ pub struct Asset {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub roles: Option<Vec<String>>,
+
+    /// File Extension: size of the file in bytes
+    #[serde(skip_serializing_if = "Option::is_none", rename = "file:size")]
+    pub file_size: Option<u64>,
+
+    /// File Extension: checksum of the file
+    #[serde(skip_serializing_if = "Option::is_none", rename = "file:checksum")]
+    pub file_checksum: Option<Checksum>,
+}
+
+/// File checksum (File Extension)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Checksum {
+    /// The multihash checksum value
+    pub value: String,
+
+    /// The checksum algorithm namespace (e.g., "md5", "sha256")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub namespace: Option<String>,
 }
 
 impl Asset {
@@ -130,6 +184,8 @@ impl Asset {
             title: None,
             description: None,
             roles: None,
+            file_size: None,
+            file_checksum: None,
         }
     }
 
@@ -145,6 +201,18 @@ impl Asset {
 
     pub fn with_roles(mut self, roles: Vec<String>) -> Self {
         self.roles = Some(roles);
+        self
+    }
+
+    /// Set the file size (File Extension)
+    pub fn with_file_size(mut self, size: u64) -> Self {
+        self.file_size = Some(size);
+        self
+    }
+
+    /// Set the file checksum (File Extension)
+    pub fn with_file_checksum(mut self, checksum: Checksum) -> Self {
+        self.file_checksum = Some(checksum);
         self
     }
 }

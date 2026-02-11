@@ -292,7 +292,7 @@ fn extract_lods_from_features(features: &[Value]) -> Result<Vec<String>> {
                             for geom in geom_array {
                                 if let Some(lod) = geom.get("lod") {
                                     if let Some(lod_num) = lod.as_f64() {
-                                        lods.insert(format!("{}", lod_num));
+                                        lods.insert(format!("{lod_num}"));
                                     } else if let Some(lod_str) = lod.as_str() {
                                         lods.insert(lod_str.to_string());
                                     }
@@ -452,6 +452,60 @@ impl CityModelMetadataReader for CityJSONSeqReader {
 
     fn extensions(&self) -> Result<Vec<String>> {
         self.with_data(|data| extract_extensions_from_header(&data.header))
+    }
+
+    fn semantic_surfaces(&self) -> Result<bool> {
+        self.with_data(|data| {
+            // Check features for semantic surfaces
+            for feature in &data.features {
+                if let Some(city_objects) = feature.get("CityObjects") {
+                    if let Some(objects) = city_objects.as_object() {
+                        for (_id, obj) in objects {
+                            if let Some(geometry) = obj.get("geometry") {
+                                if let Some(geom_array) = geometry.as_array() {
+                                    for geom in geom_array {
+                                        if geom.get("semantics").is_some() {
+                                            return Ok(true);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Ok(false)
+        })
+    }
+
+    fn textures(&self) -> Result<bool> {
+        self.with_data(|data| {
+            // Check for textures in the header or any feature
+            if data.header.get("textures").is_some() {
+                return Ok(true);
+            }
+            for feature in &data.features {
+                if feature.get("textures").is_some() {
+                    return Ok(true);
+                }
+            }
+            Ok(false)
+        })
+    }
+
+    fn materials(&self) -> Result<bool> {
+        self.with_data(|data| {
+            // Check for materials in the header or any feature
+            if data.header.get("materials").is_some() {
+                return Ok(true);
+            }
+            for feature in &data.features {
+                if feature.get("materials").is_some() {
+                    return Ok(true);
+                }
+            }
+            Ok(false)
+        })
     }
 }
 

@@ -322,6 +322,6 @@ mod attribute_tests {
         let attr = AttributeDefinition::new("year", AttributeType::Number);
         let json = serde_json::to_string(&attr).expect("Failed to serialize");
         assert!(json.contains("\"name\":\"year\""));
-        assert!(json.contains("\"type\":\"Number\""));
+        assert!(json.contains("\"type\":\"NUMBER\""));
     }
 }

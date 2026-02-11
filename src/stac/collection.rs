@@ -129,6 +129,9 @@ impl StacCollectionBuilder {
     }
 
     /// Aggregate CityJSON metadata from multiple readers
+    ///
+    /// Uses the STAC 3D City Models Extension (city3d: prefix)
+    /// https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json
     pub fn aggregate_cityjson_metadata(
         mut self,
         readers: &[Box<dyn CityModelMetadataReader>],
@@ -137,7 +140,7 @@ impl StacCollectionBuilder {
         let encodings: HashSet<String> = readers.iter().map(|r| r.encoding().to_string()).collect();
         let encoding_vec: Vec<String> = encodings.into_iter().collect();
         self.summaries.insert(
-            "cj:encoding".to_string(),
+            "city3d:encoding".to_string(),
             serde_json::to_value(encoding_vec)?,
         );
 
@@ -145,8 +148,10 @@ impl StacCollectionBuilder {
         let versions: HashSet<String> = readers.iter().filter_map(|r| r.version().ok()).collect();
         if !versions.is_empty() {
             let version_vec: Vec<String> = versions.into_iter().collect();
-            self.summaries
-                .insert("cj:version".to_string(), serde_json::to_value(version_vec)?);
+            self.summaries.insert(
+                "city3d:version".to_string(),
+                serde_json::to_value(version_vec)?,
+            );
         }
 
         // Aggregate LODs
@@ -160,7 +165,7 @@ impl StacCollectionBuilder {
             let mut lods: Vec<String> = all_lods.into_iter().collect();
             lods.sort();
             self.summaries
-                .insert("cj:lods".to_string(), serde_json::to_value(lods)?);
+                .insert("city3d:lods".to_string(), serde_json::to_value(lods)?);
         }
 
         // Aggregate city object types
@@ -174,7 +179,7 @@ impl StacCollectionBuilder {
             let mut types: Vec<String> = all_types.into_iter().collect();
             types.sort();
             self.summaries
-                .insert("cj:co_types".to_string(), serde_json::to_value(types)?);
+                .insert("city3d:co_types".to_string(), serde_json::to_value(types)?);
         }
 
         // City object count statistics
@@ -194,7 +199,34 @@ impl StacCollectionBuilder {
                 "total": total
             });
 
-            self.summaries.insert("cj:city_objects".to_string(), stats);
+            self.summaries
+                .insert("city3d:city_objects".to_string(), stats);
+        }
+
+        // Aggregate semantic surfaces presence
+        let has_semantic_surfaces: bool = readers
+            .iter()
+            .filter_map(|r| r.semantic_surfaces().ok())
+            .any(|x| x);
+        if has_semantic_surfaces {
+            self.summaries.insert(
+                "city3d:semantic_surfaces".to_string(),
+                serde_json::to_value(true)?,
+            );
+        }
+
+        // Aggregate textures presence
+        let has_textures: bool = readers.iter().filter_map(|r| r.textures().ok()).any(|x| x);
+        if has_textures {
+            self.summaries
+                .insert("city3d:textures".to_string(), serde_json::to_value(true)?);
+        }
+
+        // Aggregate materials presence
+        let has_materials: bool = readers.iter().filter_map(|r| r.materials().ok()).any(|x| x);
+        if has_materials {
+            self.summaries
+                .insert("city3d:materials".to_string(), serde_json::to_value(true)?);
         }
 
         // Aggregate EPSG codes
@@ -208,22 +240,6 @@ impl StacCollectionBuilder {
             let codes: Vec<u32> = epsg_codes.into_iter().collect();
             self.summaries
                 .insert("proj:epsg".to_string(), serde_json::to_value(codes)?);
-        }
-
-        // Aggregate CityJSON extensions (Application Domain Extensions)
-        let all_extensions: HashSet<String> = readers
-            .iter()
-            .filter_map(|r| r.extensions().ok())
-            .flatten()
-            .collect();
-
-        if !all_extensions.is_empty() {
-            let mut extensions: Vec<String> = all_extensions.into_iter().collect();
-            extensions.sort();
-            self.summaries.insert(
-                "cj:extensions".to_string(),
-                serde_json::to_value(extensions)?,
-            );
         }
 
         // Merge all bounding boxes for spatial extent
@@ -240,11 +256,14 @@ impl StacCollectionBuilder {
         Ok(self)
     }
 
-    /// Aggregate CityJSON metadata from pre-parsed STAC items
+    /// Aggregate 3D City Models metadata from pre-parsed STAC items
     ///
     /// This method is useful when STAC items were generated separately (e.g., for assets
     /// stored in Object Storage) and need to be aggregated into a collection.
-    /// It extracts CityJSON extension properties (cj:*) from item properties and merges them.
+    /// It extracts 3D City Models extension properties (city3d:*) from item properties and merges them.
+    ///
+    /// Uses the STAC 3D City Models Extension (city3d: prefix)
+    /// https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json
     pub fn aggregate_from_items(mut self, items: &[crate::stac::models::StacItem]) -> Result<Self> {
         use crate::stac::models::StacItem;
 
@@ -274,15 +293,23 @@ impl StacCollectionBuilder {
             item.properties.get(key).and_then(|v| v.as_i64())
         }
 
+        // Helper to extract boolean from item properties
+        fn get_bool(item: &StacItem, key: &str) -> bool {
+            item.properties
+                .get(key)
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false)
+        }
+
         // Collect all encodings
         let encodings: HashSet<String> = items
             .iter()
-            .filter_map(|item| get_string(item, "cj:encoding"))
+            .filter_map(|item| get_string(item, "city3d:encoding"))
             .collect();
         if !encodings.is_empty() {
             let encoding_vec: Vec<String> = encodings.into_iter().collect();
             self.summaries.insert(
-                "cj:encoding".to_string(),
+                "city3d:encoding".to_string(),
                 serde_json::to_value(encoding_vec)?,
             );
         }
@@ -290,42 +317,44 @@ impl StacCollectionBuilder {
         // Collect all versions
         let versions: HashSet<String> = items
             .iter()
-            .filter_map(|item| get_string(item, "cj:version"))
+            .filter_map(|item| get_string(item, "city3d:version"))
             .collect();
         if !versions.is_empty() {
             let version_vec: Vec<String> = versions.into_iter().collect();
-            self.summaries
-                .insert("cj:version".to_string(), serde_json::to_value(version_vec)?);
+            self.summaries.insert(
+                "city3d:version".to_string(),
+                serde_json::to_value(version_vec)?,
+            );
         }
 
         // Aggregate LODs
         let all_lods: HashSet<String> = items
             .iter()
-            .flat_map(|item| get_string_array(item, "cj:lods"))
+            .flat_map(|item| get_string_array(item, "city3d:lods"))
             .collect();
         if !all_lods.is_empty() {
             let mut lods: Vec<String> = all_lods.into_iter().collect();
             lods.sort();
             self.summaries
-                .insert("cj:lods".to_string(), serde_json::to_value(lods)?);
+                .insert("city3d:lods".to_string(), serde_json::to_value(lods)?);
         }
 
         // Aggregate city object types
         let all_types: HashSet<String> = items
             .iter()
-            .flat_map(|item| get_string_array(item, "cj:co_types"))
+            .flat_map(|item| get_string_array(item, "city3d:co_types"))
             .collect();
         if !all_types.is_empty() {
             let mut types: Vec<String> = all_types.into_iter().collect();
             types.sort();
             self.summaries
-                .insert("cj:co_types".to_string(), serde_json::to_value(types)?);
+                .insert("city3d:co_types".to_string(), serde_json::to_value(types)?);
         }
 
         // City object count statistics
         let counts: Vec<i64> = items
             .iter()
-            .filter_map(|item| get_int(item, "cj:city_objects"))
+            .filter_map(|item| get_int(item, "city3d:city_objects"))
             .collect();
         if !counts.is_empty() {
             let min = *counts.iter().min().unwrap();
@@ -338,7 +367,33 @@ impl StacCollectionBuilder {
                 "total": total
             });
 
-            self.summaries.insert("cj:city_objects".to_string(), stats);
+            self.summaries
+                .insert("city3d:city_objects".to_string(), stats);
+        }
+
+        // Aggregate semantic surfaces presence
+        let has_semantic_surfaces = items
+            .iter()
+            .any(|item| get_bool(item, "city3d:semantic_surfaces"));
+        if has_semantic_surfaces {
+            self.summaries.insert(
+                "city3d:semantic_surfaces".to_string(),
+                serde_json::to_value(true)?,
+            );
+        }
+
+        // Aggregate textures presence
+        let has_textures = items.iter().any(|item| get_bool(item, "city3d:textures"));
+        if has_textures {
+            self.summaries
+                .insert("city3d:textures".to_string(), serde_json::to_value(true)?);
+        }
+
+        // Aggregate materials presence
+        let has_materials = items.iter().any(|item| get_bool(item, "city3d:materials"));
+        if has_materials {
+            self.summaries
+                .insert("city3d:materials".to_string(), serde_json::to_value(true)?);
         }
 
         // Aggregate EPSG codes from proj:epsg property
@@ -351,20 +406,6 @@ impl StacCollectionBuilder {
             let codes: Vec<u32> = epsg_codes.into_iter().collect();
             self.summaries
                 .insert("proj:epsg".to_string(), serde_json::to_value(codes)?);
-        }
-
-        // Aggregate CityJSON extensions
-        let all_extensions: HashSet<String> = items
-            .iter()
-            .flat_map(|item| get_string_array(item, "cj:extensions"))
-            .collect();
-        if !all_extensions.is_empty() {
-            let mut extensions: Vec<String> = all_extensions.into_iter().collect();
-            extensions.sort();
-            self.summaries.insert(
-                "cj:extensions".to_string(),
-                serde_json::to_value(extensions)?,
-            );
         }
 
         // Merge spatial extents from item bboxes
@@ -409,12 +450,26 @@ impl StacCollectionBuilder {
             ));
         }
 
+        // Build stac_extensions list dynamically based on which extensions are used
+        let mut stac_extensions =
+            vec!["https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json".to_string()];
+
+        // Add Projection Extension if proj:epsg is in summaries
+        if self.summaries.contains_key("proj:epsg") {
+            stac_extensions.push(
+                "https://stac-extensions.github.io/projection/v2.0.0/schema.json".to_string(),
+            );
+        }
+
+        // Add Stats Extension if we have statistics (min/max for city_objects)
+        if self.summaries.contains_key("city3d:city_objects") {
+            stac_extensions
+                .push("https://stac-extensions.github.io/stats/v0.2.0/schema.json".to_string());
+        }
+
         Ok(StacCollection {
             stac_version: "1.0.0".to_string(),
-            stac_extensions: vec![
-                "https://raw.githubusercontent.com/cityjson/cityjson-stac/main/stac-extension/schema.json".to_string(),
-                "https://stac-extensions.github.io/projection/v1.1.0/schema.json".to_string(),
-            ],
+            stac_extensions,
             collection_type: "Collection".to_string(),
             id: self.id,
             title: self.title,
@@ -513,15 +568,19 @@ mod tests {
         let summaries = collection.summaries.unwrap();
 
         // Check aggregated LODs
-        let lods = summaries.get("cj:lods").unwrap().as_array().unwrap();
+        let lods = summaries.get("city3d:lods").unwrap().as_array().unwrap();
         assert_eq!(lods.len(), 2);
 
         // Check aggregated types
-        let types = summaries.get("cj:co_types").unwrap().as_array().unwrap();
+        let types = summaries
+            .get("city3d:co_types")
+            .unwrap()
+            .as_array()
+            .unwrap();
         assert_eq!(types.len(), 2);
 
         // Check city object stats
-        let stats = summaries.get("cj:city_objects").unwrap();
+        let stats = summaries.get("city3d:city_objects").unwrap();
         assert_eq!(stats["total"], 2);
         assert_eq!(stats["min"], 1);
         assert_eq!(stats["max"], 1);
