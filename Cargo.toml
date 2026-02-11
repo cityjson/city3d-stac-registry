@@ -45,11 +45,16 @@ url = { version = "2.5", features = ["serde"] }
 # Optional: for parallel processing
 rayon = { version = "1.10", optional = true }
 
+# Optional: runtime JSON Schema validation
+jsonschema = { version = "0.26", optional = true }
+
 [dev-dependencies]
 tempfile = "3.10"
 assert_cmd = "2.0"
 predicates = "3.1"
 pretty_assertions = "1.4"
+typify = "0.6.1"
+
 
 [features]
 default = []
