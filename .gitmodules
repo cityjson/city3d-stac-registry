@@ -1,0 +1,6 @@
+[submodule "stac-spec"]
+	path = stac-spec
+	url = git@github.com:radiantearth/stac-spec.git
+[submodule "stac-cityjson-extension"]
+	path = stac-cityjson-extension
+	url = git@github.com:HideBa/stac-cityjson-extension.git
