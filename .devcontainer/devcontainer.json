@@ -45,7 +45,7 @@
     "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind,consistency=cached",
     "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached"
   ],
-  "postCreateCommand": "bash -c 'cargo install just --locked && cargo install cargo-watch --locked || true && ./scripts/setup-hooks.sh && .devcontainer/install-claude-plugins.sh serena'",
+  "postCreateCommand": "bash -c 'cargo install just --locked && cargo install cargo-watch --locked || true && ./scripts/setup-hooks.sh && .devcontainer/install-claude-plugins.sh context7 frontend-design code-review feature-dev code-simplifier clangd-lsp claude-code-setup commit-commands explanatory-output-style frontend-design github greptile hookify learning-output-style playwright pr-review-toolkit pyright-lsp ralph-loop rust-analyzer-lsp serena typescript-lsp'",
   "remoteUser": "vscode",
   "forwardPorts": [
     8080,
