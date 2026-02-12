@@ -1,7 +1,6 @@
 {
   "name": "cityjson-stac Dev Container",
   "image": "mcr.microsoft.com/devcontainers/rust:1-1-bookworm",
-
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
       "installZsh": true,
@@ -12,7 +11,6 @@
       "version": "latest"
     }
   },
-
   "customizations": {
     "vscode": {
       "extensions": [
@@ -22,7 +20,6 @@
         "mutantdino.resourcemonitor",
         "github.copilot",
         "streetsidesoftware.code-spell-checker",
-        "anthropics.claude-code"
       ],
       "settings": {
         "rust-analyzer.checkOnSave.command": "clippy",
@@ -35,7 +32,6 @@
       }
     }
   },
-
   "mounts": [
     "source=${localWorkspaceFolderBasename}-cargo,target=/usr/local/cargo,type=volume",
     "source=${localWorkspaceFolderBasename}-target,target=${containerWorkspaceFolder}/target,type=volume",
@@ -46,21 +42,21 @@
     "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind,consistency=cached",
     "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached"
   ],
-
   "postCreateCommand": "bash -c 'curl -fsSL https://claude.ai/install.sh | bash && cargo install just --locked && cargo install cargo-watch --locked || true && ./scripts/setup-hooks.sh'",
-
   "remoteUser": "vscode",
-  "forwardPorts": [8080, 3000],
-
+  "forwardPorts": [
+    8080,
+    3000
+  ],
   "portsAttributes": {
     "8080": {
       "label": "Development Server",
       "onAutoForward": "openBrowser"
     }
   },
-
   "runArgs": [
     "--cap-add=SYS_PTRACE",
-    "--security-opt", "seccomp=unconfined"
+    "--security-opt",
+    "seccomp=unconfined"
   ]
 }
