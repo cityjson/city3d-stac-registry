@@ -49,6 +49,18 @@ pub enum CityJsonStacError {
     #[error("No supported files found in directory")]
     NoFilesFound,
 
+    /// Object storage error (unified error for HTTP, S3, Azure, GCS, local)
+    #[error("Object storage error: {0}")]
+    ObjectStoreError(#[from] object_store::Error),
+
+    /// Path parsing error for object storage
+    #[error("Path error: {0}")]
+    PathError(#[from] object_store::path::Error),
+
+    /// Generic network/storage error (kept for backwards compatibility)
+    #[error("Storage/network error: {0}")]
+    StorageError(String),
+
     /// Generic error with custom message
     #[error("{0}")]
     Other(String),
