@@ -82,7 +82,7 @@ impl CityJSONReader {
 }
 
 // Helper function to extract f64 from JSON array with proper error handling
-fn get_f64_from_array(arr: &[Value], idx: usize) -> Result<f64> {
+pub(crate) fn get_f64_from_array(arr: &[Value], idx: usize) -> Result<f64> {
     arr.get(idx).and_then(|v| v.as_f64()).ok_or_else(|| {
         CityJsonStacError::InvalidCityJson(format!(
             "Expected number at index {}, got: {:?}",
@@ -93,7 +93,7 @@ fn get_f64_from_array(arr: &[Value], idx: usize) -> Result<f64> {
 }
 
 // Helper function to extract bbox from data
-fn extract_bbox_from_data(data: &Value) -> Result<BBox3D> {
+pub(crate) fn extract_bbox_from_data(data: &Value) -> Result<BBox3D> {
     // Try to get from metadata.geographicalExtent first
     if let Some(metadata) = data.get("metadata") {
         if let Some(extent) = metadata.get("geographicalExtent") {
@@ -171,7 +171,7 @@ fn extract_bbox_from_data(data: &Value) -> Result<BBox3D> {
 }
 
 // Helper function to extract CRS from data
-fn extract_crs_from_data(data: &Value) -> Result<CRS> {
+pub(crate) fn extract_crs_from_data(data: &Value) -> Result<CRS> {
     if let Some(metadata) = data.get("metadata") {
         if let Some(ref_system) = metadata.get("referenceSystem") {
             if let Some(url) = ref_system.as_str() {
@@ -187,7 +187,7 @@ fn extract_crs_from_data(data: &Value) -> Result<CRS> {
 }
 
 // Helper function to extract transform from data
-fn extract_transform_from_data(data: &Value) -> Result<Option<Transform>> {
+pub(crate) fn extract_transform_from_data(data: &Value) -> Result<Option<Transform>> {
     if let Some(transform) = data.get("transform") {
         let scale = transform
             .get("scale")
@@ -220,7 +220,7 @@ fn extract_transform_from_data(data: &Value) -> Result<Option<Transform>> {
 }
 
 // Helper function to extract LODs from data (uses BTreeSet for automatic sorting)
-fn extract_lods_from_data(data: &Value) -> Result<Vec<String>> {
+pub(crate) fn extract_lods_from_data(data: &Value) -> Result<Vec<String>> {
     let mut lods = BTreeSet::new();
 
     if let Some(city_objects) = data.get("CityObjects") {
@@ -248,7 +248,7 @@ fn extract_lods_from_data(data: &Value) -> Result<Vec<String>> {
 }
 
 // Helper function to extract city object types (uses BTreeSet for automatic sorting)
-fn extract_city_object_types_from_data(data: &Value) -> Result<Vec<String>> {
+pub(crate) fn extract_city_object_types_from_data(data: &Value) -> Result<Vec<String>> {
     let mut types = BTreeSet::new();
 
     if let Some(city_objects) = data.get("CityObjects") {
@@ -268,7 +268,7 @@ fn extract_city_object_types_from_data(data: &Value) -> Result<Vec<String>> {
 }
 
 // Helper function to count city objects
-fn count_city_objects_from_data(data: &Value) -> Result<usize> {
+pub(crate) fn count_city_objects_from_data(data: &Value) -> Result<usize> {
     if let Some(city_objects) = data.get("CityObjects") {
         if let Some(objects) = city_objects.as_object() {
             return Ok(objects.len());
@@ -279,7 +279,7 @@ fn count_city_objects_from_data(data: &Value) -> Result<usize> {
 }
 
 // Helper function to extract attribute schema
-fn extract_attributes_from_data(data: &Value) -> Result<Vec<AttributeDefinition>> {
+pub(crate) fn extract_attributes_from_data(data: &Value) -> Result<Vec<AttributeDefinition>> {
     let mut attribute_map: HashMap<String, AttributeType> = HashMap::new();
 
     if let Some(city_objects) = data.get("CityObjects") {
@@ -307,7 +307,7 @@ fn extract_attributes_from_data(data: &Value) -> Result<Vec<AttributeDefinition>
 }
 
 // Helper function to extract version
-fn extract_version_from_data(data: &Value) -> Result<String> {
+pub(crate) fn extract_version_from_data(data: &Value) -> Result<String> {
     if let Some(version) = data.get("version") {
         if let Some(v_str) = version.as_str() {
             return Ok(v_str.to_string());
@@ -330,7 +330,7 @@ fn extract_version_from_data(data: &Value) -> Result<String> {
 ///   "https://cityjson.org/extensions/3dbag.json": "3DBAG"
 /// }
 /// ```
-fn extract_extensions_from_data(data: &Value) -> Result<Vec<String>> {
+pub(crate) fn extract_extensions_from_data(data: &Value) -> Result<Vec<String>> {
     let mut extensions = Vec::new();
 
     if let Some(ext_obj) = data.get("extensions") {
@@ -345,6 +345,30 @@ fn extract_extensions_from_data(data: &Value) -> Result<Vec<String>> {
     // Sort for consistent output
     extensions.sort();
     Ok(extensions)
+}
+
+/// Helper function to extract semantic surfaces from data
+pub(crate) fn extract_semantic_surfaces_from_data(data: &Value) -> Result<bool> {
+    // Check if any geometry has semantic surfaces
+    // CityJSON 2.0 stores semantic surfaces in "semantics" object
+    // which is present alongside geometry boundaries
+    if let Some(city_objects) = data.get("CityObjects") {
+        if let Some(objects) = city_objects.as_object() {
+            for (_id, obj) in objects {
+                if let Some(geometry) = obj.get("geometry") {
+                    if let Some(geom_array) = geometry.as_array() {
+                        for geom in geom_array {
+                            // Check for semantics property which indicates semantic surfaces
+                            if geom.get("semantics").is_some() {
+                                return Ok(true);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Ok(false)
 }
 
 impl CityModelMetadataReader for CityJSONReader {
@@ -397,28 +421,7 @@ impl CityModelMetadataReader for CityJSONReader {
     }
 
     fn semantic_surfaces(&self) -> Result<bool> {
-        self.with_data(|data| {
-            // Check if any geometry has semantic surfaces
-            // CityJSON 2.0 stores semantic surfaces in the "semantics" object
-            // which is present alongside geometry boundaries
-            if let Some(city_objects) = data.get("CityObjects") {
-                if let Some(objects) = city_objects.as_object() {
-                    for (_id, obj) in objects {
-                        if let Some(geometry) = obj.get("geometry") {
-                            if let Some(geom_array) = geometry.as_array() {
-                                for geom in geom_array {
-                                    // Check for semantics property which indicates semantic surfaces
-                                    if geom.get("semantics").is_some() {
-                                        return Ok(true);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            Ok(false)
-        })
+        self.with_data(extract_semantic_surfaces_from_data)
     }
 
     fn textures(&self) -> Result<bool> {

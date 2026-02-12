@@ -18,20 +18,20 @@ This tool implements the official [STAC 3D City Models Extension](https://stac-e
 
 Properties in the STAC Item `properties` object:
 
-| Field Name                  | Type          | Required | Description                                      |
-| --------------------------- | ------------- | -------- | ------------------------------------------------ |
-| `city3d:encoding`           | string        | Yes*     | Encoding format (see list below)                |
-| `city3d:version`            | string        | No       | Specification version (e.g., "2.0", "3.0")      |
-| `city3d:encoding_version`   | string        | No       | Encoding-specific version                       |
-| `city3d:city_objects`       | integer       | No       | Number of city objects                           |
-| `city3d:lods`               | array[string] | No       | Available levels of detail                      |
-| `city3d:co_types`           | array[string] | No       | City object types present                        |
-| `city3d:attributes`         | array[object] | No       | Attribute schema definitions                     |
-| `city3d:semantic_surfaces`  | boolean       | No       | Has semantic surface information                 |
-| `city3d:textures`           | boolean       | No       | Has texture information                          |
-| `city3d:materials`          | boolean       | No       | Has material information                         |
+| Field Name                 | Type          | Required | Description                                |
+| -------------------------- | ------------- | -------- | ------------------------------------------ |
+| `city3d:encoding`          | string        | Yes\*    | Encoding format (see list below)           |
+| `city3d:version`           | string        | No       | Specification version (e.g., "2.0", "3.0") |
+| `city3d:encoding_version`  | string        | No       | Encoding-specific version                  |
+| `city3d:city_objects`      | integer       | No       | Number of city objects                     |
+| `city3d:lods`              | array[string] | No       | Available levels of detail                 |
+| `city3d:co_types`          | array[string] | No       | City object types present                  |
+| `city3d:attributes`        | array[object] | No       | Attribute schema definitions               |
+| `city3d:semantic_surfaces` | boolean       | No       | Has semantic surface information           |
+| `city3d:textures`          | boolean       | No       | Has texture information                    |
+| `city3d:materials`         | boolean       | No       | Has material information                   |
 
-*At least one `city3d:*` field is required.
+_At least one `city3d:_` field is required.
 
 ---
 
@@ -39,17 +39,17 @@ Properties in the STAC Item `properties` object:
 
 Properties in the STAC Collection `summaries` object:
 
-| Field Name                  | Type          | Description                             |
-| --------------------------- | ------------- | --------------------------------------- |
-| `city3d:encoding`           | array/string  | All encoding formats in collection      |
-| `city3d:version`            | array[string] | All versions in collection              |
-| `city3d:encoding_version`   | array[string] | All encoding versions                    |
-| `city3d:lods`               | array[string] | All LODs across collection              |
-| `city3d:co_types`           | array[string] | All city object types across collection |
-| `city3d:city_objects`       | object        | Statistics: `{min, max, total}`         |
-| `city3d:semantic_surfaces`  | boolean       | True if any item has them                |
-| `city3d:textures`           | boolean       | True if any item has them                |
-| `city3d:materials`          | boolean       | True if any item has them                |
+| Field Name                 | Type          | Description                             |
+| -------------------------- | ------------- | --------------------------------------- |
+| `city3d:encoding`          | array/string  | All encoding formats in collection      |
+| `city3d:version`           | array[string] | All versions in collection              |
+| `city3d:encoding_version`  | array[string] | All encoding versions                   |
+| `city3d:lods`              | array[string] | All LODs across collection              |
+| `city3d:co_types`          | array[string] | All city object types across collection |
+| `city3d:city_objects`      | object        | Statistics: `{min, max, total}`         |
+| `city3d:semantic_surfaces` | boolean       | True if any item has them               |
+| `city3d:textures`          | boolean       | True if any item has them               |
+| `city3d:materials`         | boolean       | True if any item has them               |
 
 ---
 
@@ -57,9 +57,11 @@ Properties in the STAC Collection `summaries` object:
 
 ### `city3d:encoding`
 
-Encoding format of the 3D city model data.
+3D city model encoding format. Can be a single string or array of strings for multi-format datasets.
 
-**Allowed Values:**
+**Common values:**
+
+**JSON-based:**
 
 - `"CityJSON"` - Standard CityJSON (.json)
 - `"CityJSONSeq"` - CityJSON Text Sequences (.jsonl)
@@ -161,18 +163,24 @@ This extension incorporates properties from these STAC extensions via `$ref`:
 
 ```json
 {
-  "stac_version": "1.0.0",
+  "stac_version": "1.1.0",
   "stac_extensions": [
     "https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json",
     "https://stac-extensions.github.io/projection/v2.0.0/schema.json"
   ],
   "type": "Feature",
   "id": "rotterdam_buildings_lod2",
-  "bbox": [4.46, 51.91, -5.0, 4.49, 51.93, 100.0],
+  "bbox": [4.46, 51.91, 4.49, 51.93],
   "geometry": {
     "type": "Polygon",
     "coordinates": [
-      [[4.46, 51.91], [4.49, 51.91], [4.49, 51.93], [4.46, 51.93], [4.46, 51.91]]
+      [
+        [4.46, 51.91],
+        [4.49, 51.91],
+        [4.49, 51.93],
+        [4.46, 51.93],
+        [4.46, 51.91]
+      ]
     ]
   },
   "properties": {
@@ -187,15 +195,61 @@ This extension incorporates properties from these STAC extensions via `$ref`:
   },
   "assets": {
     "data": {
-      "href": "./rotterdam_buildings_lod2.json",
+      "href": "./rotterdam_buildings_lod2.city.json",
       "type": "application/json",
       "roles": ["data"]
     }
   },
   "links": [
     { "rel": "self", "href": "./rotterdam_buildings_lod2_item.json" },
-    { "rel": "collection", "href": "./collection.json" }
+    { "rel": "parent", "href": "./collection.json" }
   ]
+}
+```
+
+### STAC Item (CityGML)
+
+```json
+{
+  "stac_version": "1.1.0",
+  "stac_extensions": [
+    "https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json",
+    "https://stac-extensions.github.io/projection/v2.1.0/schema.json"
+  ],
+  "type": "Feature",
+  "id": "hamburg_citygml_lod2",
+  "bbox": [9.93, 53.55, 9.95, 53.56],
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [9.93, 53.55],
+        [9.95, 53.55],
+        [9.95, 53.56],
+        [9.93, 53.56],
+        [9.93, 53.55]
+      ]
+    ]
+  },
+  "properties": {
+    "datetime": "2023-05-15T00:00:00Z",
+    "proj:epsg": 25832,
+    "city3d:encoding": "CityGML",
+    "city3d:version": "2.0",
+    "city3d:city_objects": 42800,
+    "city3d:lods": ["0", "1", "2"],
+    "city3d:co_types": ["Building", "BuildingPart", "Road", "WaterBody"],
+    "city3d:semantic_surfaces": true,
+    "city3d:textures": true,
+    "city3d:materials": true
+  },
+  "assets": {
+    "data": {
+      "href": "./hamburg_lod2.gml",
+      "type": "application/gml+xml",
+      "roles": ["data"]
+    }
+  }
 }
 ```
 
@@ -203,7 +257,7 @@ This extension incorporates properties from these STAC extensions via `$ref`:
 
 ```json
 {
-  "stac_version": "1.0.0",
+  "stac_version": "1.1.0",
   "stac_extensions": [
     "https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json",
     "https://stac-extensions.github.io/projection/v2.0.0/schema.json"
@@ -214,7 +268,7 @@ This extension incorporates properties from these STAC extensions via `$ref`:
   "description": "3D city model with buildings and terrain in multiple LODs",
   "license": "CC-BY-4.0",
   "extent": {
-    "spatial": { "bbox": [[4.42, 51.88, -5.0, 4.6, 51.98, 120.5]] },
+    "spatial": { "bbox": [[4.42, 51.88, 4.6, 51.98]] },
     "temporal": { "interval": [["2023-05-15T00:00:00Z", null]] }
   },
   "summaries": {
@@ -238,7 +292,7 @@ This extension incorporates properties from these STAC extensions via `$ref`:
 
 ## Best Practices
 
-1. **3D Bounding Box**: Use 6-element bbox `[xmin, ymin, zmin, xmax, ymax, zmax]`
+1. **3D Bounding Box**: Use 6-element bbox `[xmin, ymin, zmin, xmax, ymax, zmax]` when z-values are meaningful
 2. **Geometry**: Provide 2D footprint polygon in WGS84 for map display
 3. **Temporal**: Use `datetime` for single timestamp, or `start/end_datetime` for ranges
 4. **Assets**: Include primary data file with `"roles": ["data"]`
@@ -256,6 +310,7 @@ https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json
 ```
 
 Local development copy available at:
+
 ```
 stac-cityjson-extension/json-schema/schema.json
 ```

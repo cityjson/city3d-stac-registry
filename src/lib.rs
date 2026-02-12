@@ -31,6 +31,7 @@ pub mod config;
 pub mod error;
 pub mod metadata;
 pub mod reader;
+pub mod remote;
 pub mod stac;
 pub mod traversal;
 

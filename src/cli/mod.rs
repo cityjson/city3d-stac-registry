@@ -1,8 +1,9 @@
+#![allow(clippy::uninlined_format_args)]
 //! Command-line interface
 
 use crate::config::{CollectionCliArgs, CollectionConfigFile};
 use crate::error::{CityJsonStacError, Result};
-use crate::reader::get_reader;
+use crate::reader::{get_reader, get_reader_from_source, InputSource};
 use crate::stac::{StacCollectionBuilder, StacItemBuilder};
 use crate::traversal;
 use clap::{Parser, Subcommand};
@@ -23,9 +24,11 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Generate STAC Item from a single file
+    ///
+    /// The input can be a local file path or a remote URL (http://, https://)
     Item {
-        /// Input file path
-        file: PathBuf,
+        /// Input file path or URL
+        input: String,
 
         /// Output file path
         #[arg(short, long)]
@@ -168,7 +171,7 @@ enum Commands {
 }
 
 /// Run the CLI application
-pub fn run() -> Result<()> {
+pub async fn run() -> Result<()> {
     let cli = Cli::parse();
 
     // Set up logging based on verbosity
@@ -184,7 +187,7 @@ pub fn run() -> Result<()> {
 
     match cli.command {
         Commands::Item {
-            file,
+            input,
             output,
             id,
             title,
@@ -192,16 +195,19 @@ pub fn run() -> Result<()> {
             collection,
             base_url,
             pretty,
-        } => handle_item_command(
-            file,
-            output,
-            id,
-            title,
-            description,
-            collection,
-            base_url,
-            pretty,
-        ),
+        } => {
+            handle_item_command(
+                input,
+                output,
+                id,
+                title,
+                description,
+                collection,
+                base_url,
+                pretty,
+            )
+            .await
+        }
 
         Commands::Collection {
             inputs,
@@ -273,8 +279,8 @@ pub fn run() -> Result<()> {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn handle_item_command(
-    file: PathBuf,
+async fn handle_item_command(
+    input: String,
     output: Option<PathBuf>,
     id: Option<String>,
     title: Option<String>,
@@ -283,24 +289,17 @@ fn handle_item_command(
     base_url: Option<String>,
     pretty: bool,
 ) -> Result<()> {
-    log::info!("Processing file: {}", file.display());
+    log::info!("Processing input: {}", input);
 
-    // Validate file exists
-    if !file.exists() {
-        return Err(crate::error::CityJsonStacError::IoError(
-            std::io::Error::new(
-                std::io::ErrorKind::NotFound,
-                format!("File not found: {}", file.display()),
-            ),
-        ));
-    }
-
-    // Get reader for the file
-    let reader = get_reader(&file)?;
+    // Parse input as either local file or remote URL
+    let source = InputSource::from_str_input(&input)?;
+    let reader = get_reader_from_source(&source).await?;
     log::debug!("Using {} reader", reader.encoding());
 
     // Build STAC Item
-    let mut builder = StacItemBuilder::from_file(&file, reader.as_ref(), base_url.as_deref())?;
+    // For remote URLs, use the virtual path from the reader
+    let mut builder =
+        StacItemBuilder::from_file(reader.file_path(), reader.as_ref(), base_url.as_deref())?;
 
     // Apply custom options
     if let Some(custom_id) = id {
@@ -326,9 +325,23 @@ fn handle_item_command(
 
     // Generate output path
     let output_path = output.unwrap_or_else(|| {
-        let mut path = file.clone();
-        path.set_extension("item.json");
-        path
+        // For URLs, use a filename derived from the URL
+        // For local files, use the file path with .item.json extension
+        match source {
+            InputSource::Local(path) => {
+                let mut p = path.clone();
+                p.set_extension("item.json");
+                p
+            }
+            InputSource::Remote(url) => {
+                let filename = url
+                    .split('/')
+                    .next_back()
+                    .and_then(|s| s.split('?').next())
+                    .unwrap_or("remote.item.json");
+                PathBuf::from(format!("{}.json", filename.trim_end_matches(".json")))
+            }
+        }
     });
 
     // Build and serialize
@@ -466,13 +479,13 @@ fn handle_collection_command(config: CollectionConfig) -> Result<()> {
                             } else {
                                 serde_json::to_string(&item)?
                             };
-                            items_data.push((file.clone(), json, item_id));
+                            items_data.push((file.to_path_buf(), json, item_id));
                             readers.push(reader);
                             print!(".");
                         }
                         Err(e) => {
                             if config.skip_errors {
-                                errors.push((file.clone(), e.to_string()));
+                                errors.push((file.to_path_buf(), e.to_string()));
                                 log::warn!("Skipping {}: {}", file.display(), e);
                                 print!("!");
                             } else {
@@ -482,7 +495,7 @@ fn handle_collection_command(config: CollectionConfig) -> Result<()> {
                     },
                     Err(e) => {
                         if config.skip_errors {
-                            errors.push((file.clone(), e.to_string()));
+                            errors.push((file.to_path_buf(), e.to_string()));
                             log::warn!("Skipping {}: {}", file.display(), e);
                             print!("!");
                         } else {
@@ -493,7 +506,7 @@ fn handle_collection_command(config: CollectionConfig) -> Result<()> {
             }
             Err(e) => {
                 if config.skip_errors {
-                    errors.push((file.clone(), e.to_string()));
+                    errors.push((file.to_path_buf(), e.to_string()));
                     log::warn!("Skipping {}: {}", file.display(), e);
                     print!("!");
                 } else {

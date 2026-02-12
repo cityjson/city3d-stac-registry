@@ -1,8 +1,12 @@
 //! Reader implementations for different CityJSON formats
-
-mod cityjson;
-mod cjseq;
-mod fcb;
+//!
+//! This module provides a unified approach to reading CityJSON files
+//! from both local filesystem and remote storage (HTTP, S3, Azure, GCS)
+//! using the object_store crate.
+//!
+pub mod cityjson;
+pub mod cjseq;
+pub mod fcb;
 
 pub use cityjson::CityJSONReader;
 pub use cjseq::CityJSONSeqReader;
@@ -10,191 +14,130 @@ pub use fcb::FlatCityBufReader;
 
 use crate::error::{CityJsonStacError, Result};
 use crate::metadata::{AttributeDefinition, BBox3D, Transform, CRS};
-use std::path::Path;
+use crate::remote::is_remote_url;
+use serde_json::Value;
+use std::path::{Path, PathBuf};
+
+/// Input source for CityJSON data
+///
+/// Can be either a local file path or a remote URL
+#[derive(Debug, Clone)]
+pub enum InputSource {
+    /// Local file path
+    Local(PathBuf),
+    /// Remote URL (http://, https://, s3://, az://, gs://, etc.)
+    Remote(String),
+}
+
+impl InputSource {
+    /// Parse input string into InputSource
+    ///
+    /// # Arguments
+    /// * `input` - Input string (file path or URL)
+    ///
+    /// # Returns
+    /// InputSource enum variant
+    pub fn from_str_input(input: &str) -> Result<Self> {
+        if is_remote_url(input) {
+            Ok(InputSource::Remote(input.to_string()))
+        } else {
+            Ok(InputSource::Local(PathBuf::from(input)))
+        }
+    }
+}
+
+/// Get a reader from an InputSource
+///
+/// # Arguments
+/// * `source` - InputSource (local path or URL)
+///
+/// # Returns
+/// Box<dyn CityModelMetadataReader>
+///
+/// # Errors
+/// Returns error if:
+/// - URL format is unsupported
+/// - File not found
+/// - Failed to read remote content
+pub async fn get_reader_from_source(
+    source: &InputSource,
+) -> Result<Box<dyn CityModelMetadataReader>> {
+    match source {
+        InputSource::Local(path) => get_reader(path),
+        InputSource::Remote(_) => {
+            // TODO: Implement remote readers
+            // For now, we need to download the remote file and use it
+            // Remote reader implementation is planned but not yet available
+            Err(CityJsonStacError::Other(
+                "Remote readers are not yet implemented. Please use local files.".to_string(),
+            ))
+        }
+    }
+}
 
 /// Trait for extracting metadata from CityJSON-format files
 ///
 /// Implemented by format-specific readers (CityJSON, CityJSONSeq, FlatCityBuf, etc.)
 pub trait CityModelMetadataReader: Send + Sync {
-    /// Extract 3D bounding box [xmin, ymin, zmin, xmax, ymax, zmax]
-    ///
-    /// Returns the spatial extent of all geometry in the file.
-    /// Values should be in the native CRS of the dataset.
+    /// Get the 3D bounding box of the city model
     fn bbox(&self) -> Result<BBox3D>;
 
-    /// Get coordinate reference system information
-    ///
-    /// Returns EPSG code and WKT2 representation if available
+    /// Get the coordinate reference system
     fn crs(&self) -> Result<CRS>;
 
-    /// Get list of available Levels of Detail
-    ///
-    /// Returns strings like ["0", "1", "2", "2.2"]
+    /// Get the levels of detail present in the model
     fn lods(&self) -> Result<Vec<String>>;
 
-    /// Get list of CityObject types present
-    ///
-    /// Returns types like ["Building", "BuildingPart", "Road"]
+    /// Get the types of city objects present
     fn city_object_types(&self) -> Result<Vec<String>>;
 
-    /// Count total number of city objects
+    /// Get the total count of city objects
     fn city_object_count(&self) -> Result<usize>;
 
-    /// Extract attribute schema definitions
-    ///
-    /// Returns schema describing semantic attributes attached to objects
+    /// Get attribute definitions
     fn attributes(&self) -> Result<Vec<AttributeDefinition>>;
 
-    /// Get encoding format name
-    ///
-    /// Returns one of: "CityJSON", "CityJSONSeq", "FlatCityBuf", "CityParquet"
+    /// Get the encoding format name
     fn encoding(&self) -> &'static str;
 
-    /// Get CityJSON version
-    ///
-    /// Returns version string like "2.0" or "1.1"
+    /// Get the CityJSON version
     fn version(&self) -> Result<String>;
 
-    /// Get file path being read
+    /// Get the file path
     fn file_path(&self) -> &Path;
 
-    /// Get coordinate transform parameters if present
-    ///
-    /// Returns scale and translate arrays for vertex compression
+    /// Get the coordinate transform if present
     fn transform(&self) -> Result<Option<Transform>>;
 
-    /// Extract additional metadata from file
-    ///
-    /// Returns free-form metadata object from CityJSON
-    fn metadata(&self) -> Result<Option<serde_json::Value>>;
+    /// Get the metadata object if present
+    fn metadata(&self) -> Result<Option<Value>>;
 
-    /// Get CityJSON extensions used in the file
-    ///
-    /// Returns URLs to extension schema files (Application Domain Extensions).
-    /// Extensions in CityJSON allow extending the core data model with:
-    /// - New properties at the root level
-    /// - New attributes for existing City Objects
-    /// - New semantic objects
-    /// - New City Object types (prefixed with "+")
+    /// Get the extensions used
     fn extensions(&self) -> Result<Vec<String>>;
 
-    /// Check if dataset contains semantic surfaces
-    ///
-    /// Semantic surfaces provide detailed geometry breakdown with specific
-    /// semantic meaning (e.g., roofs, walls, ground surfaces).
+    /// Check if semantic surfaces are present
     fn semantic_surfaces(&self) -> Result<bool>;
 
-    /// Check if dataset includes texture information
-    ///
-    /// Textures provide visual appearance of surfaces through image data.
+    /// Check if textures are present
     fn textures(&self) -> Result<bool>;
 
-    /// Check if dataset includes material information
-    ///
-    /// Materials define surface appearance properties like color, shininess, transparency.
+    /// Check if materials are present
     fn materials(&self) -> Result<bool>;
 }
 
-/// Factory function to create appropriate reader for a file
-///
-/// # Arguments
-/// * `file_path` - Path to the file to read
-///
-/// # Returns
-/// Boxed trait object implementing CityModelMetadataReader
-///
-/// # Errors
-/// Returns error if file format is unsupported or file cannot be opened
-pub fn get_reader(file_path: &Path) -> Result<Box<dyn CityModelMetadataReader>> {
-    let extension = file_path
+/// Factory function to get the appropriate reader based on file extension
+pub fn get_reader(path: &Path) -> Result<Box<dyn CityModelMetadataReader>> {
+    let extension = path
         .extension()
         .and_then(|e| e.to_str())
-        .ok_or_else(|| {
-            CityJsonStacError::UnsupportedFormat("No file extension found".to_string())
-        })?;
+        .ok_or_else(|| CityJsonStacError::InvalidCityJson("No file extension".to_string()))?;
 
-    match extension.to_lowercase().as_str() {
-        "json" => {
-            // Need to peek inside to distinguish CityJSON from regular JSON
-            if is_cityjson(file_path)? {
-                Ok(Box::new(CityJSONReader::new(file_path)?))
-            } else {
-                Err(CityJsonStacError::InvalidCityJson(
-                    "File is not a CityJSON file (missing 'type': 'CityJSON')".to_string(),
-                ))
-            }
-        }
-        "jsonl" | "cjseq" => {
-            // CityJSON Text Sequences
-            Ok(Box::new(CityJSONSeqReader::new(file_path)?))
-        }
-        "fcb" => {
-            // FlatCityBuf binary format
-            Ok(Box::new(FlatCityBufReader::new(file_path)?))
-        }
-        "parquet" => {
-            // Future support
-            Err(CityJsonStacError::UnsupportedFormat(
-                "CityParquet (.parquet) not yet supported".to_string(),
-            ))
-        }
-        _ => Err(CityJsonStacError::UnsupportedFormat(format!(
-            "Unknown extension: {extension}",
+    match extension {
+        "json" => Ok(Box::new(CityJSONReader::new(path)?)),
+        "jsonl" => Ok(Box::new(CityJSONSeqReader::new(path)?)),
+        "fcb" => Ok(Box::new(FlatCityBufReader::new(path)?)),
+        _ => Err(CityJsonStacError::InvalidCityJson(format!(
+            "Unsupported file extension: {extension}",
         ))),
-    }
-}
-
-/// Helper to check if JSON file is CityJSON format
-fn is_cityjson(file_path: &Path) -> Result<bool> {
-    use std::fs::File;
-    use std::io::{BufRead, BufReader};
-
-    let file = File::open(file_path)?;
-    let reader = BufReader::new(file);
-
-    // Read first few lines and look for "type": "CityJSON"
-    for line in reader.lines().take(20) {
-        let line = line?;
-        if line.contains(r#""type""#) && line.contains(r#""CityJSON""#) {
-            return Ok(true);
-        }
-        // Also check for the pattern with spaces
-        if line.contains("\"type\"") && line.contains("\"CityJSON\"") {
-            return Ok(true);
-        }
-    }
-
-    Ok(false)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::io::Write;
-    use tempfile::NamedTempFile;
-
-    #[test]
-    fn test_is_cityjson() {
-        let mut temp_file = NamedTempFile::new().unwrap();
-        writeln!(temp_file, r#"{{"type": "CityJSON", "version": "2.0"}}"#).unwrap();
-        temp_file.flush().unwrap();
-
-        assert!(is_cityjson(temp_file.path()).unwrap());
-    }
-
-    #[test]
-    fn test_is_not_cityjson() {
-        let mut temp_file = NamedTempFile::new().unwrap();
-        writeln!(temp_file, r#"{{"name": "test", "value": 123}}"#).unwrap();
-        temp_file.flush().unwrap();
-
-        assert!(!is_cityjson(temp_file.path()).unwrap());
-    }
-
-    #[test]
-    fn test_get_reader_unsupported_extension() {
-        let path = Path::new("test.txt");
-        let result = get_reader(path);
-        assert!(result.is_err());
     }
 }

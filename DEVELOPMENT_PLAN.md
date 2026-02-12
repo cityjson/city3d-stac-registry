@@ -1,20 +1,35 @@
 # CityJSON-STAC Development Roadmap
 
+## Status Update (Feb 2025)
+
+**Completed in commit #13:**
+- ✅ STAC extension prefix changed from `cj:` to `city3d:`
+- ✅ CityGML encoding added to supported formats
+- ✅ STAC_EXTENSION.md updated to match official spec
+- ✅ Schema files updated
+
+**Remaining Work:**
+- ⏳ YAML Configuration for collections
+- ⏳ Remote access via HTTPS (async migration)
+- ⏳ CityGML reader implementation (XML parsing)
+
+---
+
 ## Context
 
-This document outlines the development roadmap for adding three major features to cityjson-stac:
+This document outlines the remaining development roadmap for three features:
 1. **YAML configuration** - Allow collection metadata to be specified via config file
-2. **Remote access via HTTPS** - Enable reading files from remote servers using object_store abstraction
-3. **CityGML support** - Add CityGML 2.0 and 3.0 format support
+2. **Remote access via HTTPS** - Enable reading files from remote servers
+3. **CityGML support** - Add CityGML 2.0 and 3.0 format support (reader only, encoding exists)
 
 These features will expand the tool's capability to handle remote datasets, support XML-based 3D city models, and provide better metadata management for STAC collections.
 
-**Implementation Order**: 3 → 1 → 2 (YAML config first for quick wins, then remote access, then CityGML)
+**Implementation Order**: 1 → 2 → 3 (YAML config first for quick wins, then remote access, then CityGML reader)
 
 **Key Decisions**:
 - Remote files: Stream to memory (simpler implementation)
 - CityGML: Streaming XML parser for all files (handles large files >1GB)
-- STAC prefix: Break compatibility, use `city3d:` (clean break)
+- STAC prefix: Already updated to `city3d:` ✅
 
 ---
 
@@ -35,10 +50,6 @@ Allow users to specify collection metadata (title, license, providers, etc.) via
 - YAML file for human-friendly editing
 - Optional - CLI arguments take precedence
 - Can specify all collection-level metadata
-
-**Schema Validation:**
-- Use `schemars` to generate JSON Schema from config struct
-- Optional validation via `jsonschema` crate (Phase 3.5)
 
 ### Implementation Steps
 
@@ -82,15 +93,15 @@ pub struct CollectionConfigFile {
     pub summaries: Option<std::collections::HashMap<String, serde_json::Value>>,
 
     /// Links to add
-    pub links: Option<Vec<LinkConfig>>,
+    pub links: Option<Vec<LinkConfig>>>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ProviderConfig {
     pub name: String,
-    pub url: Option<String>,
+    pub url: Option<String>>,
     pub roles: Option<Vec<String>>,
-    pub description: Option<String>,
+    pub description: Option<String>>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -101,22 +112,22 @@ pub struct ExtentConfig {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SpatialExtentConfig {
-    pub bbox: Option<Vec<f64>>,
-    pub crs: Option<String>,
+    pub bbox: Option<Vec<f64>>>,
+    pub crs: Option<String>>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct TemporalExtentConfig {
-    pub start: Option<String>,
-    pub end: Option<String>,
+    pub start: Option<String>>,
+    pub end: Option<String>>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LinkConfig {
     pub rel: String,
     pub href: String,
-    pub r#type: Option<String>,
-    pub title: Option<String>,
+    pub r#type: Option<String>>,
+    pub title: Option<String>>,
 }
 
 impl CollectionConfigFile {
@@ -137,7 +148,7 @@ impl CollectionConfigFile {
             license: if cli_args.license != "proprietary" {
                 Some(cli_args.license.clone())
             } else {
-                self_license
+                self.license
             },
             keywords: self.keywords,
             providers: self.providers,
@@ -150,15 +161,17 @@ impl CollectionConfigFile {
 
 /// CLI arguments that can override config
 pub struct CollectionCliArgs {
-    pub id: Option<String>,
-    pub title: Option<String>,
-    pub description: Option<String>,
+    pub id: Option<String>>,
+    pub title: Option<String>>,
+    pub description: Option<String>>,
     pub license: String,
 }
 ```
 
 #### 1.3 Update CLI
 **Modify:** `src/cli/mod.rs`
+
+Add `--config` option to Collection command:
 
 ```rust
 Collection {
@@ -168,7 +181,11 @@ Collection {
     #[arg(short = 'C', long)]
     config: Option<PathBuf>,
 }
+```
 
+Update `handle_collection_command()` to load and merge config:
+
+```rust
 fn handle_collection_command(config: CollectionConfig) -> Result<()> {
     // Load config file if provided
     let base_config = if let Some(config_path) = config.config {
@@ -223,7 +240,9 @@ fn handle_collection_command(config: CollectionConfig) -> Result<()> {
 ```
 
 #### 1.4 Provider Conversion
-**Modify:** `src/stac/models.rs` or `src/config/mod.rs`
+**Modify:** `src/stac/models.rs`
+
+Add `From<ProviderConfig>` implementation:
 
 ```rust
 impl From<ProviderConfig> for crate::stac::models::Provider {
@@ -301,20 +320,15 @@ links:
 ## Phase 2: Remote Access via HTTPS
 
 ### Goal
-Enable readers to access files from remote servers (HTTPS, S3, Azure Blob, etc.) using Apache arrow-rs-object_store for abstraction.
+Enable readers to access files from remote servers (HTTPS, S3, Azure Blob, etc.) using object_store abstraction.
 
 ### Key Design Decisions
 
 **Async Migration Strategy:**
 - The codebase is currently entirely synchronous. Remote access requires async I/O.
-- Introduce `tokio` as the async runtime.
+- Introduce `tokio` as async runtime.
 - Create a dual-mode reader architecture: sync for local files, async for remote.
 - Stream to memory (simpler implementation as per user decision)
-
-**Object Store Integration:**
-- Use `object_store` crate for abstraction over different storage backends.
-- Support HTTP/HTTPS (via `http` feature), local files (existing), S3, Azure.
-- Implement remote download to memory buffer.
 
 ### Implementation Steps
 
@@ -324,14 +338,15 @@ Enable readers to access files from remote servers (HTTPS, S3, Azure Blob, etc.)
 tokio = { version = "1.40", features = ["fs", "rt-multi-thread"] }
 object_store = { version = "0.11", features = ["http", "aws", "azure"] }
 reqwest = { version = "0.12", features = ["rustls-tls"] }
+bytes = "1.8"
 ```
 
 #### 2.2 Create Remote Access Module
 **New file:** `src/remote/mod.rs`
 
 ```rust
-use object_store::ObjectStore;
 use reqwest::Client;
+use bytes::Bytes;
 
 /// Remote location types
 pub enum RemoteLocation {
@@ -419,6 +434,7 @@ pub fn get_reader_from_source(source: &InputSource) -> Result<Box<dyn CityModelM
             match extension.to_lowercase().as_str() {
                 "json" => Ok(Box::new(RemoteCityJSONReader::from_url(url)?)),
                 "jsonl" | "cjseq" => Ok(Box::new(RemoteCityJSONSeqReader::from_url(url)?)),
+                "gml" => Ok(Box::new(RemoteCityGMLReader::from_url(url)?)),
                 _ => Err(CityJsonStacError::UnsupportedFormat(format!(
                     "Unknown extension: {}", extension
                 )))
@@ -471,7 +487,162 @@ impl CityModelMetadataReader for RemoteCityJSONReader {
 
     fn encoding(&self) -> &'static str { "CityJSON" }
 
-    // ... other trait methods similar to CityJSONReader
+    fn version(&self) -> Result<String> {
+        self.data.read().unwrap().as_ref()
+            .and_then(|v| v.get("version"))
+            .and_then(|v| v.as_str())
+            .map(String::from)
+            .ok_or_else(|| CityJsonStacError::MetadataError("Version not found".to_string()))
+    }
+
+    fn bbox(&self) -> Result<BBox3D> {
+        self.data.read().unwrap().as_ref()
+            .and_then(|v| v.get("metadata"))
+            .and_then(|m| m.get("geographicalExtent"))
+            .and_then(|e| e.as_array())
+            .and_then(|a| a.as_array())
+            .and_then(|a| a.first())
+            .and_then(|b| b.as_array())
+            .ok_or_else(|| CityJsonStacError::MetadataError("BBox not found".to_string()))
+            .map(|bbox| {
+                // Parse bbox array [xmin, ymin, zmin, xmax, ymax, zmax]
+                let coords = bbox.as_array().unwrap();
+                BBox3D::new(
+                    coords[0].as_f64().unwrap(),
+                    coords[1].as_f64().unwrap(),
+                    coords[2].as_f64().unwrap(),
+                    coords[3].as_f64().unwrap(),
+                    coords[4].as_f64().unwrap(),
+                    coords[5].as_f64().unwrap(),
+                )
+            })
+    }
+
+    fn crs(&self) -> Result<CRS> {
+        self.data.read().unwrap().as_ref()
+            .and_then(|v| v.get("metadata"))
+            .and_then(|m| m.get("referenceSystem"))
+            .and_then(|rs| rs.as_str())
+            .map(String::from)
+            .ok_or_else(|| CityJsonStacError::MetadataError("CRS not found".to_string()))
+            .map(|crs_str| {
+                // Parse CRS from string like "https://www.opengis.net/def/crs/EPSG/0/7415"
+                if crs_str.contains("/EPSG/0/") {
+                    let epsg_code: u32 = crs_str.split('/').last()
+                        .and_then(|s| s.parse().ok())
+                        .unwrap_or(0);
+                    CRS::from_epsg(epsg_code)
+                } else {
+                    CRS::from_wkt2(crs_str.clone())
+                }
+            })
+    }
+
+    fn lods(&self) -> Result<Vec<String>> {
+        self.data.read().unwrap().as_ref()
+            .and_then(|v| v.get("CityObjects"))
+            .and_then(|co| co.as_object())
+            .and_then(|obj| {
+                // Collect LODs from all CityObjects
+                let mut lods = std::collections::BTreeSet::new();
+                for (_key, value) in obj.iter() {
+                    if let Some(obj) = value.as_object() {
+                        if let Some(geom) = obj.get("geometry") {
+                            if let Some(geoms) = geom.as_array() {
+                                for g in geoms.iter() {
+                                    if let Some(lod) = g.get("lod") {
+                                        if let Some(lod_str) = lod.as_str() {
+                                            lods.insert(lod_str.to_string());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if !lods.is_empty() {
+                    Ok(lods.into_iter().collect())
+                } else {
+                    Err(CityJsonStacError::MetadataError("No LODs found".to_string()))
+                }
+            })
+            .ok_or_else(|| CityJsonStacError::MetadataError("CityObjects not found".to_string()))
+    }
+
+    fn city_object_types(&self) -> Result<Vec<String>> {
+        self.data.read().unwrap().as_ref()
+            .and_then(|v| v.get("CityObjects"))
+            .and_then(|co| co.as_object())
+            .map(|obj| {
+                let mut types = std::collections::BTreeSet::new();
+                for (key, _value) in obj.iter() {
+                    // Extract type from key like "id1"
+                    // CityJSON types can be standard or prefixed with "+"
+                    let type_name = key.strip_prefix("id").unwrap_or(key);
+                    types.insert(type_name.to_string());
+                }
+                types.into_iter().collect()
+            })
+            .ok_or_else(|| CityJsonStacError::MetadataError("CityObjects not found".to_string()))
+    }
+
+    fn city_object_count(&self) -> Result<usize> {
+        self.data.read().unwrap().as_ref()
+            .and_then(|v| v.get("CityObjects"))
+            .and_then(|co| co.as_object())
+            .map(|obj| obj.len())
+            .ok_or_else(|| CityJsonStacError::MetadataError("CityObjects not found".to_string()))
+    }
+
+    fn attributes(&self) -> Result<Vec<AttributeDefinition>> {
+        self.data.read().unwrap().as_ref()
+            .and_then(|v| v.get("CityObjects"))
+            .and_then(|co| {
+                // Extract attributes from +GenericCityObject or type-specific objects
+                co.as_object()
+                    .and_then(|obj| {
+                        // Look for attributes in first city object
+                        obj.values().next()
+                            .and_then(|val| val.as_object())
+                            .and_then(|o| o.get("attributes"))
+                            .and_then(|attrs| attrs.as_array())
+                            .map(|arr| {
+                                arr.iter().filter_map(|a| a.as_object()).map(|attr| {
+                                    AttributeDefinition {
+                                        name: attr.get("name").and_then(|v| v.as_str()).map(String::from).unwrap(),
+                                        attr_type: AttributeType::String,
+                                        description: attr.get("description").and_then(|v| v.as_str()).map(String::from),
+                                        required: attr.get("required").and_then(|v| v.as_bool()),
+                                    }
+                                }).collect()
+                            })
+                    })
+            })
+            .unwrap_or(Ok(Vec::new()))
+    }
+
+    fn file_path(&self) -> &Path { &self.file_path }
+
+    fn transform(&self) -> Result<Option<Transform>> {
+        self.data.read().unwrap().as_ref()
+            .and_then(|v| v.get("transform"))
+            .and_then(|t| serde_json::from_value(t.clone()).ok())
+            .ok_or_else(|| Ok(None))
+    }
+
+    fn metadata(&self) -> Result<Option<serde_json::Value>> {
+        Ok(self.data.read().unwrap().as_ref().and_then(|v| v.get("metadata").cloned()))
+    }
+
+    fn extensions(&self) -> Result<Vec<String>> {
+        self.data.read().unwrap().as_ref()
+            .and_then(|v| v.get("extensions"))
+            .and_then(|e| e.as_array())
+            .map(|arr| {
+                arr.iter().filter_map(|v| v.as_str()).map(String::from).collect()
+            })
+            .unwrap_or(Ok(Vec::new()))
+    }
 }
 ```
 
@@ -483,13 +654,6 @@ Item {
     /// Input file path or URL
     #[arg(value_parser = parse_input_source)]
     input: InputSource,
-
-    // ... other fields
-}
-
-Collection {
-    /// Directory to scan (local only - remote scanning not supported)
-    directory: PathBuf,  // Keep as PathBuf for now
 
     // ... other fields
 }
@@ -547,15 +711,17 @@ pub async fn run() -> Result<()> {
 
 ---
 
-## Phase 3: CityGML Support
+## Phase 3: CityGML Reader Implementation
 
 ### Goal
-Add support for CityGML 2.0 and 3.0 formats using `quick-xml` for parsing.
+Add CityGML 2.0 and 3.0 format reader using `quick-xml` for parsing.
+
+**Note:** The `city3d:encoding` property and "CityGML" value were already added in commit #13. This phase focuses on implementing the actual XML reader.
 
 ### Key Design Decisions
 
 **XML Parsing Strategy:**
-- Use `quick-xml` with `serde` for deserialization
+- Use `quick-xml` for parsing
 - CityGML is complex and modular - need to handle multiple namespaces
 - **Streaming parser for all files** (as per user decision - handles files >1GB)
 
@@ -565,27 +731,23 @@ Add support for CityGML 2.0 and 3.0 formats using `quick-xml` for parsing.
   - `boundedBy` → `bbox()`
   - `gml:id` attributes for object counting
   - `lodXGeometry` properties → `lods()`
-
-**STAC Extension Prefix Change:**
-- Current implementation uses `cj:` (CityJSON-specific)
-- STAC extension spec uses `city3d:` (format-agnostic)
-- **Break compatibility** - use `city3d:` only (as per user decision)
+  - XML attributes for materials, textures, semantic surfaces
 
 ### Implementation Steps
 
 #### 3.1 Add XML Dependencies
 ```toml
 # Cargo.toml additions
-quick-xml = { version = "0.37", features = ["serialize", "async-tokio"] }
+quick-xml = { version = "0.37", features = ["serialize"] }
 ```
 
 #### 3.2 Create Streaming CityGML Reader
 **New file:** `src/reader/citygml.rs`
 
 ```rust
-use quick_xml::de::Deserializer;
 use quick_xml::events::Event;
 use std::io::BufReader;
+use crate::metadata::{BBox3D, CRS, AttributeDefinition};
 
 pub struct CityGMLReader {
     file_path: PathBuf,
@@ -594,10 +756,10 @@ pub struct CityGMLReader {
 
 struct CityGMLMetadata {
     version: String,  // "2.0" or "3.0"
-    city_object_types: BTreeSet<String>,
+    city_object_types: std::collections::BTreeSet<String>,
     bbox: Option<BBox3D>,
     crs: Option<CRS>,
-    lods: BTreeSet<String>,
+    lods: std::collections::BTreeSet<String>,
     city_object_count: usize,
     attributes: Vec<AttributeDefinition>,
     extensions: Vec<String>,
@@ -613,8 +775,17 @@ impl CityGMLReader {
         let reader = BufReader::new(file);
 
         let mut metadata = CityGMLMetadata {
-            version: Self::detect_version(reader)?
-            // ... initialize other fields
+            version: Self::detect_version(&mut reader.lock())?,
+            city_object_types: std::collections::BTreeSet::new(),
+            bbox: None,
+            crs: None,
+            lods: std::collections::BTreeSet::new(),
+            city_object_count: 0,
+            attributes: Vec::new(),
+            extensions: Vec::new(),
+            has_semantic_surfaces: false,
+            has_textures: false,
+            has_materials: false,
         };
 
         // Stream through file to extract metadata
@@ -626,47 +797,101 @@ impl CityGMLReader {
         })
     }
 
-    fn detect_version(reader: BufReader<File>) -> Result<String> {
+    fn detect_version(reader: &mut std::io::BufReader<std::fs::File>>) -> Result<String> {
         // Read first few KB to find CityGML version
         // Look for xmlns="http://www.opengis.net/citygml/2.0" or /3.0
+        // Reset and read again
+        use std::io::{BufRead, Seek};
+        reader.seek(std::io::SeekFrom::Start(0))?;
+
+        let mut buffer = Vec::new();
+        let bytes_read = reader.read_buf(&mut buffer).take(4096)?; // Read first 4KB
+
+        let content = String::from_utf8_lossy(&buffer);
+
+        if content.contains("citygml/3.0") {
+            Ok("3.0".to_string())
+        } else if content.contains("citygml/2.0") {
+            Ok("2.0".to_string())
+        } else if content.contains("citygml/1.0") {
+            Ok("1.0".to_string())
+        } else if content.contains("www.opengis.net/gml") {
+            Ok("2.0".to_string()) // Default to 2.0 for GML
+        } else {
+            Err(CityJsonStacError::MetadataError("Could not detect CityGML version".to_string()))
+        }
     }
 
     fn stream_parse_metadata(path: &Path, metadata: &mut CityGMLMetadata) -> Result<()> {
-        // Use streaming XML parser to avoid loading entire file
-        // Count city objects, collect types, extract bbox, etc.
-        let reader = std::fs::File::open(path)?;
-        let reader = BufReader::new(reader);
+        use std::io::BufReader;
+
+        let file = std::fs::File::open(path)?;
+        let reader = BufReader::new(file);
         let mut parser = quick_xml::Reader::from_reader(reader);
 
         let mut current_element = Vec::new();
         let mut in_city_object = false;
+        let mut current_lod: Option<String> = None;
 
         loop {
             match parser.read_event_into(&mut current_element) {
                 Ok(Event::Start(ref e)) => {
                     match e.name().as_ref() {
-                        b"core:CityObject" | b"cityObjectMember" => {
+                        // CityGML namespace handling - look for common elements
+                        b"core:CityObject" | b"cityObjectMember" | b"gen:CityObject" => {
                             in_city_object = true;
                             metadata.city_object_count += 1;
                         }
-                        b"bldg:Building" => {
-                            metadata.city_object_types.insert("Building".to_string());
+                        b"bldg:Building" | b"bldg:BuildingPart" | b"tran:Road" | b"tran:Rail" |
+                        b"tran:Square" | b"tran:TINRelief" | b"wtr:WaterBody" => {
+                            // Extract type name (namespace:local)
+                            let type_name = std::str::from_utf8_lossy(e.name())
+                                .split(':')
+                                .last()
+                                .unwrap_or(e.name())
+                                .to_string();
+                            metadata.city_object_types.insert(type_name);
                         }
-                        b"tran:Road" => {
-                            metadata.city_object_types.insert("Road".to_string());
+                        b"bldg:lodXMultiSurface" | b"bldg:lodXSolid" | b"bldg:lodXImplicit" |
+                        b"tran:lodXMultiSurface" => {
+                            // Extract LOD number from element name
+                            if let Some(lod_str) = std::str::from_utf8_lossy(e.name())
+                                .split(':')
+                                .last()
+                            {
+                                if let Some(ch) = lod_str.chars().next() {
+                                    if ch.is_ascii_digit() {
+                                        metadata.lods.insert(lod_str.to_string());
+                                        current_lod = Some(lod_str.to_string());
+                                    }
+                                }
+                            }
                         }
-                        b"lodXMultiSurface" | b"lodXSolid" => {
-                            // Extract LOD number
+                        b"gml:boundedBy" => {
+                            // Will extract bbox content when we get to it
                         }
-                        // ... handle other element types
+                        _ => {}
+                    }
+                }
+                Ok(Event::Text(ref text)) => {
+                    // Check for semantic surfaces, textures, materials
+                    let text_str = text.to_lowercase();
+                    if text_str.contains("semanticsurface") || text_str.contains("semanticsurface") {
+                        metadata.has_semantic_surfaces = true;
+                    }
+                    if text_str.contains("texture") || text_str.contains("textur") {
+                        metadata.has_textures = true;
+                    }
+                    if text_str.contains("material") {
+                        metadata.has_materials = true;
                     }
                 }
                 Ok(Event::End(_)) => {
                     in_city_object = false;
+                    current_lod = None;
                 }
                 Ok(Event::Eof) => break,
                 Err(e) => return Err(CityJsonStacError::Other(format!("XML error: {}", e))),
-                _ => {}
             }
         }
 
@@ -786,7 +1011,7 @@ fn is_citygml(file_path: &Path) -> Result<bool> {
     // Read first few lines and look for CityGML namespace
     for line in reader.lines().take(20) {
         let line = line?;
-        if line.contains("www.opengis.net/citygml") {
+        if line.contains("citygml") || line.contains("www.opengis.net/gml") {
             return Ok(true);
         }
     }
@@ -795,51 +1020,9 @@ fn is_citygml(file_path: &Path) -> Result<bool> {
 }
 ```
 
-#### 3.4 Update STAC Extension Prefix (Breaking Change)
-**Modify:** `src/stac/item.rs`, `src/stac/collection.rs`
-
-- Change `cj:` → `city3d:` for all extension properties
-- Update schema URL reference
-
-```rust
-// In item.rs - cityjson_metadata():
-// Old:
-self.properties.insert("cj:encoding".to_string(), json!(reader.encoding()));
-self.properties.insert("cj:version".to_string(), json!(reader.version()?));
-
-// New:
-self.properties.insert("city3d:encoding".to_string(), json!(reader.encoding()));
-self.properties.insert("city3d:version".to_string(), json!(reader.version()?));
-```
-
-```rust
-// In collection.rs - aggregate_cityjson_metadata():
-// Old:
-self.summaries.insert("cj:encoding".to_string(), ...);
-self.summaries.insert("cj:lods".to_string(), ...);
-
-// New:
-self.summaries.insert("city3d:encoding".to_string(), ...);
-self.summaries.insert("city3d:lods".to_string(), ...);
-```
-
-#### 3.5 Update STAC Extension URL
-**Modify:** `src/stac/models.rs`
-
-```rust
-// In StacCollection build():
-stac_extensions: vec![
-    "https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json".to_string(),
-    "https://stac-extensions.github.io/projection/v1.1.0/schema.json".to_string(),
-],
-```
-
 ### Files to Modify
 - `Cargo.toml` - Add XML dependencies
 - `src/reader/mod.rs` - Add .gml/.xml extension handling
-- `src/stac/item.rs` - Update property prefix to `city3d:`
-- `src/stac/collection.rs` - Update summary prefix to `city3d:`
-- `src/stac/models.rs` - Update extension URL
 
 ### Files to Create
 - `src/reader/citygml.rs` - CityGML reader implementation
@@ -851,7 +1034,7 @@ stac_extensions: vec![
 - Verify LOD extraction from different CityGML modules
 - Test streaming parser with large files (>100MB)
 - Verify XML namespace handling
-- Test attribute extraction from GenericCityObject
+- Test attribute extraction
 
 ---
 
@@ -899,9 +1082,9 @@ stac_extensions: vec![
 - [ ] Timeout handling
 - [ ] Retry logic for failed downloads
 
-### Phase 3: CityGML Support
+### Phase 3: CityGML Reader
 
-#### Milestone 3.0: CityGML Basic Support
+#### Milestone 3.0: CityGML Basic Reader
 - [ ] Add quick-xml dependency
 - [ ] Create `CityGMLReader` with streaming parser
 - [ ] Implement version detection (2.0 vs 3.0)
@@ -911,7 +1094,7 @@ stac_extensions: vec![
 - [ ] Update factory for .gml/.xml files
 - [ ] Tests with sample CityGML files
 
-#### Milestone 3.5: CityGML Complete
+#### Milestone 3.5: CityGML Advanced Features
 - [ ] LOD extraction for CityGML
 - [ ] Attribute extraction from CityGML
 - [ ] Handle CityGML 2.0 vs 3.0 differences
@@ -919,13 +1102,6 @@ stac_extensions: vec![
 - [ ] Semantic surface detection
 - [ ] Texture/material detection
 - [ ] Large file streaming tests
-
-#### Milestone 3.6: STAC Extension Prefix Update (Breaking Change)
-- [ ] Update all `cj:` to `city3d:` in item builder
-- [ ] Update all `cj:` to `city3d:` in collection builder
-- [ ] Update STAC extension schema URL
-- [ ] Update documentation
-- [ ] Update STAC_EXTENSION.md
 
 ---
 
@@ -937,8 +1113,9 @@ stac_extensions: vec![
 | serde_yaml | 0.9+ | - | 1 |
 | tokio | 1.40+ | fs, rt-multi-thread | 2 |
 | reqwest | 0.12+ | rustls-tls | 2 |
-| quick-xml | 0.37+ | serialize, async-tokio | 3 |
+| quick-xml | 0.37+ | serialize | 3 |
 | object_store | 0.11+ | http, aws, azure | 2.5 (optional) |
+| bytes | 1.8+ | - | 2 |
 
 ---
 
@@ -963,10 +1140,8 @@ stac_extensions: vec![
 
 ## Breaking Changes
 
-1. **STAC Extension Prefix:** `cj:` → `city3d:` (Phase 3.6)
-   - Existing STAC outputs will use old prefix
-   - Users will need to regenerate collections
-   - This is a clean break as per user decision
+1. **STAC Extension Prefix:** Already changed in commit #13 ✅
+   - `cj:` → `city3d:` complete
 
 2. **Async Runtime:** CLI will become async (Phase 2)
    - Should be transparent to users
@@ -984,9 +1159,8 @@ After implementing all phases, update:
 
 1. **README.md** - New features and usage examples
 2. **CLAUDE.md** - Update project instructions
-3. **STAC_EXTENSION.md** - Confirm prefix is `city3d:`
-4. **CHANGELOG.md** - Document breaking changes
-5. **examples/** - Add config file examples
+3. **CHANGELOG.md** - Document breaking changes
+4. **examples/** - Add config file examples
 
 ---
 
