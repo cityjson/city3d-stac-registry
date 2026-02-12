@@ -9,6 +9,13 @@
     },
     "ghcr.io/devcontainers/features/git:1": {
       "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts",
+      "nodeGypDependencies": true,
+      "npmPackages": [
+        "typescript"
+      ]
     }
   },
   "customizations": {
@@ -38,7 +45,7 @@
     "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind,consistency=cached",
     "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached"
   ],
-  "postCreateCommand": "bash -c 'cargo install just --locked && cargo install cargo-watch --locked || true && ./scripts/setup-hooks.sh'",
+  "postCreateCommand": "bash -c 'cargo install just --locked && cargo install cargo-watch --locked || true && ./scripts/setup-hooks.sh && .devcontainer/install-claude-plugins.sh serena'",
   "remoteUser": "vscode",
   "forwardPorts": [
     8080,
