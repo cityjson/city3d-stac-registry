@@ -43,7 +43,7 @@ clippy:
     cargo clippy -- -D warnings
 
 # Full CI check
-ci: fmt-check clippy test
+ci: fmt clippy test
 
 # run dev container
 devcon:

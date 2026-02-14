@@ -41,6 +41,7 @@ env_logger = "0.11"
 
 # FlatCityBuf support
 fcb_core = "0.6"
+cjseq = "0.4"
 
 # URL handling for STAC links
 url = { version = "2.5", features = ["serde"] }
@@ -49,6 +50,7 @@ url = { version = "2.5", features = ["serde"] }
 tokio = { version = "1.40", features = ["fs", "rt-multi-thread", "macros"] }
 object_store = { version = "0.11", features = ["http", "aws", "azure", "gcp"] }
 bytes = "1.8"
+tokio-util = { version = "0.7" }
 tempfile = "3.10"
 
 # Optional: for parallel processing
