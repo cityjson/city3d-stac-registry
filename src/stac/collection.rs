@@ -506,6 +506,10 @@ mod tests {
             r#"{{
             "type": "CityJSON",
             "version": "{}",
+            "transform": {{
+                "scale": [0.01, 0.01, 0.01],
+                "translate": [100000, 200000, 0]
+            }},
             "metadata": {{
                 "geographicalExtent": [1.0, 2.0, 0.0, 10.0, 20.0, 30.0],
                 "referenceSystem": "https://www.opengis.net/def/crs/EPSG/0/7415"
@@ -516,11 +520,11 @@ mod tests {
                     "geometry": [{{
                         "type": "Solid",
                         "lod": "{}",
-                        "boundaries": []
+                        "boundaries": [[[[0,0,0]]]]
                     }}]
                 }}
             }},
-            "vertices": []
+            "vertices": [[0,0,0]]
         }}"#,
             version, obj_type, lod
         );

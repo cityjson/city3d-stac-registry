@@ -39,7 +39,7 @@ This document tracks the progress of refactoring the cityjson-stac codebase to u
 
 ## Task 2 & 3: Use cjseq for Both CityJSON and CityJSONSeq Readers
 
-### Status: 🚧 In Progress
+### Status: ✅ Complete
 
 ### Implementation Approach
 
@@ -101,35 +101,35 @@ Key implementation points:
 - [x] Fixed CRS extraction to handle URL string format (`"https://www.opengis.net/def/crs/EPSG/0/7415"`)
 - [x] Fixed `file_path()` to return `&Path` instead of `Result<PathBuf>`
 - [x] Removed `AttributeType::Integer` (doesn't exist, use `Number` instead)
-- [ ] Replace `serde_json::Value` with `cjseq::CityJSON` in CityJSONReader
-- [ ] Replace `serde_json::Value` with `cjseq` types in CityJSONSeqReader
-- [ ] Replace `BTreeSet` with `HashSet` in CityJSONSeqReader
+- [x] Replace `serde_json::Value` with `cjseq::CityJSON` in CityJSONReader
+- [x] Replace `serde_json::Value` with `cjseq` types in CityJSONSeqReader
+- [x] Replace `BTreeSet` with `HashSet` in CityJSONSeqReader
+- [x] Updated test fixtures in STAC module to include `transform` field (required by cjseq)
+- [x] Uncommented and enabled CityJSONSeq integration tests in `tests/reader_tests.rs`
 
 #### 2.4 Verification
 
-- [x] `cargo test` passes (64 tests baseline)
+- [x] `cargo test` passes (250 tests total)
 - [x] `cargo clippy -- -D warnings` passes
 - [x] `cargo fmt --check` passes
-- [ ] All tests pass with cjseq implementation
-
----
+- [x] All tests pass with cjseq implementation
 
 ---
 
 ## Task 3: CityJSONSeqReader Streaming Implementation
 
-### Status: 🚧 In Progress
+### Status: ✅ Complete
 
 See Task 2 above - CityJSONSeqReader is part of the combined refactoring effort to use cjseq for both readers.
 
 ### Streaming Design
 
-CityJSONSeq is designed for streaming. The reader should:
-1. Read first line as `cjseq::CityJSON` header (metadata only)
-2. Stream remaining lines using `BufReader::lines()`
-3. Parse each line as `cjseq::CityJSONFeature`
-4. Aggregate statistics incrementally (LODs, types, attributes, etc.)
-5. Discard features after extracting metadata (memory-efficient)
+CityJSONSeq is designed for streaming. The reader:
+1. Reads first line as `cjseq::CityJSON` header (metadata only)
+2. Streams remaining lines using `BufReader::lines()`
+3. Parses each line as `cjseq::CityJSONFeature`
+4. Aggregates statistics incrementally (LODs, types, attributes, etc.)
+5. Discards features after extracting metadata (memory-efficient)
 
 ```rust
 pub struct CityJSONSeqReader {
@@ -139,7 +139,6 @@ pub struct CityJSONSeqReader {
 }
 
 pub struct AggregatedMetadata {
-    bbox: Option<BBox3D>,
     lods: HashSet<String>,  // Use HashSet, not BTreeSet (no sorting needed)
     city_object_types: HashSet<String>,
     city_object_count: usize,
@@ -164,19 +163,19 @@ The note says "Work on 1, 2 and 3 in order", so this is for later.
 
 After implementation is complete:
 
-- [ ] Run `cargo test --lib` - All unit tests pass
-- [ ] Run `cargo clippy -- -D warnings` - No warnings
-- [ ] Run `cargo fmt --check` - Properly formatted
-- [ ] Test with real data in `tests/data/`:
-  - [ ] `delft.city.json` - Small CityJSON file
-  - [ ] `delft.city.jsonl` - CityJSONSeq file
-  - [ ] `railway.city.json` / `railway.city.jsonl` - Larger files
+- [x] Run `cargo test --lib` - All unit tests pass (78 tests)
+- [x] Run `cargo clippy -- -D warnings` - No warnings
+- [x] Run `cargo fmt --check` - Properly formatted
+- [x] Test with real data in `tests/data/`:
+  - [x] `delft.city.json` - Small CityJSON file
+  - [x] `delft.city.jsonl` - CityJSONSeq file
+  - [x] `railway.city.json` / `railway.city.jsonl` - Larger files
 
 ### Current Status
 
 - [x] Documentation updates complete (Task 1)
-- [ ] CityJSONReader using cjseq (Task 2)
-- [ ] CityJSONSeqReader using cjseq (Task 3)
+- [x] CityJSONReader using cjseq (Task 2)
+- [x] CityJSONSeqReader using cjseq (Task 3)
 
 ---
 
@@ -202,7 +201,7 @@ cat /tmp/test_item.json | jq .
 
 - Always run `cargo fmt` before committing
 - Always run `cargo clippy -- -D warnings` before committing
-- Use `BTreeSet` for automatic sorting of collections
+- Use `HashSet` for unordered collections, sort when producing output
 - Return `Result<T>` from all fallible operations
 - Use `RwLock` for thread-safe lazy loading
 - Document public APIs with rustdoc comments

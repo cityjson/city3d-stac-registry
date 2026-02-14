@@ -11,9 +11,8 @@ use crate::error::{CityJsonStacError, Result};
 use crate::metadata::{AttributeDefinition, AttributeType, BBox3D, Transform, CRS};
 use crate::reader::CityModelMetadataReader;
 
-// FIXME: don't use Value, use cjseq::CityJSON instead
 use serde_json::Value;
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
@@ -23,11 +22,9 @@ use std::sync::RwLock;
 #[derive(Clone)]
 struct AggregatedMetadata {
     /// All unique LODs across all features.
-    // FIXME: we don't need to use BTreeSet here, just use HashSet
-    lods: BTreeSet<String>,
+    lods: HashSet<String>,
     /// All unique city object types (excluding extension types starting with '+')
-    // FIXME: Use strict type exposed from cjseq lib. Also we don't need to use BTreeSet here, just use HashSet
-    city_object_types: BTreeSet<String>,
+    city_object_types: HashSet<String>,
     /// Total count of city objects across all features
     city_object_count: usize,
     /// All attributes found across features
@@ -46,8 +43,8 @@ struct AggregatedMetadata {
 /// then streams through remaining features to aggregate statistics.
 pub struct CityJSONSeqReader {
     file_path: PathBuf,
-    /// Metadata header from first line (as raw JSON Value for compatibility)
-    metadata_header: Value,
+    /// Metadata header from first line (typed CityJSON struct)
+    metadata_header: cjseq::CityJSON,
     /// Aggregated statistics (computed during construction)
     aggregated: RwLock<Option<AggregatedMetadata>>,
 }
@@ -74,14 +71,14 @@ impl CityJSONSeqReader {
             .next()
             .ok_or_else(|| CityJsonStacError::Other("Empty CityJSONSeq file".to_string()))??;
 
-        let metadata_header: Value = serde_json::from_str(&first_line).map_err(|e| {
+        let metadata_header = cjseq::CityJSON::from_str(&first_line).map_err(|e| {
             CityJsonStacError::Other(format!("Failed to parse CityJSONSeq header: {e}"))
         })?;
 
         // Stream through remaining lines to aggregate statistics
         let mut aggregated = AggregatedMetadata {
-            lods: BTreeSet::new(),
-            city_object_types: BTreeSet::new(),
+            lods: HashSet::new(),
+            city_object_types: HashSet::new(),
             city_object_count: 0,
             attributes: HashMap::new(),
             has_semantic_surfaces: false,
@@ -96,16 +93,10 @@ impl CityJSONSeqReader {
                 continue; // Skip empty lines
             }
 
-            match serde_json::from_str::<Value>(&line) {
-                Ok(feature) => {
-                    Self::process_feature(&feature, &mut aggregated);
-                }
-                Err(e) => {
-                    return Err(CityJsonStacError::Other(format!(
-                        "Failed to parse CityJSONFeature: {e}"
-                    )));
-                }
-            }
+            let feature = cjseq::CityJSONFeature::from_str(&line).map_err(|e| {
+                CityJsonStacError::Other(format!("Failed to parse CityJSONFeature: {e}"))
+            })?;
+            Self::process_feature(&feature, &mut aggregated);
         }
 
         Ok(Self {
@@ -116,91 +107,65 @@ impl CityJSONSeqReader {
     }
 
     /// Process a single feature and update aggregated statistics
-    fn process_feature(feature: &Value, aggregated: &mut AggregatedMetadata) {
-        // Get CityObjects from the feature
-        if let Some(city_objects) = feature
-            .get("CityObjects")
-            .or_else(|| feature.get("city_objects"))
-        {
-            if let Some(objs) = city_objects.as_object() {
-                for (_id, city_object) in objs {
-                    // Collect city object types (excluding extension types starting with '+')
-                    if let Some(type_val) = city_object
-                        .get("type")
-                        .or_else(|| city_object.get("thetype"))
-                    {
-                        if let Some(type_str) = type_val.as_str() {
-                            if !type_str.starts_with('+') {
-                                aggregated.city_object_types.insert(type_str.to_string());
-                            }
-                        }
+    fn process_feature(feature: &cjseq::CityJSONFeature, aggregated: &mut AggregatedMetadata) {
+        for city_object in feature.city_objects.values() {
+            // Collect city object types (excluding extension types starting with '+')
+            if !city_object.thetype.starts_with('+') {
+                aggregated
+                    .city_object_types
+                    .insert(city_object.thetype.clone());
+            }
+
+            // Collect LODs from geometry and check for semantic surfaces
+            if let Some(ref geometries) = city_object.geometry {
+                for geom in geometries {
+                    if let Some(ref lod) = geom.lod {
+                        aggregated.lods.insert(lod.clone());
                     }
-
-                    // Collect LODs from geometry
-                    if let Some(geometries) = city_object.get("geometry") {
-                        if let Some(geom_array) = geometries.as_array() {
-                            for geom in geom_array {
-                                if let Some(lod) = geom.get("lod").and_then(|v| v.as_str()) {
-                                    aggregated.lods.insert(lod.to_string());
-                                }
-                                // Check for semantic surfaces
-                                if geom.get("semantics").is_some() {
-                                    aggregated.has_semantic_surfaces = true;
-                                }
-                            }
-                        }
+                    // Check for semantic surfaces
+                    if geom.semantics.is_some() {
+                        aggregated.has_semantic_surfaces = true;
                     }
-
-                    // Collect attributes
-                    if let Some(attrs) = city_object.get("attributes") {
-                        if let Some(attrs_obj) = attrs.as_object() {
-                            for (attr_name, attr_value) in attrs_obj {
-                                let attr_type = match attr_value {
-                                    Value::String(_) => AttributeType::String,
-                                    Value::Number(_) => AttributeType::Number,
-                                    Value::Bool(_) => AttributeType::Boolean,
-                                    Value::Array(_) => AttributeType::Array,
-                                    Value::Object(_) => AttributeType::Object,
-                                    Value::Null => continue,
-                                };
-
-                                // Merge attribute types: if conflicting types, use String
-                                aggregated
-                                    .attributes
-                                    .entry(attr_name.clone())
-                                    .and_modify(|existing| {
-                                        if *existing != attr_type {
-                                            *existing = AttributeType::String;
-                                        }
-                                    })
-                                    .or_insert(attr_type);
-                            }
-                        }
-                    }
-
-                    // Increment count
-                    aggregated.city_object_count += 1;
                 }
             }
+
+            // Collect attributes
+            if let Some(ref attrs) = city_object.attributes {
+                if let Some(attrs_obj) = attrs.as_object() {
+                    for (attr_name, attr_value) in attrs_obj {
+                        let attr_type = match attr_value {
+                            Value::String(_) => AttributeType::String,
+                            Value::Number(_) => AttributeType::Number,
+                            Value::Bool(_) => AttributeType::Boolean,
+                            Value::Array(_) => AttributeType::Array,
+                            Value::Object(_) => AttributeType::Object,
+                            Value::Null => continue,
+                        };
+
+                        // Merge attribute types: if conflicting types, use String
+                        aggregated
+                            .attributes
+                            .entry(attr_name.clone())
+                            .and_modify(|existing| {
+                                if *existing != attr_type {
+                                    *existing = AttributeType::String;
+                                }
+                            })
+                            .or_insert(attr_type);
+                    }
+                }
+            }
+
+            // Increment count
+            aggregated.city_object_count += 1;
         }
 
         // Check for textures and materials in appearance
-        if let Some(appearance) = feature
-            .get("appearance")
-            .or_else(|| feature.get("Appearance"))
-        {
-            if appearance
-                .get("textures")
-                .or_else(|| appearance.get("Textures"))
-                .is_some()
-            {
+        if let Some(ref appearance) = feature.appearance {
+            if appearance.textures.is_some() {
                 aggregated.has_textures = true;
             }
-            if appearance
-                .get("materials")
-                .or_else(|| appearance.get("Materials"))
-                .is_some()
-            {
+            if appearance.materials.is_some() {
                 aggregated.has_materials = true;
             }
         }
@@ -227,55 +192,12 @@ impl CityJSONSeqReader {
 
     /// Extract CRS from metadata header
     fn extract_crs_from_header(&self) -> CRS {
-        if let Some(metadata) = self.metadata_header.get("metadata") {
-            // Try referenceSystem as string URL (common in CityJSONSeq)
-            if let Some(rs) = metadata.get("referenceSystem") {
-                if let Some(rs_str) = rs.as_str() {
-                    // Handle URL format: "https://www.opengis.net/def/crs/EPSG/0/7415"
-                    if rs_str.contains("EPSG") {
-                        let parts: Vec<&str> = rs_str.split('/').collect();
-                        if let Some(last) = parts.last() {
-                            if let Ok(code) = last.parse::<u32>() {
-                                return CRS::from_epsg(code);
-                            }
-                        }
-                    }
-                }
-                // Try referenceSystem as object
-                if let Some(rs_obj) = rs.as_object() {
-                    // Try base_url field
-                    if let Some(base_url) = rs_obj.get("base_url").and_then(|v| v.as_str()) {
-                        if base_url.contains("EPSG") {
-                            let parts: Vec<&str> = base_url.split('/').collect();
-                            if let Some(last) = parts.last() {
-                                if let Ok(code) = last.parse::<u32>() {
-                                    return CRS::from_epsg(code);
-                                }
-                            }
-                        }
-                    }
-                    // Try code field
-                    if let Some(code_val) = rs_obj.get("code") {
-                        if let Some(code_str) = code_val.as_str() {
-                            if let Ok(code) = code_str.parse::<u32>() {
-                                // Check authority
-                                if rs_obj.get("authority").and_then(|v| v.as_str()) == Some("EPSG")
-                                {
-                                    return CRS::from_epsg(code);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Fallback to CRS string (CityJSON 1.0)
-            if let Some(crs_value) = metadata.get("CRS") {
-                if let Some(crs_str) = crs_value.as_str() {
-                    if let Some(code_str) = crs_str.strip_prefix("EPSG:") {
-                        if let Ok(code) = code_str.parse::<u32>() {
-                            return CRS::from_epsg(code);
-                        }
+        if let Some(ref metadata) = self.metadata_header.metadata {
+            if let Some(ref rs) = metadata.reference_system {
+                // cjseq::ReferenceSystem has authority and code fields
+                if rs.authority == "EPSG" {
+                    if let Ok(code) = rs.code.parse::<u32>() {
+                        return CRS::from_epsg(code);
                     }
                 }
             }
@@ -285,66 +207,42 @@ impl CityJSONSeqReader {
 
     /// Extract transform from metadata header
     fn extract_transform_from_header(&self) -> Option<Transform> {
-        if let Some(transform_obj) = self.metadata_header.get("transform") {
-            if let Some(obj) = transform_obj.as_object() {
-                let scale = obj.get("scale").and_then(|v| v.as_array()).and_then(|arr| {
-                    let vals: Vec<f64> = arr.iter().filter_map(|v| v.as_f64()).collect();
-                    if vals.len() == 3 {
-                        Some([vals[0], vals[1], vals[2]])
-                    } else {
-                        None
-                    }
-                });
+        let scale = &self.metadata_header.transform.scale;
+        let translate = &self.metadata_header.transform.translate;
 
-                let translate = obj
-                    .get("translate")
-                    .and_then(|v| v.as_array())
-                    .and_then(|arr| {
-                        let vals: Vec<f64> = arr.iter().filter_map(|v| v.as_f64()).collect();
-                        if vals.len() == 3 {
-                            Some([vals[0], vals[1], vals[2]])
-                        } else {
-                            None
-                        }
-                    });
+        if scale.len() == 3 && translate.len() == 3 {
+            // Check if transform is the default identity (no actual transform)
+            let is_default = scale[0] == 1.0
+                && scale[1] == 1.0
+                && scale[2] == 1.0
+                && translate[0] == 0.0
+                && translate[1] == 0.0
+                && translate[2] == 0.0;
 
-                if let (Some(s), Some(t)) = (scale, translate) {
-                    return Some(Transform::new(s, t));
-                }
+            if is_default {
+                return None;
             }
+
+            Some(Transform::new(
+                [scale[0], scale[1], scale[2]],
+                [translate[0], translate[1], translate[2]],
+            ))
+        } else {
+            None
         }
-        None
     }
 
     /// Extract bbox from metadata header
     fn extract_bbox_from_header(&self) -> Result<BBox3D> {
-        if let Some(metadata) = self.metadata_header.get("metadata") {
-            // Try geographicalExtent first
-            if let Some(extent) = metadata
-                .get("geographicalExtent")
-                .or_else(|| metadata.get("geographicExtent"))
-            {
-                if let Some(arr) = extent.as_array() {
-                    let vals: Vec<f64> = arr.iter().filter_map(|v| v.as_f64()).collect();
-                    if vals.len() == 6 {
-                        return Ok(BBox3D::new(
-                            vals[0], vals[1], vals[2], vals[3], vals[4], vals[5],
-                        ));
-                    }
-                }
+        if let Some(ref metadata) = self.metadata_header.metadata {
+            if let Some(extent) = metadata.geographical_extent {
+                return Ok(BBox3D::new(
+                    extent[0], extent[1], extent[2], extent[3], extent[4], extent[5],
+                ));
             }
         }
         // Default bbox if not found
         Ok(BBox3D::new(0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
-    }
-
-    /// Extract version from metadata header
-    fn extract_version_from_header(&self) -> String {
-        self.metadata_header
-            .get("version")
-            .and_then(|v| v.as_str())
-            .unwrap_or("1.0")
-            .to_string()
     }
 }
 
@@ -359,12 +257,16 @@ impl CityModelMetadataReader for CityJSONSeqReader {
 
     fn lods(&self) -> Result<Vec<String>> {
         let aggregated = self.get_aggregated()?;
-        Ok(aggregated.lods.into_iter().collect())
+        let mut lods: Vec<String> = aggregated.lods.into_iter().collect();
+        lods.sort();
+        Ok(lods)
     }
 
     fn city_object_types(&self) -> Result<Vec<String>> {
         let aggregated = self.get_aggregated()?;
-        Ok(aggregated.city_object_types.into_iter().collect())
+        let mut types: Vec<String> = aggregated.city_object_types.into_iter().collect();
+        types.sort();
+        Ok(types)
     }
 
     fn city_object_count(&self) -> Result<usize> {
@@ -388,7 +290,7 @@ impl CityModelMetadataReader for CityJSONSeqReader {
     }
 
     fn version(&self) -> Result<String> {
-        Ok(self.extract_version_from_header())
+        Ok(self.metadata_header.version.clone())
     }
 
     fn file_path(&self) -> &Path {
@@ -400,18 +302,23 @@ impl CityModelMetadataReader for CityJSONSeqReader {
     }
 
     fn metadata(&self) -> Result<Option<Value>> {
-        Ok(self.metadata_header.get("metadata").cloned())
+        match &self.metadata_header.metadata {
+            Some(m) => {
+                let value = serde_json::to_value(m).map_err(|e| {
+                    CityJsonStacError::Other(format!("Failed to serialize metadata: {e}"))
+                })?;
+                Ok(Some(value))
+            }
+            None => Ok(None),
+        }
     }
 
     fn extensions(&self) -> Result<Vec<String>> {
-        // Extensions are in the metadata header
-        if let Some(metadata) = self.metadata_header.get("metadata") {
-            if let Some(ext) = metadata.get("extensions") {
-                if let Some(ext_obj) = ext.as_object() {
-                    let mut extensions: Vec<String> = ext_obj.keys().cloned().collect();
-                    extensions.sort();
-                    return Ok(extensions);
-                }
+        if let Some(ref ext) = self.metadata_header.extensions {
+            if let Some(ext_obj) = ext.as_object() {
+                let mut extensions: Vec<String> = ext_obj.keys().cloned().collect();
+                extensions.sort();
+                return Ok(extensions);
             }
         }
         Ok(Vec::new())
@@ -565,7 +472,7 @@ mod tests {
     fn test_cityjsonseq_semantic_surfaces() {
         let mut temp_file = NamedTempFile::new().unwrap();
         let header = r#"{"type":"CityJSON","version":"2.0","transform":{"scale":[1.0,1.0,1.0],"translate":[0,0,0]},"CityObjects":{},"vertices":[],"metadata":{"geographicalExtent":[0,0,0,1,1,1]}}"#;
-        let feature = r#"{"type":"CityJSONFeature","id":"b1","CityObjects":{"b1":{"type":"Building","geometry":[{"type":"Solid","lod":"2","boundaries":[[[[0,0,0]]]],"semantics":{"surfaces":[{"type":"Wall"}]}}]}},"vertices":[[0,0,0]]}"#;
+        let feature = r#"{"type":"CityJSONFeature","id":"b1","CityObjects":{"b1":{"type":"Building","geometry":[{"type":"Solid","lod":"2","boundaries":[[[[0,0,0]]]],"semantics":{"surfaces":[{"type":"WallSurface"}],"values":[[[0]]]}}]}},"vertices":[[0,0,0]]}"#;
 
         writeln!(temp_file, "{}", header).unwrap();
         writeln!(temp_file, "{}", feature).unwrap();

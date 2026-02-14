@@ -448,6 +448,10 @@ mod tests {
         let cityjson = r#"{
             "type": "CityJSON",
             "version": "2.0",
+            "transform": {
+                "scale": [0.01, 0.01, 0.01],
+                "translate": [100000, 200000, 0]
+            },
             "metadata": {
                 "geographicalExtent": [1.0, 2.0, 0.0, 10.0, 20.0, 30.0],
                 "referenceSystem": "https://www.opengis.net/def/crs/EPSG/0/7415"
@@ -458,14 +462,14 @@ mod tests {
                     "geometry": [{
                         "type": "Solid",
                         "lod": "2",
-                        "boundaries": []
+                        "boundaries": [[[[0,0,0]]]]
                     }],
                     "attributes": {
                         "yearOfConstruction": 2020
                     }
                 }
             },
-            "vertices": []
+            "vertices": [[0,0,0]]
         }"#;
 
         writeln!(temp_file, "{}", cityjson).unwrap();

@@ -1,6 +1,8 @@
 //! Unit tests for the reader module
 
-use cityjson_stac::reader::{get_reader, CityJSONReader, CityModelMetadataReader};
+use cityjson_stac::reader::{
+    get_reader, CityJSONReader, CityJSONSeqReader, CityModelMetadataReader,
+};
 use std::path::Path;
 
 /// Test data directory path
@@ -265,34 +267,57 @@ mod reader_thread_safety_tests {
 mod cjseq_integration_tests {
     use super::*;
 
-    //TODO: uncomment when CityJSONSeq is supported
-    // #[test]
-    // fn test_read_delft_cjseq() {
-    //     let path = test_data_path("delft.city.jsonl");
-    //     let reader = get_reader(&path).expect("Failed to create reader");
+    #[test]
+    fn test_read_delft_cjseq() {
+        let path = test_data_path("delft.city.jsonl");
+        let reader = get_reader(&path).expect("Failed to create reader");
 
-    //     assert_eq!(reader.encoding(), "CityJSONSeq");
+        assert_eq!(reader.encoding(), "CityJSONSeq");
 
-    //     let version = reader.version().expect("Failed to get version");
-    //     assert_eq!(version, "2.0");
+        let version = reader.version().expect("Failed to get version");
+        assert_eq!(version, "2.0");
 
-    //     let bbox = reader.bbox().expect("Failed to get bbox");
-    //     assert!(bbox.is_valid());
-    // }
+        let bbox = reader.bbox().expect("Failed to get bbox");
+        assert!(bbox.is_valid());
+    }
 
-    // #[test]
-    // fn test_read_railway_cjseq() {
-    //     let path = test_data_path("railway.city.jsonl");
-    //     let reader = get_reader(&path).expect("Failed to create reader");
+    #[test]
+    fn test_read_railway_cjseq() {
+        let path = test_data_path("railway.city.jsonl");
+        let reader = get_reader(&path).expect("Failed to create reader");
 
-    //     assert_eq!(reader.encoding(), "CityJSONSeq");
+        assert_eq!(reader.encoding(), "CityJSONSeq");
 
-    //     let count = reader.city_object_count().expect("Failed to get count");
-    //     assert!(count > 0, "Railway should have city objects");
+        let count = reader.city_object_count().expect("Failed to get count");
+        assert!(count > 0, "Railway should have city objects");
 
-    //     let types = reader.city_object_types().expect("Failed to get types");
-    //     assert!(!types.is_empty());
-    // }
+        let types = reader.city_object_types().expect("Failed to get types");
+        assert!(!types.is_empty());
+    }
+
+    #[test]
+    fn test_cjseq_reader_is_send_sync() {
+        fn assert_send_sync<T: Send + Sync>() {}
+        assert_send_sync::<CityJSONSeqReader>();
+    }
+
+    #[test]
+    fn test_delft_cjseq_crs() {
+        let path = test_data_path("delft.city.jsonl");
+        let reader = get_reader(&path).expect("Failed to create reader");
+
+        let crs = reader.crs().expect("Failed to get CRS");
+        assert_eq!(crs.epsg, Some(7415));
+    }
+
+    #[test]
+    fn test_delft_cjseq_transform() {
+        let path = test_data_path("delft.city.jsonl");
+        let reader = get_reader(&path).expect("Failed to create reader");
+
+        let transform = reader.transform().expect("Failed to get transform");
+        assert!(transform.is_some());
+    }
 }
 
 mod fcb_integration_tests {
