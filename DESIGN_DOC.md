@@ -5,11 +5,14 @@ This document provides detailed technical architecture and implementation guidel
 ## Table of Contents
 
 1. [Architecture Details](#architecture-details)
-2. [Module Design](#module-design)
-3. [Data Flow](#data-flow)
-4. [CLI Specification](#cli-specification)
-5. [Error Handling](#error-handling)
-6. [Testing Strategy](#testing-strategy)
+2. [Design Philosophy](#design-philosophy)
+3. [Development Standards](#development-standards)
+4. [Test Data](#test-data)
+5. [Module Design](#module-design)
+6. [Data Flow](#data-flow)
+7. [CLI Specification](#cli-specification)
+8. [Error Handling](#error-handling)
+9. [Testing Strategy](#testing-strategy)
 
 ---
 
@@ -80,6 +83,175 @@ pub fn get_reader(file_path: &Path) -> Result<Box<dyn CityModelMetadataReader>> 
     }
 }
 ```
+
+---
+
+## Design Philosophy
+
+### Interface Programming
+
+The codebase follows a **trait-oriented design** where all format readers implement the `CityModelMetadataReader` trait. This provides:
+
+1. **Polymorphism**: Callers work with `dyn CityModelMetadataReader` without knowing the concrete implementation
+2. **Extensibility**: New formats can be added by implementing the trait without changing existing code
+3. **Testability**: Mock implementations can be easily created for testing
+
+### Factory Pattern
+
+The `get_reader()` function serves as a factory that:
+- Examines file extensions to determine format
+- Returns a boxed trait object (`Box<dyn CityModelMetadataReader>`)
+- Encapsulates reader creation logic
+- Makes the codebase open for extension (new readers) but closed for modification
+
+### Streaming-First Approach
+
+Different formats have different characteristics:
+- **CityJSON (`.json`)**: Single-file format, typically small enough to load entirely
+- **CityJSONSeq (`.jsonl`)**: Designed for streaming, processes line-by-line
+- **FlatCityBuf (`.fcb`)**: Binary format with header metadata that can be read without full file load
+
+The reader implementations respect these characteristics:
+- Use lazy loading with `RwLock` for interior mutability
+- Stream `.jsonl` files line-by-line when possible
+- Cache extracted metadata to avoid redundant computation
+
+### Data Source Abstraction
+
+The `InputSource` enum abstracts between local and remote data:
+
+```rust
+pub enum InputSource {
+    Local(PathBuf),
+    Remote(String),  // http://, https://, s3://, az://, gs://
+}
+```
+
+This design allows:
+- Future support for HTTP/HTTPS and object storage (S3, Azure, GCS)
+- Transparent switching between local and remote data
+- Consistent API regardless of data location
+
+### Module Dependency Direction
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    STAC Module                          │
+│          (consumes metadata from readers)               │
+└────────────────────┬────────────────────────────────────┘
+                     │ depends on
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│                   Reader Module                         │
+│   (implements CityModelMetadataReader trait)            │
+└────────────────────┬────────────────────────────────────┘
+                     │ depends on
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│                 Metadata Module                         │
+│       (BBox3D, CRS, Transform, AttributeDefinition)     │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Key principle**: Readers depend on metadata types, not vice versa. The metadata module has no knowledge of readers or CityJSON formats.
+
+---
+
+## Development Standards
+
+### Test-Driven Development (TDD)
+
+When adding new features or modifying existing ones:
+1. Write tests first to define expected behavior
+2. Run tests to see them fail (red)
+3. Implement the minimum code to make tests pass (green)
+4. Refactor while keeping tests green
+
+### Code Quality Standards
+
+**Pre-commit checklist** (enforced by git hooks):
+```bash
+# Format code
+cargo fmt
+
+# Check for lints and warnings
+cargo clippy -- -D warnings
+
+# Run unit tests
+cargo test --lib
+```
+
+**Rules**:
+- **NEVER** use `#[allow(dead_code)]` or `#[allow(unused)]` as workarounds
+- If code is truly not needed, remove it
+- If clippy warns about dead code during development, consider marking tests as `#[cfg(test)]`
+- If clippy warns about unused code that will be used later, consider using `#[expect(dead_code)]` with a comment explaining why
+
+### Testing Guidelines
+
+1. **Return mocked data in tests, not real data**
+   - Tests should be deterministic and fast
+   - Create minimal test fixtures inline in the test function
+   - Avoid reading external files in unit tests (use integration tests for file I/O)
+
+2. **Use descriptive test names**
+   ```rust
+   #[test]
+   fn test_bbox_merge_returns_union_of_both_boxes() { ... }
+   ```
+
+3. **Test both success and failure paths**
+   - Verify error handling with invalid inputs
+   - Check that error messages are helpful
+
+4. **Organize tests by module**
+   - Unit tests in `src/<module>/tests.rs` or inline `#[cfg(test)]` modules
+   - Integration tests in `tests/` directory
+
+---
+
+## Test Data
+
+### Test Data Location
+
+Test fixtures are located in `tests/data/`:
+
+| File | Format | Description | Use Case |
+|------|--------|-------------|----------|
+| `delft.city.json` | CityJSON | Small file with metadata but no geometry | Basic reader tests |
+| `delft.city.jsonl` | CityJSONSeq | 159 lines (1 header + 158 features) | Streaming tests |
+| `railway.city.json` | CityJSON | Complex file with geometry and attributes | Full metadata extraction |
+| `railway.city.jsonl` | CityJSONSeq | 39 lines (1 header + 38 features) | Smaller streaming dataset |
+| `all.fcb` | FlatCityBuf | Binary format reference | FCB reader tests |
+
+### Using Test Data in Tests
+
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    fn test_data_path(file: &str) -> PathBuf {
+        PathBuf::from("tests/data").join(file)
+    }
+
+    #[test]
+    fn test_delft_cityjson() {
+        let path = test_data_path("delft.city.json");
+        let reader = CityJSONReader::new(&path).unwrap();
+        // ... test assertions
+    }
+}
+```
+
+### Adding New Test Files
+
+When adding new test data:
+1. Place the file in `tests/data/`
+2. Document its purpose in the table above
+3. Add a corresponding test that uses it
+4. Keep test files minimal but representative of real-world data
 
 ---
 

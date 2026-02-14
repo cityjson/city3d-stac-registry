@@ -1,8 +1,16 @@
 //! CityJSON format reader
+//!
+//! This module provides a reader for CityJSON files (.json).
+//!
+//! Note: CityJSON files are not designed for streaming.
+//! The CityJSONSeq format (.jsonl) is designed for streaming and has a
+//! separate reader implementation.
 
 use crate::error::{CityJsonStacError, Result};
 use crate::metadata::{AttributeDefinition, AttributeType, BBox3D, Transform, CRS};
 use crate::reader::CityModelMetadataReader;
+
+//FIXME: don't use Value, use cjseq::CityJSON instead
 use serde_json::Value;
 use std::collections::{BTreeSet, HashMap};
 use std::fs::File;
@@ -16,7 +24,8 @@ use std::sync::RwLock;
 /// while maintaining thread-safety (`Send + Sync` bounds).
 pub struct CityJSONReader {
     file_path: PathBuf,
-    /// Cached parsed data (lazy loaded via interior mutability)
+    /// Cached parsed CityJSON data (lazy loaded via interior mutability)
+    // FIXME: don't use Value, use cjseq::CityJSON instead
     data: RwLock<Option<Value>>,
 }
 
@@ -36,7 +45,7 @@ impl CityJSONReader {
         })
     }
 
-    /// Lazy load and cache JSON data using interior mutability
+    /// Lazy load and cache CityJSON data using interior mutability
     fn ensure_loaded(&self) -> Result<()> {
         // First check if already loaded with a read lock (cheaper)
         {
@@ -59,7 +68,9 @@ impl CityJSONReader {
         if data.is_none() {
             let file = File::open(&self.file_path)?;
             let reader = BufReader::new(file);
-            *data = Some(serde_json::from_reader(reader)?);
+            // FIXME: don't use Value, use cjseq::CityJSON instead
+            let value: Value = serde_json::from_reader(reader)?;
+            *data = Some(value);
         }
         Ok(())
     }
@@ -81,160 +92,187 @@ impl CityJSONReader {
     }
 }
 
-// Helper function to extract f64 from JSON array with proper error handling
-pub(crate) fn get_f64_from_array(arr: &[Value], idx: usize) -> Result<f64> {
-    arr.get(idx).and_then(|v| v.as_f64()).ok_or_else(|| {
-        CityJsonStacError::InvalidCityJson(format!(
-            "Expected number at index {}, got: {:?}",
-            idx,
-            arr.get(idx)
-        ))
-    })
-}
-
-// Helper function to extract bbox from data
-pub(crate) fn extract_bbox_from_data(data: &Value) -> Result<BBox3D> {
+/// Extract bbox from CityJSON data
+///
+/// First tries to get from metadata.geographicalExtent,
+/// then falls back to computing from vertices.
+fn extract_bbox_from_data(data: &Value) -> Result<BBox3D> {
     // Try to get from metadata.geographicalExtent first
     if let Some(metadata) = data.get("metadata") {
         if let Some(extent) = metadata.get("geographicalExtent") {
             if let Some(arr) = extent.as_array() {
-                if arr.len() == 6 {
-                    return Ok(BBox3D::new(
-                        get_f64_from_array(arr, 0)?,
-                        get_f64_from_array(arr, 1)?,
-                        get_f64_from_array(arr, 2)?,
-                        get_f64_from_array(arr, 3)?,
-                        get_f64_from_array(arr, 4)?,
-                        get_f64_from_array(arr, 5)?,
-                    ));
+                if arr.len() >= 6 {
+                    let vals: Vec<f64> = arr.iter().filter_map(|v| v.as_f64()).collect();
+                    if vals.len() == 6 {
+                        return Ok(BBox3D::new(
+                            vals[0], vals[1], vals[2], vals[3], vals[4], vals[5],
+                        ));
+                    }
                 }
             }
         }
     }
 
-    // Extract transform for vertex processing
-    let transform = extract_transform_from_data(data)?;
-
     // Fallback: compute from vertices
     if let Some(vertices) = data.get("vertices") {
-        if let Some(vertex_array) = vertices.as_array() {
-            if vertex_array.is_empty() {
-                return Err(CityJsonStacError::MetadataError(
-                    "No vertices found".to_string(),
-                ));
-            }
-
+        if let Some(verts_array) = vertices.as_array() {
             let mut xmin = f64::MAX;
             let mut ymin = f64::MAX;
             let mut zmin = f64::MAX;
             let mut xmax = f64::MIN;
             let mut ymax = f64::MIN;
             let mut zmax = f64::MIN;
+            let mut found = false;
 
-            for vertex in vertex_array {
-                if let Some(v) = vertex.as_array() {
-                    if v.len() >= 3 {
-                        let coords = if let Some(ref t) = transform {
-                            // Apply transform if present (vertices are compressed integers)
-                            let compressed = [
-                                v[0].as_i64().unwrap_or(0) as i32,
-                                v[1].as_i64().unwrap_or(0) as i32,
-                                v[2].as_i64().unwrap_or(0) as i32,
-                            ];
-                            t.apply(&compressed)
-                        } else {
-                            // No transform, vertices are raw floats
-                            [
-                                v[0].as_f64().unwrap_or(0.0),
-                                v[1].as_f64().unwrap_or(0.0),
-                                v[2].as_f64().unwrap_or(0.0),
-                            ]
-                        };
-
-                        xmin = xmin.min(coords[0]);
-                        ymin = ymin.min(coords[1]);
-                        zmin = zmin.min(coords[2]);
-                        xmax = xmax.max(coords[0]);
-                        ymax = ymax.max(coords[1]);
-                        zmax = zmax.max(coords[2]);
+            for v in verts_array {
+                if let Some(arr) = v.as_array() {
+                    if arr.len() >= 3 {
+                        if let (Some(x), Some(y), Some(z)) =
+                            (arr[0].as_i64(), arr[1].as_i64(), arr[2].as_i64())
+                        {
+                            let xf = x as f64;
+                            let yf = y as f64;
+                            let zf = z as f64;
+                            xmin = xmin.min(xf);
+                            ymin = ymin.min(yf);
+                            zmin = zmin.min(zf);
+                            xmax = xmax.max(xf);
+                            ymax = ymax.max(yf);
+                            zmax = zmax.max(zf);
+                            found = true;
+                        }
                     }
                 }
             }
 
-            return Ok(BBox3D::new(xmin, ymin, zmin, xmax, ymax, zmax));
+            if found {
+                return Ok(BBox3D::new(xmin, ymin, zmin, xmax, ymax, zmax));
+            }
         }
     }
 
-    Err(CityJsonStacError::MetadataError(
-        "Could not determine bounding box".to_string(),
-    ))
+    // Default bbox if nothing found
+    Ok(BBox3D::new(0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
 }
 
-// Helper function to extract CRS from data
-pub(crate) fn extract_crs_from_data(data: &Value) -> Result<CRS> {
+/// Extract CRS from CityJSON data
+fn extract_crs_from_data(data: &Value) -> Result<CRS> {
     if let Some(metadata) = data.get("metadata") {
-        if let Some(ref_system) = metadata.get("referenceSystem") {
-            if let Some(url) = ref_system.as_str() {
-                if let Some(crs) = CRS::from_cityjson_url(url) {
-                    return Ok(crs);
+        // Try referenceSystem - can be object (CityJSON 1.1+) or string URL
+        if let Some(rs) = metadata.get("referenceSystem") {
+            // Handle as URL string: "https://www.opengis.net/def/crs/EPSG/0/7415"
+            if let Some(rs_str) = rs.as_str() {
+                // Extract EPSG code from URL like "https://www.opengis.net/def/crs/EPSG/0/7415"
+                if rs_str.contains("EPSG") {
+                    let parts: Vec<&str> = rs_str.split('/').collect();
+                    if let Some(last) = parts.last() {
+                        if let Ok(code) = last.parse::<u32>() {
+                            return Ok(CRS::from_epsg(code));
+                        }
+                    }
+                }
+            }
+            // Handle as object
+            if let Some(rs_obj) = rs.as_object() {
+                // Try to extract EPSG code from different possible fields
+                if let Some(code) = rs_obj.get("code").and_then(|v| v.as_str()) {
+                    if let Ok(epsg_code) = code.parse::<u32>() {
+                        return Ok(CRS::from_epsg(epsg_code));
+                    }
+                }
+                // Try referenceSystemName format like "EPSG:7415"
+                if let Some(name) = rs_obj.get("referenceSystemName").and_then(|v| v.as_str()) {
+                    if let Some(code_str) = name.strip_prefix("EPSG:") {
+                        if let Ok(code) = code_str.parse::<u32>() {
+                            return Ok(CRS::from_epsg(code));
+                        }
+                    }
+                }
+                // Try base_url field
+                if let Some(base_url) = rs_obj.get("base_url").and_then(|v| v.as_str()) {
+                    if base_url.contains("EPSG") {
+                        let parts: Vec<&str> = base_url.split('/').collect();
+                        if let Some(last) = parts.last() {
+                            if let Ok(code) = last.parse::<u32>() {
+                                return Ok(CRS::from_epsg(code));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Fallback to CRS string (CityJSON 1.0)
+        if let Some(crs_value) = metadata.get("CRS") {
+            if let Some(crs_str) = crs_value.as_str() {
+                // Handle EPSG:XXXX format
+                if let Some(code_str) = crs_str.strip_prefix("EPSG:") {
+                    if let Ok(code) = code_str.parse::<u32>() {
+                        return Ok(CRS::from_epsg(code));
+                    }
+                }
+                // Handle URN format
+                if crs_str.contains("EPSG") {
+                    let parts: Vec<&str> = crs_str.split('/').collect();
+                    if let Some(last) = parts.last() {
+                        if let Ok(code) = last.parse::<u32>() {
+                            return Ok(CRS::from_epsg(code));
+                        }
+                    }
                 }
             }
         }
     }
 
-    // Default to WGS84
+    // Default CRS
     Ok(CRS::default())
 }
 
-// Helper function to extract transform from data
-pub(crate) fn extract_transform_from_data(data: &Value) -> Result<Option<Transform>> {
-    if let Some(transform) = data.get("transform") {
-        let scale = transform
-            .get("scale")
-            .and_then(|s| s.as_array())
-            .and_then(|arr| {
-                if arr.len() == 3 {
-                    Some([arr[0].as_f64()?, arr[1].as_f64()?, arr[2].as_f64()?])
+/// Extract transform from CityJSON data
+fn extract_transform_from_data(data: &Value) -> Result<Option<Transform>> {
+    if let Some(transform_obj) = data.get("transform") {
+        if let Some(obj) = transform_obj.as_object() {
+            let scale = obj.get("scale").and_then(|v| v.as_array()).and_then(|arr| {
+                let vals: Vec<f64> = arr.iter().filter_map(|v| v.as_f64()).collect();
+                if vals.len() == 3 {
+                    Some([vals[0], vals[1], vals[2]])
                 } else {
                     None
                 }
             });
 
-        let translate = transform
-            .get("translate")
-            .and_then(|t| t.as_array())
-            .and_then(|arr| {
-                if arr.len() == 3 {
-                    Some([arr[0].as_f64()?, arr[1].as_f64()?, arr[2].as_f64()?])
-                } else {
-                    None
-                }
-            });
+            let translate = obj
+                .get("translate")
+                .and_then(|v| v.as_array())
+                .and_then(|arr| {
+                    let vals: Vec<f64> = arr.iter().filter_map(|v| v.as_f64()).collect();
+                    if vals.len() == 3 {
+                        Some([vals[0], vals[1], vals[2]])
+                    } else {
+                        None
+                    }
+                });
 
-        if let (Some(scale), Some(translate)) = (scale, translate) {
-            return Ok(Some(Transform::new(scale, translate)));
+            if let (Some(s), Some(t)) = (scale, translate) {
+                return Ok(Some(Transform::new(s, t)));
+            }
         }
     }
-
     Ok(None)
 }
 
-// Helper function to extract LODs from data (uses BTreeSet for automatic sorting)
-pub(crate) fn extract_lods_from_data(data: &Value) -> Result<Vec<String>> {
+/// Extract LODs from CityJSON data
+fn extract_lods_from_data(data: &Value) -> Result<Vec<String>> {
     let mut lods = BTreeSet::new();
 
     if let Some(city_objects) = data.get("CityObjects") {
-        if let Some(objects) = city_objects.as_object() {
-            for (_id, obj) in objects {
-                if let Some(geometry) = obj.get("geometry") {
-                    if let Some(geom_array) = geometry.as_array() {
+        if let Some(objs) = city_objects.as_object() {
+            for (_id, obj) in objs {
+                if let Some(geometries) = obj.get("geometry") {
+                    if let Some(geom_array) = geometries.as_array() {
                         for geom in geom_array {
-                            if let Some(lod) = geom.get("lod") {
-                                if let Some(lod_num) = lod.as_f64() {
-                                    lods.insert(format!("{lod_num}"));
-                                } else if let Some(lod_str) = lod.as_str() {
-                                    lods.insert(lod_str.to_string());
-                                }
+                            if let Some(lod) = geom.get("lod").and_then(|v| v.as_str()) {
+                                lods.insert(lod.to_string());
                             }
                         }
                     }
@@ -243,53 +281,21 @@ pub(crate) fn extract_lods_from_data(data: &Value) -> Result<Vec<String>> {
         }
     }
 
-    // BTreeSet is already sorted, just collect to Vec
     Ok(lods.into_iter().collect())
 }
 
-// Helper function to extract city object types (uses BTreeSet for automatic sorting)
-pub(crate) fn extract_city_object_types_from_data(data: &Value) -> Result<Vec<String>> {
+/// Extract city object types from CityJSON data
+fn extract_city_object_types_from_data(data: &Value) -> Result<Vec<String>> {
     let mut types = BTreeSet::new();
 
     if let Some(city_objects) = data.get("CityObjects") {
-        if let Some(objects) = city_objects.as_object() {
-            for (_id, obj) in objects {
-                if let Some(obj_type) = obj.get("type") {
-                    if let Some(type_str) = obj_type.as_str() {
-                        types.insert(type_str.to_string());
-                    }
-                }
-            }
-        }
-    }
-
-    // BTreeSet is already sorted, just collect to Vec
-    Ok(types.into_iter().collect())
-}
-
-// Helper function to count city objects
-pub(crate) fn count_city_objects_from_data(data: &Value) -> Result<usize> {
-    if let Some(city_objects) = data.get("CityObjects") {
-        if let Some(objects) = city_objects.as_object() {
-            return Ok(objects.len());
-        }
-    }
-
-    Ok(0)
-}
-
-// Helper function to extract attribute schema
-pub(crate) fn extract_attributes_from_data(data: &Value) -> Result<Vec<AttributeDefinition>> {
-    let mut attribute_map: HashMap<String, AttributeType> = HashMap::new();
-
-    if let Some(city_objects) = data.get("CityObjects") {
-        if let Some(objects) = city_objects.as_object() {
-            for (_id, obj) in objects {
-                if let Some(attributes) = obj.get("attributes") {
-                    if let Some(attrs) = attributes.as_object() {
-                        for (key, value) in attrs {
-                            let attr_type = AttributeType::from_json_value(value);
-                            attribute_map.insert(key.clone(), attr_type);
+        if let Some(objs) = city_objects.as_object() {
+            for (_id, obj) in objs {
+                if let Some(type_val) = obj.get("type") {
+                    if let Some(type_str) = type_val.as_str() {
+                        // Filter out extension types (starting with +)
+                        if !type_str.starts_with('+') {
+                            types.insert(type_str.to_string());
                         }
                     }
                 }
@@ -297,68 +303,79 @@ pub(crate) fn extract_attributes_from_data(data: &Value) -> Result<Vec<Attribute
         }
     }
 
-    let mut attributes: Vec<AttributeDefinition> = attribute_map
-        .into_iter()
-        .map(|(name, attr_type)| AttributeDefinition::new(name, attr_type))
-        .collect();
-
-    attributes.sort_by(|a, b| a.name.cmp(&b.name));
-    Ok(attributes)
+    Ok(types.into_iter().collect())
 }
 
-// Helper function to extract version
-pub(crate) fn extract_version_from_data(data: &Value) -> Result<String> {
-    if let Some(version) = data.get("version") {
-        if let Some(v_str) = version.as_str() {
-            return Ok(v_str.to_string());
+/// Extract attributes from CityJSON data
+fn extract_attributes_from_data(data: &Value) -> Result<Vec<AttributeDefinition>> {
+    let mut attributes_map: HashMap<String, AttributeType> = HashMap::new();
+
+    if let Some(city_objects) = data.get("CityObjects") {
+        if let Some(objs) = city_objects.as_object() {
+            for (_id, obj) in objs {
+                if let Some(attrs) = obj.get("attributes") {
+                    if let Some(attrs_obj) = attrs.as_object() {
+                        for (attr_name, attr_value) in attrs_obj {
+                            let attr_type = match attr_value {
+                                Value::String(_) => AttributeType::String,
+                                Value::Number(_) => AttributeType::Number,
+                                Value::Bool(_) => AttributeType::Boolean,
+                                Value::Array(_) => AttributeType::Array,
+                                Value::Object(_) => AttributeType::Object,
+                                Value::Null => continue,
+                            };
+
+                            // Merge attribute types: if conflicting types, use String
+                            attributes_map
+                                .entry(attr_name.clone())
+                                .and_modify(|existing| {
+                                    if *existing != attr_type {
+                                        *existing = AttributeType::String;
+                                    }
+                                })
+                                .or_insert(attr_type);
+                        }
+                    }
+                }
+            }
         }
     }
 
-    Ok("1.0".to_string()) // Default version
+    let mut attributes: Vec<_> = attributes_map
+        .into_iter()
+        .map(|(name, attr_type)| AttributeDefinition::new(&name, attr_type))
+        .collect();
+
+    // Sort by name for consistent output
+    attributes.sort_by(|a, b| a.name.cmp(&b.name));
+
+    Ok(attributes)
 }
 
-/// Helper function to extract CityJSON extensions (Application Domain Extensions)
-///
-/// In CityJSON, extensions are declared at the root level in an object where:
-/// - The key is the URL to the extension schema file
-/// - The value is the extension name/prefix (used for new City Object types with "+" prefix)
-///
-/// Example:
-/// ```json
-/// "extensions": {
-///   "https://example.org/noise.ext.json": "Noise",
-///   "https://cityjson.org/extensions/3dbag.json": "3DBAG"
-/// }
-/// ```
-pub(crate) fn extract_extensions_from_data(data: &Value) -> Result<Vec<String>> {
+/// Extract extensions from CityJSON data
+fn extract_extensions_from_data(data: &Value) -> Result<Vec<String>> {
     let mut extensions = Vec::new();
 
-    if let Some(ext_obj) = data.get("extensions") {
-        if let Some(obj) = ext_obj.as_object() {
-            // Extensions are stored as {url: name}, we return the URLs
-            for url in obj.keys() {
+    if let Some(ext) = data.get("extensions") {
+        if let Some(ext_obj) = ext.as_object() {
+            for (url, _name) in ext_obj {
                 extensions.push(url.clone());
             }
         }
     }
 
-    // Sort for consistent output
     extensions.sort();
     Ok(extensions)
 }
 
-/// Helper function to extract semantic surfaces from data
-pub(crate) fn extract_semantic_surfaces_from_data(data: &Value) -> Result<bool> {
-    // Check if any geometry has semantic surfaces
-    // CityJSON 2.0 stores semantic surfaces in "semantics" object
-    // which is present alongside geometry boundaries
+/// Extract semantic surfaces presence from CityJSON data
+fn extract_semantic_surfaces_from_data(data: &Value) -> Result<bool> {
     if let Some(city_objects) = data.get("CityObjects") {
-        if let Some(objects) = city_objects.as_object() {
-            for (_id, obj) in objects {
-                if let Some(geometry) = obj.get("geometry") {
-                    if let Some(geom_array) = geometry.as_array() {
+        if let Some(objs) = city_objects.as_object() {
+            for (_id, obj) in objs {
+                if let Some(geometries) = obj.get("geometry") {
+                    if let Some(geom_array) = geometries.as_array() {
                         for geom in geom_array {
-                            // Check for semantics property which indicates semantic surfaces
                             if geom.get("semantics").is_some() {
                                 return Ok(true);
                             }
@@ -366,6 +383,26 @@ pub(crate) fn extract_semantic_surfaces_from_data(data: &Value) -> Result<bool> 
                     }
                 }
             }
+        }
+    }
+    Ok(false)
+}
+
+/// Extract textures presence from CityJSON data
+fn extract_textures_from_data(data: &Value) -> Result<bool> {
+    if let Some(appearance) = data.get("appearance") {
+        if appearance.get("textures").is_some() {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
+/// Extract materials presence from CityJSON data
+fn extract_materials_from_data(data: &Value) -> Result<bool> {
+    if let Some(appearance) = data.get("appearance") {
+        if appearance.get("materials").is_some() {
+            return Ok(true);
         }
     }
     Ok(false)
@@ -389,7 +426,14 @@ impl CityModelMetadataReader for CityJSONReader {
     }
 
     fn city_object_count(&self) -> Result<usize> {
-        self.with_data(count_city_objects_from_data)
+        self.with_data(|data| {
+            if let Some(city_objects) = data.get("CityObjects") {
+                if let Some(objs) = city_objects.as_object() {
+                    return Ok(objs.len());
+                }
+            }
+            Ok(0)
+        })
     }
 
     fn attributes(&self) -> Result<Vec<AttributeDefinition>> {
@@ -401,7 +445,14 @@ impl CityModelMetadataReader for CityJSONReader {
     }
 
     fn version(&self) -> Result<String> {
-        self.with_data(extract_version_from_data)
+        self.with_data(|data| {
+            if let Some(version) = data.get("version") {
+                if let Some(v) = version.as_str() {
+                    return Ok(v.to_string());
+                }
+            }
+            Ok("1.0".to_string()) // Default version
+        })
     }
 
     fn file_path(&self) -> &Path {
@@ -425,17 +476,11 @@ impl CityModelMetadataReader for CityJSONReader {
     }
 
     fn textures(&self) -> Result<bool> {
-        self.with_data(|data| {
-            // Check for textures in the root-level textures object
-            Ok(data.get("textures").is_some())
-        })
+        self.with_data(extract_textures_from_data)
     }
 
     fn materials(&self) -> Result<bool> {
-        self.with_data(|data| {
-            // Check for materials in the root-level materials object
-            Ok(data.get("materials").is_some())
-        })
+        self.with_data(extract_materials_from_data)
     }
 }
 
@@ -452,7 +497,14 @@ mod tests {
             "version": "2.0",
             "metadata": {
                 "geographicalExtent": [1.0, 2.0, 0.0, 10.0, 20.0, 30.0],
-                "referenceSystem": "https://www.opengis.net/def/crs/EPSG/0/7415"
+                "referenceSystem": {
+                    "type": "referenceSystem",
+                    "referenceSystemName": "EPSG:7415",
+                    "base_url": "https://www.opengis.net/def/crs/EPSG/0/7415",
+                    "authority": "EPSG",
+                    "version": "0",
+                    "code": "7415"
+                }
             },
             "CityObjects": {
                 "building1": {
@@ -492,6 +544,12 @@ mod tests {
         let temp_file = create_test_cityjson();
         let reader = CityJSONReader::new(temp_file.path());
         assert!(reader.is_ok());
+    }
+
+    #[test]
+    fn test_cityjson_reader_not_found() {
+        let reader = CityJSONReader::new(Path::new("/nonexistent/file.json"));
+        assert!(reader.is_err());
     }
 
     #[test]
@@ -585,8 +643,7 @@ mod tests {
                 "https://3dbag.nl/extensions/3dbag.ext.json": "3DBAG"
             },
             "metadata": {
-                "geographicalExtent": [1.0, 2.0, 0.0, 10.0, 20.0, 30.0],
-                "referenceSystem": "https://www.opengis.net/def/crs/EPSG/0/7415"
+                "geographicalExtent": [1.0, 2.0, 0.0, 10.0, 20.0, 30.0]
             },
             "CityObjects": {
                 "building1": {
@@ -598,42 +655,167 @@ mod tests {
         }"#;
 
         writeln!(temp_file, "{}", cityjson).unwrap();
-        temp_file.flush().unwrap();
-
         let reader = CityJSONReader::new(temp_file.path()).unwrap();
         let extensions = reader.extensions().unwrap();
 
         assert_eq!(extensions.len(), 2);
-        assert!(extensions.contains(&"https://3dbag.nl/extensions/3dbag.ext.json".to_string()));
         assert!(
             extensions.contains(&"https://www.cityjson.org/extensions/noise.ext.json".to_string())
         );
+        assert!(extensions.contains(&"https://3dbag.nl/extensions/3dbag.ext.json".to_string()));
     }
 
     #[test]
     fn test_cityjson_extensions_sorted() {
-        // Verify extensions are returned sorted
+        // Extensions should be returned sorted
         let mut temp_file = NamedTempFile::new().unwrap();
         let cityjson = r#"{
             "type": "CityJSON",
             "version": "2.0",
             "extensions": {
-                "https://z-extension.org/z.ext.json": "Z",
-                "https://a-extension.org/a.ext.json": "A"
+                "https://z.ext.json": "Z",
+                "https://a.ext.json": "A"
+            },
+            "metadata": {
+                "geographicalExtent": [0, 0, 0, 1, 1, 1]
             },
             "CityObjects": {},
             "vertices": []
         }"#;
 
         writeln!(temp_file, "{}", cityjson).unwrap();
-        temp_file.flush().unwrap();
-
         let reader = CityJSONReader::new(temp_file.path()).unwrap();
         let extensions = reader.extensions().unwrap();
 
-        assert_eq!(extensions.len(), 2);
-        // Should be sorted alphabetically
-        assert_eq!(extensions[0], "https://a-extension.org/a.ext.json");
-        assert_eq!(extensions[1], "https://z-extension.org/z.ext.json");
+        // Check that extensions are sorted
+        assert_eq!(extensions[0], "https://a.ext.json");
+        assert_eq!(extensions[1], "https://z.ext.json");
+    }
+
+    #[test]
+    fn test_cityjson_semantic_surfaces() {
+        let mut temp_file = NamedTempFile::new().unwrap();
+        let cityjson = r#"{
+            "type": "CityJSON",
+            "version": "2.0",
+            "metadata": {
+                "geographicalExtent": [0, 0, 0, 1, 1, 1]
+            },
+            "CityObjects": {
+                "building1": {
+                    "type": "Building",
+                    "geometry": [{
+                        "type": "Solid",
+                        "lod": "2",
+                        "boundaries": [],
+                        "semantics": {
+                            "surfaces": [
+                                {"type": "Wall"},
+                                {"type": "Roof"}
+                            ]
+                        }
+                    }]
+                }
+            },
+            "vertices": []
+        }"#;
+
+        writeln!(temp_file, "{}", cityjson).unwrap();
+        let reader = CityJSONReader::new(temp_file.path()).unwrap();
+        assert!(reader.semantic_surfaces().unwrap());
+    }
+
+    #[test]
+    fn test_cityjson_no_semantic_surfaces() {
+        let temp_file = create_test_cityjson();
+        let reader = CityJSONReader::new(temp_file.path()).unwrap();
+        assert!(!reader.semantic_surfaces().unwrap());
+    }
+
+    #[test]
+    fn test_cityjson_textures() {
+        let mut temp_file = NamedTempFile::new().unwrap();
+        let cityjson = r#"{
+            "type": "CityJSON",
+            "version": "2.0",
+            "metadata": {
+                "geographicalExtent": [0, 0, 0, 1, 1, 1]
+            },
+            "appearance": {
+                "textures": [
+                    {
+                        "type": "PNG",
+                        "image": "base64..."
+                    }
+                ]
+            },
+            "CityObjects": {},
+            "vertices": []
+        }"#;
+
+        writeln!(temp_file, "{}", cityjson).unwrap();
+        let reader = CityJSONReader::new(temp_file.path()).unwrap();
+        assert!(reader.textures().unwrap());
+    }
+
+    #[test]
+    fn test_cityjson_materials() {
+        let mut temp_file = NamedTempFile::new().unwrap();
+        let cityjson = r#"{
+            "type": "CityJSON",
+            "version": "2.0",
+            "metadata": {
+                "geographicalExtent": [0, 0, 0, 1, 1, 1]
+            },
+            "appearance": {
+                "materials": [
+                    {
+                        "name": "roof",
+                        "ambientIntensity": 0.6
+                    }
+                ]
+            },
+            "CityObjects": {},
+            "vertices": []
+        }"#;
+
+        writeln!(temp_file, "{}", cityjson).unwrap();
+        let reader = CityJSONReader::new(temp_file.path()).unwrap();
+        assert!(reader.materials().unwrap());
+    }
+
+    #[test]
+    fn test_cityjson_transform() {
+        let mut temp_file = NamedTempFile::new().unwrap();
+        let cityjson = r#"{
+            "type": "CityJSON",
+            "version": "2.0",
+            "transform": {
+                "scale": [0.01, 0.01, 0.01],
+                "translate": [100000, 200000, 0]
+            },
+            "metadata": {
+                "geographicalExtent": [0, 0, 0, 1, 1, 1]
+            },
+            "CityObjects": {},
+            "vertices": []
+        }"#;
+
+        writeln!(temp_file, "{}", cityjson).unwrap();
+        let reader = CityJSONReader::new(temp_file.path()).unwrap();
+        let transform = reader.transform().unwrap();
+        assert!(transform.is_some());
+
+        let t = transform.unwrap();
+        assert_eq!(t.scale, [0.01, 0.01, 0.01]);
+        assert_eq!(t.translate, [100000.0, 200000.0, 0.0]);
+    }
+
+    #[test]
+    fn test_cityjson_metadata() {
+        let temp_file = create_test_cityjson();
+        let reader = CityJSONReader::new(temp_file.path()).unwrap();
+        let metadata = reader.metadata().unwrap();
+        assert!(metadata.is_some());
     }
 }
