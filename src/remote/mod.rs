@@ -8,10 +8,9 @@
 //! - Google Cloud Storage (gs://)
 
 use crate::error::{CityJsonStacError, Result};
-use crate::reader::InputSource;
-use bytes::Bytes;
-use object_store::{path::Path as ObjectPath, DynObjectStore, ObjectStore};
+use object_store::DynObjectStore;
 use std::sync::Arc;
+use url::Url;
 
 /// Create an object store from a URL string
 ///
@@ -30,130 +29,17 @@ use std::sync::Arc;
 ///
 /// # Errors
 /// Returns error if URL scheme is unsupported or credentials are missing
-pub async fn create_store_from_url(url: &str) -> Result<(Arc<DynObjectStore>, ObjectPath)> {
+pub async fn create_store_from_url(
+    url: &str,
+    options: Option<Vec<(&str, &str)>>,
+) -> Result<Arc<DynObjectStore>> {
     // Check for HTTP/HTTPS URLs first
-    if url.starts_with("http://") || url.starts_with("https://") {
-        let parsed = url::Url::parse(url)
-            .map_err(|e| CityJsonStacError::StorageError(format!("Invalid URL: {e}")))?;
-
-        // Extract base URL (scheme + host)
-        let base_url = format!(
-            "{}://{}",
-            parsed.scheme(),
-            parsed.host_str().unwrap_or("localhost")
-        );
-
-        let store = object_store::http::HttpBuilder::new()
-            .with_url(&base_url)
-            .build()
-            .map_err(|e| {
-                CityJsonStacError::StorageError(format!("Failed to create HTTP store: {e}"))
-            })?;
-
-        let path = parsed.path().to_string();
-
-        let parsed_path = ObjectPath::from(path.as_str());
-
-        Ok((Arc::new(store), parsed_path))
-    } else if url.starts_with("s3://") {
-        // S3 URLs are s3://bucket/key
-        let store = object_store::aws::AmazonS3Builder::from_env()
-            .with_url(url)
-            .build()
-            .map_err(|e| {
-                CityJsonStacError::StorageError(format!("Failed to create S3 store: {e}"))
-            })?;
-
-        Ok((
-            Arc::new(store),
-            ObjectPath::parse(url.strip_prefix("s3://").unwrap_or("")).map_err(|e| {
-                CityJsonStacError::StorageError(format!("Failed to parse S3 path: {e}"))
-            })?,
-        ))
-    } else if url.starts_with("az://") || url.starts_with("azure://") {
-        // Azure URLs are az://container/key or azure://container/key
-        let store = object_store::azure::MicrosoftAzureBuilder::from_env()
-            .with_url(url)
-            .build()
-            .map_err(|e| {
-                CityJsonStacError::StorageError(format!("Failed to create Azure store: {e}"))
-            })?;
-
-        Ok((
-            Arc::new(store),
-            ObjectPath::parse(
-                url.strip_prefix("az://")
-                    .or(Some("azure://"))
-                    .unwrap_or("")
-                    .strip_prefix("azure://")
-                    .unwrap_or(""),
-            )
-            .map_err(|e| {
-                CityJsonStacError::StorageError(format!("Failed to parse Azure path: {e}"))
-            })?,
-        ))
-    } else if url.starts_with("gs://") {
-        // GCS URLs are gs://bucket/key
-        let store = object_store::gcp::GoogleCloudStorageBuilder::from_env()
-            .with_url(url)
-            .build()
-            .map_err(|e| {
-                CityJsonStacError::StorageError(format!("Failed to create GCS store: {e}"))
-            })?;
-
-        Ok((
-            Arc::new(store),
-            ObjectPath::parse(url.strip_prefix("gs://").unwrap_or("")).map_err(|e| {
-                CityJsonStacError::StorageError(format!("Failed to parse GCS path: {e}"))
-            })?,
-        ))
-    } else {
-        // Not an object_store URL, treat as local file path
-        let local = object_store::local::LocalFileSystem::new();
-        let path = ObjectPath::from(url);
-        Ok((Arc::new(local), path))
-    }
-}
-
-/// Download content to memory using object_store
-///
-/// # Arguments
-/// * `source` - InputSource (local path or URL)
-///
-/// # Returns
-/// Downloaded bytes
-///
-/// # Errors
-/// Returns error if:
-/// - Object store operation fails
-/// - File/object not found
-/// - Access denied
-pub async fn fetch_to_bytes(source: &InputSource) -> Result<Bytes> {
-    match source {
-        InputSource::Local(path_buf) => {
-            // For local files, use tokio fs directly (faster than object_store)
-            let bytes = tokio::fs::read(path_buf).await.map_err(|e| {
-                CityJsonStacError::StorageError(format!("Failed to read file: {e}"))
-            })?;
-            Ok(Bytes::from(bytes))
-        }
-        InputSource::Remote(url) => {
-            // Fetch from object store
-            let (store, path) = create_store_from_url(url).await?;
-
-            let get_result = store.get(&path).await;
-
-            let bytes = get_result
-                .map_err(|e| CityJsonStacError::StorageError(format!("Failed to fetch: {e}")))?
-                .bytes()
-                .await
-                .map_err(|e| {
-                    CityJsonStacError::StorageError(format!("Failed to read bytes: {e}"))
-                })?;
-
-            Ok(bytes)
-        }
-    }
+    let url = Url::parse(url).map_err(CityJsonStacError::UrlError)?;
+    let (store, _path) =
+        object_store::parse_url_opts(&url, options.unwrap_or_default()).map_err(|e| {
+            CityJsonStacError::StorageError(format!("Failed to create object store: {e}"))
+        })?;
+    Ok(Arc::from(store))
 }
 
 /// Extract file extension from URL or path

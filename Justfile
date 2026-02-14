@@ -28,7 +28,7 @@ clean-gen:
 
 # Run tests
 test:
-    cargo test
+    cargo nextest run --all-features
 
 # Check formatting
 fmt-check:
@@ -39,11 +39,15 @@ fmt:
     cargo fmt
 
 # Run clippy
-clippy:
-    cargo clippy -- -D warnings
+lint:
+    cargo clippy --fix --allow-dirty --all-features
+    cargo check --all-features
+
+
+pre-commit: fmt lint test build
 
 # Full CI check
-ci: fmt clippy test
+ci: fmt-check lint test build
 
 # run dev container
 devcon:
