@@ -106,6 +106,51 @@ impl CityJSONSeqReader {
         })
     }
 
+    /// Create a CityJSONSeq reader from in-memory content
+    ///
+    /// This is used for remote files that have been downloaded as strings.
+    /// The `virtual_path` is used for display purposes (e.g., the original filename).
+    pub fn from_content(content: &str, virtual_path: PathBuf) -> Result<Self> {
+        let mut lines = content.lines();
+
+        // First line: CityJSON header (metadata only)
+        let first_line = lines
+            .next()
+            .ok_or_else(|| CityJsonStacError::Other("Empty CityJSONSeq content".to_string()))?;
+
+        let metadata_header = cjseq::CityJSON::from_str(first_line).map_err(|e| {
+            CityJsonStacError::Other(format!("Failed to parse CityJSONSeq header: {e}"))
+        })?;
+
+        // Stream through remaining lines to aggregate statistics
+        let mut aggregated = AggregatedMetadata {
+            lods: HashSet::new(),
+            city_object_types: HashSet::new(),
+            city_object_count: 0,
+            attributes: HashMap::new(),
+            has_semantic_surfaces: false,
+            has_textures: false,
+            has_materials: false,
+        };
+
+        for line in lines {
+            if line.trim().is_empty() {
+                continue;
+            }
+
+            let feature = cjseq::CityJSONFeature::from_str(line).map_err(|e| {
+                CityJsonStacError::Other(format!("Failed to parse CityJSONFeature: {e}"))
+            })?;
+            Self::process_feature(&feature, &mut aggregated);
+        }
+
+        Ok(Self {
+            file_path: virtual_path,
+            metadata_header,
+            aggregated: RwLock::new(Some(aggregated)),
+        })
+    }
+
     /// Process a single feature and update aggregated statistics
     fn process_feature(feature: &cjseq::CityJSONFeature, aggregated: &mut AggregatedMetadata) {
         for city_object in feature.city_objects.values() {
@@ -487,5 +532,40 @@ mod tests {
         let temp_file = create_test_cityjsonseq();
         let reader = CityJSONSeqReader::new(temp_file.path()).unwrap();
         assert!(!reader.semantic_surfaces().unwrap());
+    }
+
+    #[test]
+    fn test_cityjsonseq_from_content() {
+        let content = [
+            r#"{"type":"CityJSON","version":"2.0","transform":{"scale":[0.01,0.01,0.01],"translate":[100000,200000,0]},"CityObjects":{},"vertices":[],"metadata":{"geographicalExtent":[1.0,2.0,0.0,10.0,20.0,30.0],"referenceSystem":"https://www.opengis.net/def/crs/EPSG/0/7415"}}"#,
+            r#"{"type":"CityJSONFeature","id":"building1","CityObjects":{"building1":{"type":"Building","geometry":[{"type":"Solid","lod":"2","boundaries":[[[[0,0,0]]]]}],"attributes":{"yearOfConstruction":2020}}},"vertices":[[1000,2000,3000]]}"#,
+            r#"{"type":"CityJSONFeature","id":"building2","CityObjects":{"building2":{"type":"Building","geometry":[{"type":"Solid","lod":"2.2","boundaries":[[[[0,0,0]]]]}]}},"vertices":[[2000,3000,4000]]}"#,
+        ].join("\n");
+
+        let reader =
+            CityJSONSeqReader::from_content(&content, PathBuf::from("remote.city.jsonl")).unwrap();
+
+        assert_eq!(reader.version().unwrap(), "2.0");
+        assert_eq!(reader.city_object_count().unwrap(), 2);
+        assert_eq!(reader.city_object_types().unwrap(), vec!["Building"]);
+        assert_eq!(reader.crs().unwrap().epsg, Some(7415));
+        assert_eq!(reader.file_path(), Path::new("remote.city.jsonl"));
+        assert_eq!(reader.encoding(), "CityJSONSeq");
+
+        let lods = reader.lods().unwrap();
+        assert!(lods.contains(&"2".to_string()));
+        assert!(lods.contains(&"2.2".to_string()));
+    }
+
+    #[test]
+    fn test_cityjsonseq_from_content_empty() {
+        let result = CityJSONSeqReader::from_content("", PathBuf::from("empty.jsonl"));
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_cityjsonseq_from_content_invalid_header() {
+        let result = CityJSONSeqReader::from_content("not valid json", PathBuf::from("bad.jsonl"));
+        assert!(result.is_err());
     }
 }

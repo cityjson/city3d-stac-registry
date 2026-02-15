@@ -42,6 +42,34 @@ pub async fn create_store_from_url(
     Ok(Arc::from(store))
 }
 
+/// Download content from a remote URL as bytes
+///
+/// Uses `object_store` to support multiple backends:
+/// - HTTP/HTTPS URLs
+/// - Amazon S3 (`s3://`)
+/// - Azure Blob Storage (`az://`, `azure://`)
+/// - Google Cloud Storage (`gs://`)
+///
+/// # Arguments
+/// * `url` - Remote URL string
+///
+/// # Returns
+/// Downloaded file content as `bytes::Bytes`
+///
+/// # Errors
+/// Returns error if URL parsing fails, store creation fails, or download fails
+pub async fn download_from_url(url: &str) -> Result<bytes::Bytes> {
+    let parsed_url = Url::parse(url).map_err(CityJsonStacError::UrlError)?;
+    let (store, path) = object_store::parse_url_opts(&parsed_url, Vec::<(String, String)>::new())
+        .map_err(|e| {
+        CityJsonStacError::StorageError(format!("Failed to create object store: {e}"))
+    })?;
+
+    let result = store.get(&path).await?;
+    let bytes = result.bytes().await?;
+    Ok(bytes)
+}
+
 /// Extract file extension from URL or path
 ///
 /// # Arguments

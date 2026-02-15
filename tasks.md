@@ -153,9 +153,52 @@ pub struct AggregatedMetadata {
 
 ## Task 4: Remote Data Access
 
-### Status: ⏳ Deferred
+### Status: ✅ Complete
 
-The note says "Work on 1, 2 and 3 in order", so this is for later.
+#### Implementation Approach
+
+Remote files are downloaded via the `object_store` crate and parsed in-memory using `from_content()` constructors. No temporary files are needed.
+
+**Supported backends:**
+- HTTP/HTTPS URLs
+- Amazon S3 (`s3://`)
+- Azure Blob Storage (`az://`, `azure://`)
+- Google Cloud Storage (`gs://`)
+
+**Supported remote formats:**
+- CityJSON (`.json`)
+- CityJSONSeq (`.jsonl`, `.cjseq`)
+
+#### 4.1 Changes Made
+
+**`src/remote/mod.rs`**
+- [x] Added `download_from_url()` async function using `object_store::parse_url_opts`
+
+**`src/reader/cityjson.rs`**
+- [x] Added `CityJSONReader::from_content()` constructor for in-memory parsing
+
+**`src/reader/cjseq.rs`**
+- [x] Added `CityJSONSeqReader::from_content()` constructor for in-memory parsing
+
+**`src/reader/mod.rs`**
+- [x] Implemented `InputSource::Remote` variant in `get_reader_from_source()`
+- [x] Extension validation before download (avoids wasting bandwidth)
+- [x] Virtual file path from URL filename for STAC item ID generation
+
+#### 4.2 Design Decisions
+
+1. **In-memory parsing**: Remote files are downloaded as bytes, converted to UTF-8 strings, and parsed directly using `from_content()`. No temp files needed since CityJSON/CityJSONSeq are text-based.
+2. **Extension validation first**: The URL's file extension is checked before downloading to avoid fetching unsupported formats.
+3. **Virtual path**: The URL's filename is used as a virtual `file_path` for STAC item ID generation and display.
+
+#### 4.3 Verification
+
+- [x] `cargo test` passes (252 tests)
+- [x] `cargo clippy -- -D warnings` passes
+- [x] `cargo fmt --check` passes
+- [x] Unit tests for `from_content()` on both readers
+- [x] Unit tests for `InputSource` variants
+- [x] Unit test for unsupported remote extension rejection
 
 ---
 
@@ -163,7 +206,7 @@ The note says "Work on 1, 2 and 3 in order", so this is for later.
 
 After implementation is complete:
 
-- [x] Run `cargo test --lib` - All unit tests pass (78 tests)
+- [x] Run `cargo test --lib` - All unit tests pass (89 tests)
 - [x] Run `cargo clippy -- -D warnings` - No warnings
 - [x] Run `cargo fmt --check` - Properly formatted
 - [x] Test with real data in `tests/data/`:
@@ -176,6 +219,7 @@ After implementation is complete:
 - [x] Documentation updates complete (Task 1)
 - [x] CityJSONReader using cjseq (Task 2)
 - [x] CityJSONSeqReader using cjseq (Task 3)
+- [x] Remote data access for CityJSON and CityJSONSeq (Task 4)
 
 ---
 

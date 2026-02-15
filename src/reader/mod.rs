@@ -14,7 +14,7 @@ pub use fcb::FlatCityBufReader;
 
 use crate::error::{CityJsonStacError, Result};
 use crate::metadata::{AttributeDefinition, BBox3D, Transform, CRS};
-use crate::remote::is_remote_url;
+use crate::remote::{download_from_url, extract_extension_from_url, is_remote_url, url_filename};
 use serde_json::Value;
 use std::path::{Path, PathBuf};
 
@@ -64,13 +64,45 @@ pub async fn get_reader_from_source(
 ) -> Result<Box<dyn CityModelMetadataReader>> {
     match source {
         InputSource::Local(path) => get_reader(path),
-        InputSource::Remote(_) => {
-            // TODO: Implement remote readers
-            // For now, we need to download the remote file and use it
-            // Remote reader implementation is planned but not yet available
-            Err(CityJsonStacError::Other(
-                "Remote readers are not yet implemented. Please use local files.".to_string(),
-            ))
+        InputSource::Remote(url) => {
+            // Validate extension before downloading to avoid wasting bandwidth
+            let extension = extract_extension_from_url(url)?;
+            match extension.as_str() {
+                "json" | "jsonl" | "cjseq" => {}
+                _ => {
+                    return Err(CityJsonStacError::InvalidCityJson(format!(
+                        "Unsupported remote file extension: {extension}. Supported: .json, .jsonl, .cjseq",
+                    )));
+                }
+            }
+
+            log::info!("Downloading remote file: {}", url);
+
+            let bytes = download_from_url(url).await?;
+            let content = String::from_utf8(bytes.to_vec()).map_err(|e| {
+                CityJsonStacError::Other(format!("Remote file is not valid UTF-8: {e}"))
+            })?;
+
+            let filename = url_filename(url);
+            let virtual_path = PathBuf::from(&filename);
+
+            log::debug!(
+                "Remote file downloaded: {} bytes, extension: {}",
+                content.len(),
+                extension
+            );
+
+            match extension.as_str() {
+                "json" => Ok(Box::new(CityJSONReader::from_content(
+                    &content,
+                    virtual_path,
+                )?)),
+                "jsonl" | "cjseq" => Ok(Box::new(CityJSONSeqReader::from_content(
+                    &content,
+                    virtual_path,
+                )?)),
+                _ => unreachable!("extension already validated above"),
+            }
         }
     }
 }
@@ -139,5 +171,53 @@ pub fn get_reader(path: &Path) -> Result<Box<dyn CityModelMetadataReader>> {
         _ => Err(CityJsonStacError::InvalidCityJson(format!(
             "Unsupported file extension: {extension}",
         ))),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_input_source_local() {
+        let source = InputSource::from_str_input("tests/data/delft.city.json").unwrap();
+        assert!(matches!(source, InputSource::Local(_)));
+    }
+
+    #[test]
+    fn test_input_source_remote_https() {
+        let source = InputSource::from_str_input("https://example.com/data/city.json").unwrap();
+        assert!(matches!(source, InputSource::Remote(_)));
+    }
+
+    #[test]
+    fn test_input_source_remote_s3() {
+        let source = InputSource::from_str_input("s3://bucket/path/city.json").unwrap();
+        assert!(matches!(source, InputSource::Remote(_)));
+    }
+
+    #[test]
+    fn test_input_source_remote_azure() {
+        let source = InputSource::from_str_input("az://container/city.json").unwrap();
+        assert!(matches!(source, InputSource::Remote(_)));
+    }
+
+    #[test]
+    fn test_input_source_remote_gcs() {
+        let source = InputSource::from_str_input("gs://bucket/city.json").unwrap();
+        assert!(matches!(source, InputSource::Remote(_)));
+    }
+
+    #[tokio::test]
+    async fn test_get_reader_from_source_unsupported_remote_extension() {
+        let source = InputSource::Remote("https://example.com/data/file.txt".to_string());
+        let result = get_reader_from_source(&source).await;
+        assert!(result.is_err());
+        match result {
+            Err(CityJsonStacError::InvalidCityJson(msg)) => {
+                assert!(msg.contains("Unsupported remote file extension"));
+            }
+            _ => panic!("Expected InvalidCityJson error for unsupported extension"),
+        }
     }
 }

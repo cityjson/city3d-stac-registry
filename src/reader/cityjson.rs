@@ -42,6 +42,19 @@ impl CityJSONReader {
         })
     }
 
+    /// Create a CityJSON reader from in-memory content
+    ///
+    /// This is used for remote files that have been downloaded as strings.
+    /// The `virtual_path` is used for display purposes (e.g., the original filename).
+    pub fn from_content(content: &str, virtual_path: PathBuf) -> Result<Self> {
+        let cj = cjseq::CityJSON::from_str(content)
+            .map_err(|e| CityJsonStacError::Other(format!("Failed to parse CityJSON: {e}")))?;
+        Ok(Self {
+            file_path: virtual_path,
+            data: RwLock::new(Some(cj)),
+        })
+    }
+
     /// Lazy load and cache CityJSON data using interior mutability
     fn ensure_loaded(&self) -> Result<()> {
         // First check if already loaded with a read lock (cheaper)
@@ -712,5 +725,51 @@ mod tests {
         let reader = CityJSONReader::new(temp_file.path()).unwrap();
         let metadata = reader.metadata().unwrap();
         assert!(metadata.is_some());
+    }
+
+    #[test]
+    fn test_cityjson_from_content() {
+        let cityjson = r#"{
+            "type": "CityJSON",
+            "version": "2.0",
+            "transform": {
+                "scale": [0.01, 0.01, 0.01],
+                "translate": [100000, 200000, 0]
+            },
+            "metadata": {
+                "geographicalExtent": [1.0, 2.0, 0.0, 10.0, 20.0, 30.0],
+                "referenceSystem": "https://www.opengis.net/def/crs/EPSG/0/7415"
+            },
+            "CityObjects": {
+                "building1": {
+                    "type": "Building",
+                    "geometry": [{
+                        "type": "Solid",
+                        "lod": "2",
+                        "boundaries": [[[[0,0,0]]]]
+                    }],
+                    "attributes": {
+                        "yearOfConstruction": 2020
+                    }
+                }
+            },
+            "vertices": [[0,0,0]]
+        }"#;
+
+        let reader =
+            CityJSONReader::from_content(cityjson, PathBuf::from("remote.city.json")).unwrap();
+
+        assert_eq!(reader.version().unwrap(), "2.0");
+        assert_eq!(reader.city_object_count().unwrap(), 1);
+        assert_eq!(reader.city_object_types().unwrap(), vec!["Building"]);
+        assert_eq!(reader.crs().unwrap().epsg, Some(7415));
+        assert_eq!(reader.file_path(), Path::new("remote.city.json"));
+        assert_eq!(reader.encoding(), "CityJSON");
+    }
+
+    #[test]
+    fn test_cityjson_from_content_invalid() {
+        let result = CityJSONReader::from_content("not valid json", PathBuf::from("bad.json"));
+        assert!(result.is_err());
     }
 }
