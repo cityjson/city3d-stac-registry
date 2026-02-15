@@ -10,7 +10,7 @@ pub type Result<T> = std::result::Result<T, CityJsonStacError>;
 #[derive(Error, Debug)]
 pub enum CityJsonStacError {
     /// Unsupported file format
-    #[error("Unsupported file format: {0}\nSupported formats: .json (CityJSON), .jsonl (CityJSONSeq), .fcb (FlatCityBuf)")]
+    #[error("Unsupported file format: {0}\nSupported formats: .json (CityJSON), .jsonl (CityJSONSeq), .gml (CityGML), .fcb (FlatCityBuf)")]
     UnsupportedFormat(String),
 
     /// IO error (file not found, permission denied, etc.)
