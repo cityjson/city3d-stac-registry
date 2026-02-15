@@ -91,7 +91,10 @@ fn test_citygml3_city_object_count() {
 fn test_citygml2_city_object_types() {
     let reader = CityGMLReader::new(Path::new("tests/data/3dbag_citygml2.gml")).unwrap();
     let types = reader.city_object_types().unwrap();
-    assert!(!types.is_empty(), "Should have at least one city object type");
+    assert!(
+        !types.is_empty(),
+        "Should have at least one city object type"
+    );
     // 3DBAG datasets contain Building objects
     assert!(types.contains(&"Building".to_string()));
 }
@@ -100,7 +103,10 @@ fn test_citygml2_city_object_types() {
 fn test_citygml3_city_object_types() {
     let reader = CityGMLReader::new(Path::new("tests/data/3dbag_citygml3.gml")).unwrap();
     let types = reader.city_object_types().unwrap();
-    assert!(!types.is_empty(), "Should have at least one city object type");
+    assert!(
+        !types.is_empty(),
+        "Should have at least one city object type"
+    );
     // 3DBAG datasets contain Building objects
     assert!(types.contains(&"Building".to_string()));
 }
@@ -113,8 +119,14 @@ fn test_citygml2_attributes() {
     let attr_names: Vec<&str> = attrs.iter().map(|a| a.name.as_str()).collect();
 
     // Some expected 3DBAG attributes
-    assert!(attr_names.contains(&"b3_dak_type"), "Should have b3_dak_type attribute");
-    assert!(attr_names.contains(&"b3_h_maaiveld"), "Should have b3_h_maaiveld attribute");
+    assert!(
+        attr_names.contains(&"b3_dak_type"),
+        "Should have b3_dak_type attribute"
+    );
+    assert!(
+        attr_names.contains(&"b3_h_maaiveld"),
+        "Should have b3_h_maaiveld attribute"
+    );
 }
 
 #[test]
@@ -125,14 +137,23 @@ fn test_citygml3_attributes() {
     let attr_names: Vec<&str> = attrs.iter().map(|a| a.name.as_str()).collect();
 
     // Some expected 3DBAG attributes (3.0 format uses different attribute naming)
-    assert!(attr_names.contains(&"b3_dak_type"), "Should have b3_dak_type attribute");
-    assert!(attr_names.contains(&"b3_h_maaiveld"), "Should have b3_h_maaiveld attribute");
+    assert!(
+        attr_names.contains(&"b3_dak_type"),
+        "Should have b3_dak_type attribute"
+    );
+    assert!(
+        attr_names.contains(&"b3_h_maaiveld"),
+        "Should have b3_h_maaiveld attribute"
+    );
 }
 
 #[test]
 fn test_citygml_file_path() {
     let reader = CityGMLReader::new(Path::new("tests/data/3dbag_citygml2.gml")).unwrap();
-    assert_eq!(reader.file_path(), Path::new("tests/data/3dbag_citygml2.gml"));
+    assert_eq!(
+        reader.file_path(),
+        Path::new("tests/data/3dbag_citygml2.gml")
+    );
 }
 
 #[test]

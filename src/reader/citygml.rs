@@ -165,10 +165,18 @@ impl CityGMLReader {
                         if let Some(type_name) = local_name.split(':').last() {
                             // Common CityGML object types
                             match type_name {
-                                "Building" | "Road" | "Railway" | "TransportationComplex"
-                                | "Tunnel" | "Bridge" | "WaterBody" | "PlantCover"
-                                | "SolitaryVegetationObject" | "LandUse"
-                                | "CityFurniture" | "GenericCityObject" => {
+                                "Building"
+                                | "Road"
+                                | "Railway"
+                                | "TransportationComplex"
+                                | "Tunnel"
+                                | "Bridge"
+                                | "WaterBody"
+                                | "PlantCover"
+                                | "SolitaryVegetationObject"
+                                | "LandUse"
+                                | "CityFurniture"
+                                | "GenericCityObject" => {
                                     if depth == 3 {
                                         // Direct child of cityObjectMember
                                         let full_type = type_name.to_string();
@@ -215,7 +223,8 @@ impl CityGMLReader {
                         if let Ok(local_name) = std::str::from_utf8(name) {
                             if let Some(attr_type) = local_name.split(':').last() {
                                 if attr_type.ends_with("Attribute")
-                                    && attr_type != "genericAttribute" {
+                                    && attr_type != "genericAttribute"
+                                {
                                     // Get the name attribute
                                     for attr in e.attributes().flatten() {
                                         if attr.key.as_ref() == b"name" {
@@ -302,8 +311,7 @@ impl CityGMLReader {
                     if !found_root_bbox {
                         if let (Some(lower), Some(upper)) = (lower_corner, upper_corner) {
                             metadata.bbox = Some(BBox3D::new(
-                                lower[0], lower[1], lower[2],
-                                upper[0], upper[1], upper[2],
+                                lower[0], lower[1], lower[2], upper[0], upper[1], upper[2],
                             ));
                             found_root_bbox = true;
                         }
@@ -316,9 +324,7 @@ impl CityGMLReader {
 
                 Ok(Event::Eof) => break,
 
-                Err(e) => {
-                    return Err(CityJsonStacError::Other(format!("XML parsing error: {e}")))
-                }
+                Err(e) => return Err(CityJsonStacError::Other(format!("XML parsing error: {e}"))),
 
                 _ => {}
             }
@@ -398,7 +404,13 @@ impl CityModelMetadataReader for CityGMLReader {
             .metadata
             .read()
             .map_err(|_| CityJsonStacError::Other("Failed to acquire read lock".to_string()))?;
-        Ok(metadata.as_ref().unwrap().city_object_types.iter().cloned().collect())
+        Ok(metadata
+            .as_ref()
+            .unwrap()
+            .city_object_types
+            .iter()
+            .cloned()
+            .collect())
     }
 
     fn lods(&self) -> Result<Vec<String>> {
