@@ -142,7 +142,7 @@ impl CityGMLReader {
 
                     // Look for srsName attribute in Envelope element for CRS
                     if let Ok(local_name) = std::str::from_utf8(name) {
-                        if let Some(suffix) = local_name.split(':').last() {
+                        if let Some(suffix) = local_name.split(':').next_back() {
                             if suffix == "Envelope" && depth == 3 {
                                 for attr in e.attributes().flatten() {
                                     if attr.key.as_ref() == b"srsName" {
@@ -162,7 +162,7 @@ impl CityGMLReader {
 
                     // Detect object types (Building, Road, etc.)
                     if let Ok(local_name) = std::str::from_utf8(name) {
-                        if let Some(type_name) = local_name.split(':').last() {
+                        if let Some(type_name) = local_name.split(':').next_back() {
                             // Common CityGML object types
                             match type_name {
                                 "Building"
@@ -207,7 +207,7 @@ impl CityGMLReader {
                     // Parse bounding box elements at root level (depth 4)
                     if !found_root_bbox {
                         if let Ok(local_name) = std::str::from_utf8(name) {
-                            if let Some(suffix) = local_name.split(':').last() {
+                            if let Some(suffix) = local_name.split(':').next_back() {
                                 if suffix == "lowerCorner" && depth == 4 {
                                     in_lower_corner = true;
                                 } else if suffix == "upperCorner" && depth == 4 {
@@ -221,7 +221,7 @@ impl CityGMLReader {
                     // <gen:stringAttribute name="..."><gen:value>...</gen:value></gen:stringAttribute>
                     if metadata.version == CityGMLVersion::V2_0 {
                         if let Ok(local_name) = std::str::from_utf8(name) {
-                            if let Some(attr_type) = local_name.split(':').last() {
+                            if let Some(attr_type) = local_name.split(':').next_back() {
                                 if attr_type.ends_with("Attribute")
                                     && attr_type != "genericAttribute"
                                 {
@@ -242,7 +242,7 @@ impl CityGMLReader {
                     // <genericAttribute><gen:StringAttribute><gen:name>...</gen:name><gen:value>...</gen:value></gen:StringAttribute></genericAttribute>
                     if metadata.version == CityGMLVersion::V3_0 {
                         if let Ok(local_name) = std::str::from_utf8(name) {
-                            if let Some(type_name) = local_name.split(':').last() {
+                            if let Some(type_name) = local_name.split(':').next_back() {
                                 if type_name == "genericAttribute" {
                                     in_generic_attribute = true;
                                 } else if type_name == "name" && in_generic_attribute {
@@ -289,7 +289,7 @@ impl CityGMLReader {
                     depth -= 1;
 
                     if let Ok(local_name) = std::str::from_utf8(name) {
-                        if let Some(suffix) = local_name.split(':').last() {
+                        if let Some(suffix) = local_name.split(':').next_back() {
                             if suffix == "lowerCorner" {
                                 in_lower_corner = false;
                             } else if suffix == "upperCorner" {
