@@ -1,4 +1,4 @@
-use cityjson_stac::cli;
+use city3d_stac::cli;
 use std::process;
 
 #[tokio::main]

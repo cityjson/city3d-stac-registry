@@ -1,8 +1,6 @@
 //! Unit tests for the reader module
 
-use cityjson_stac::reader::{
-    get_reader, CityJSONReader, CityJSONSeqReader, CityModelMetadataReader,
-};
+use city3d_stac::reader::{get_reader, CityJSONReader, CityJSONSeqReader, CityModelMetadataReader};
 use std::path::Path;
 
 /// Test data directory path
@@ -322,7 +320,7 @@ mod cjseq_integration_tests {
 
 mod fcb_integration_tests {
     use super::*;
-    use cityjson_stac::reader::FlatCityBufReader;
+    use city3d_stac::reader::FlatCityBufReader;
 
     #[test]
     fn test_read_fcb_file() {

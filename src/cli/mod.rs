@@ -10,7 +10,7 @@ use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(name = "cjstac")]
+#[command(name = "citystac")]
 #[command(author, version, about = "Generate STAC metadata for CityJSON datasets", long_about = None)]
 struct Cli {
     #[command(subcommand)]
@@ -168,6 +168,46 @@ enum Commands {
         #[arg(long, default_value_t = true)]
         pretty: bool,
     },
+
+    /// Generate STAC Catalog from multiple directories/collections
+    Catalog {
+        /// Input directories (each directory will be a collection)
+        #[arg(num_args = 0..)]
+        inputs: Vec<PathBuf>,
+
+        /// Output directory for the catalog
+        #[arg(short, long, default_value = "./catalog")]
+        output: PathBuf,
+
+        /// YAML/TOML configuration file for catalog metadata
+        #[arg(short = 'C', long)]
+        config: Option<PathBuf>,
+
+        /// Catalog ID (defaults to output directory name)
+        #[arg(long)]
+        id: Option<String>,
+
+        /// Catalog title
+        #[arg(long)]
+        title: Option<String>,
+
+        /// Catalog description
+        #[arg(short, long)]
+        description: Option<String>,
+
+        /// Configuration for collections (license, etc.)
+        /// This will be applied to all generated sub-collections
+        #[arg(short, long, default_value = "proprietary")]
+        license: String,
+
+        /// Base URL for catalog child links
+        #[arg(long)]
+        base_url: Option<String>,
+
+        /// Pretty-print JSON
+        #[arg(long, default_value_t = true)]
+        pretty: bool,
+    },
 }
 
 /// Run the CLI application
@@ -229,8 +269,8 @@ pub async fn run() -> Result<()> {
             if inputs.is_empty() && config.is_none() {
                 // No inputs in CLI and no config file - show error
                 eprintln!("Error: No inputs provided. Specify inputs via CLI arguments or in a config file.");
-                eprintln!("Usage: cjstac collection [OPTIONS] <INPUTS>...");
-                eprintln!("       cjstac collection --config <CONFIG_FILE>");
+                eprintln!("Usage: citystac collection [OPTIONS] <INPUTS>...");
+                eprintln!("       citystac collection --config <CONFIG_FILE>");
                 std::process::exit(1);
             }
 
@@ -273,6 +313,28 @@ pub async fn run() -> Result<()> {
             license,
             items_base_url,
             skip_errors,
+            pretty,
+        }),
+
+        Commands::Catalog {
+            inputs,
+            output,
+            config,
+            id,
+            title,
+            description,
+            license,
+            base_url,
+            pretty,
+        } => handle_catalog_command(CatalogConfig {
+            inputs,
+            output,
+            config,
+            id,
+            title,
+            description,
+            license,
+            base_url,
             pretty,
         }),
     }
@@ -360,6 +422,179 @@ async fn handle_item_command(
     Ok(())
 }
 
+/// Configuration for catalog generation
+struct CatalogConfig {
+    inputs: Vec<PathBuf>,
+    output: PathBuf,
+    config: Option<PathBuf>,
+    id: Option<String>,
+    title: Option<String>,
+    description: Option<String>,
+    license: String,
+    base_url: Option<String>,
+    pretty: bool,
+}
+
+fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
+    use crate::config::{CatalogCliArgs, CatalogConfigFile};
+    use crate::stac::StacCatalogBuilder;
+
+    // Load config file if provided
+    let base_config = if let Some(config_path) = &config.config {
+        CatalogConfigFile::from_file(config_path)?
+    } else {
+        CatalogConfigFile::default()
+    };
+
+    // Merge with CLI args
+    let merged_config = base_config.merge_with_cli(&CatalogCliArgs {
+        id: config.id.clone(),
+        title: config.title.clone(),
+        description: config.description.clone(),
+    });
+
+    // Create output directory
+    std::fs::create_dir_all(&config.output)?;
+
+    // Determine collections to process
+    let mut collection_targets: Vec<(PathBuf, String)> = Vec::new(); // (path, id_hint)
+
+    // Process CLI inputs (directories)
+    for input in &config.inputs {
+        let id_hint = input
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("collection")
+            .to_string();
+        collection_targets.push((input.clone(), id_hint));
+    }
+
+    // Process config collections
+    if let Some(config_collections) = merged_config.collections {
+        // Resolve paths relative to config file if provided, otherwise CWD
+        let base_dir = config
+            .config
+            .as_ref()
+            .and_then(|p| p.parent())
+            .unwrap_or_else(|| std::path::Path::new("."));
+
+        for coll_path_str in config_collections {
+            let path = base_dir.join(&coll_path_str);
+            let id_hint = std::path::Path::new(&coll_path_str)
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("collection")
+                .to_string();
+            collection_targets.push((path, id_hint));
+        }
+    }
+
+    if collection_targets.is_empty() {
+        eprintln!("Error: No collections provided. Specify input directories via CLI or 'collections' in config file.");
+        std::process::exit(1);
+    }
+
+    log::info!(
+        "Processing {} collections for catalog",
+        collection_targets.len()
+    );
+
+    let mut generated_collections: Vec<(String, String)> = Vec::new(); // (href, title)
+
+    for (input_dir, id_hint) in collection_targets {
+        if !input_dir.exists() {
+            log::warn!("Input directory does not exist: {}", input_dir.display());
+            continue;
+        }
+
+        let collection_output_dir = config.output.join(&id_hint);
+
+        let sub_collection_config = CollectionConfig {
+            inputs: vec![input_dir.clone()],
+            output: collection_output_dir.clone(),
+            config: None,
+            id: Some(id_hint.clone()),
+            title: Some(format!("Collection from {}", id_hint)),
+            description: None,
+            license: config.license.clone(),
+            include: vec![],
+            exclude: vec![],
+            recursive: true,
+            max_depth: None,
+            skip_errors: true,
+            base_url: config.base_url.clone().map(|u| format!("{u}{id_hint}/")),
+            pretty: config.pretty,
+        };
+
+        println!("Processing collection: {}", input_dir.display());
+        match process_collection_logic(sub_collection_config) {
+            Ok((_col_path, col_id, col_title)) => {
+                let relative_href = format!("./{}/collection.json", id_hint);
+
+                let href = if let Some(base) = &config.base_url {
+                    let normalized_base = if base.ends_with('/') {
+                        base.to_string()
+                    } else {
+                        format!("{base}/")
+                    };
+                    format!("{normalized_base}{id_hint}/collection.json")
+                } else {
+                    relative_href
+                };
+
+                generated_collections.push((href, col_title.unwrap_or(col_id)));
+            }
+            Err(e) => {
+                log::error!(
+                    "Failed to generate collection for {}: {}",
+                    input_dir.display(),
+                    e
+                );
+            }
+        }
+    }
+
+    // Generate Catalog
+    let catalog_id = merged_config.id.unwrap_or_else(|| {
+        config
+            .output
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("catalog")
+            .to_string()
+    });
+
+    let description = merged_config
+        .description
+        .unwrap_or_else(|| "Root catalog".to_string());
+
+    let mut catalog_builder = StacCatalogBuilder::new(catalog_id, description);
+
+    if let Some(t) = merged_config.title {
+        catalog_builder = catalog_builder.title(t);
+    }
+
+    for (href, title) in generated_collections {
+        catalog_builder = catalog_builder.child_link(href, Some(title));
+    }
+
+    catalog_builder = catalog_builder.self_link("./catalog.json");
+
+    let catalog = catalog_builder.build();
+    let catalog_json = if config.pretty {
+        serde_json::to_string_pretty(&catalog)?
+    } else {
+        serde_json::to_string(&catalog)?
+    };
+
+    let catalog_path = config.output.join("catalog.json");
+    std::fs::write(&catalog_path, catalog_json)?;
+
+    println!("\n✓ Generated Catalog: {}", catalog_path.display());
+
+    Ok(())
+}
+
 /// Configuration for collection generation
 struct CollectionConfig {
     inputs: Vec<PathBuf>,
@@ -379,6 +614,13 @@ struct CollectionConfig {
 }
 
 fn handle_collection_command(config: CollectionConfig) -> Result<()> {
+    match process_collection_logic(config) {
+        Ok(_) => Ok(()),
+        Err(e) => Err(e),
+    }
+}
+
+fn process_collection_logic(config: CollectionConfig) -> Result<(PathBuf, String, Option<String>)> {
     // Load config file if provided
     let base_config = if let Some(config_path) = &config.config {
         CollectionConfigFile::from_file(config_path)?
@@ -530,6 +772,7 @@ fn handle_collection_command(config: CollectionConfig) -> Result<()> {
 
     let license = merged_config
         .license
+        .clone()
         .unwrap_or_else(|| config.license.clone());
 
     let mut collection_builder = StacCollectionBuilder::new(&collection_id)
@@ -538,21 +781,21 @@ fn handle_collection_command(config: CollectionConfig) -> Result<()> {
         .aggregate_cityjson_metadata(&readers)?;
 
     // Apply config-based metadata
-    if let Some(t) = merged_config.title {
-        collection_builder = collection_builder.title(t);
+    if let Some(t) = &merged_config.title {
+        collection_builder = collection_builder.title(t.clone());
     }
 
-    if let Some(d) = merged_config.description {
-        collection_builder = collection_builder.description(d);
+    if let Some(d) = &merged_config.description {
+        collection_builder = collection_builder.description(d.clone());
     }
 
-    if let Some(keywords) = merged_config.keywords {
-        collection_builder = collection_builder.keywords(keywords);
+    if let Some(keywords) = &merged_config.keywords {
+        collection_builder = collection_builder.keywords(keywords.clone());
     }
 
-    if let Some(providers) = merged_config.providers {
+    if let Some(providers) = &merged_config.providers {
         for provider in providers {
-            collection_builder = collection_builder.provider(provider.into());
+            collection_builder = collection_builder.provider(provider.clone().into());
         }
     }
 
@@ -600,7 +843,7 @@ fn handle_collection_command(config: CollectionConfig) -> Result<()> {
     println!("Collection: {}", collection_path.display());
     println!("Items: {}", items_dir.display());
 
-    Ok(())
+    Ok((collection_path, collection_id, merged_config.title))
 }
 
 /// Configuration for update-collection/aggregate command

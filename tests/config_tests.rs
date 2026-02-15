@@ -31,7 +31,7 @@ providers:
     temp_file.flush().unwrap();
 
     // Parse the config file
-    let config = cityjson_stac::config::CollectionConfigFile::from_file(temp_file.path())
+    let config = city3d_stac::config::CollectionConfigFile::from_file(temp_file.path())
         .expect("Failed to parse config file");
 
     assert_eq!(config.id, Some("test-collection".to_string()));
@@ -79,7 +79,7 @@ invalid: [unclosed list
     writeln!(temp_file, "{}", invalid_yaml).unwrap();
     temp_file.flush().unwrap();
 
-    let result = cityjson_stac::config::CollectionConfigFile::from_file(temp_file.path());
+    let result = city3d_stac::config::CollectionConfigFile::from_file(temp_file.path());
 
     assert!(result.is_err());
     let err = result.unwrap_err();
@@ -89,7 +89,7 @@ invalid: [unclosed list
 /// Test that CLI arguments override config file values
 #[test]
 fn test_config_cli_merge() {
-    use cityjson_stac::config::{CollectionCliArgs, CollectionConfigFile};
+    use city3d_stac::config::{CollectionCliArgs, CollectionConfigFile};
 
     let yaml_content = r#"
 id: from-file
@@ -141,7 +141,7 @@ id: minimal-collection
     writeln!(temp_file, "{}", yaml_content).unwrap();
     temp_file.flush().unwrap();
 
-    let config = cityjson_stac::config::CollectionConfigFile::from_file(temp_file.path())
+    let config = city3d_stac::config::CollectionConfigFile::from_file(temp_file.path())
         .expect("Failed to parse config file");
 
     assert_eq!(config.id, Some("minimal-collection".to_string()));
@@ -170,7 +170,7 @@ extent:
     writeln!(temp_file, "{}", yaml_content).unwrap();
     temp_file.flush().unwrap();
 
-    let config = cityjson_stac::config::CollectionConfigFile::from_file(temp_file.path())
+    let config = city3d_stac::config::CollectionConfigFile::from_file(temp_file.path())
         .expect("Failed to parse config file");
 
     assert!(config.extent.is_some());
@@ -208,7 +208,7 @@ links:
     writeln!(temp_file, "{}", yaml_content).unwrap();
     temp_file.flush().unwrap();
 
-    let config = cityjson_stac::config::CollectionConfigFile::from_file(temp_file.path())
+    let config = city3d_stac::config::CollectionConfigFile::from_file(temp_file.path())
         .expect("Failed to parse config file");
 
     assert!(config.links.is_some());
@@ -232,8 +232,8 @@ links:
 /// Test provider conversion from config to STAC model
 #[test]
 fn test_provider_conversion() {
-    use cityjson_stac::config::ProviderConfig;
-    use cityjson_stac::stac::Provider;
+    use city3d_stac::config::ProviderConfig;
+    use city3d_stac::stac::Provider;
 
     let config_provider = ProviderConfig {
         name: "Test Provider".to_string(),
@@ -273,7 +273,7 @@ summaries:
     writeln!(temp_file, "{}", yaml_content).unwrap();
     temp_file.flush().unwrap();
 
-    let config = cityjson_stac::config::CollectionConfigFile::from_file(temp_file.path())
+    let config = city3d_stac::config::CollectionConfigFile::from_file(temp_file.path())
         .expect("Failed to parse config file");
 
     assert!(config.summaries.is_some());
@@ -300,7 +300,7 @@ inputs:
     writeln!(temp_file, "{}", yaml_content).unwrap();
     temp_file.flush().unwrap();
 
-    let config = cityjson_stac::config::CollectionConfigFile::from_file(temp_file.path())
+    let config = city3d_stac::config::CollectionConfigFile::from_file(temp_file.path())
         .expect("Failed to parse config file");
 
     assert!(config.inputs.is_some());

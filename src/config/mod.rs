@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::path::Path;
 
 /// Collection configuration from YAML file
-#[derive(Debug, Deserialize, Serialize, Default)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct CollectionConfigFile {
     /// Collection ID
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -51,7 +51,7 @@ pub struct CollectionConfigFile {
 }
 
 /// Provider configuration from YAML
-#[derive(Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct ProviderConfig {
     /// Provider name
     pub name: String,
@@ -81,7 +81,7 @@ impl From<ProviderConfig> for Provider {
 }
 
 /// Extent configuration from YAML
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ExtentConfig {
     /// Spatial extent
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -93,7 +93,7 @@ pub struct ExtentConfig {
 }
 
 /// Spatial extent configuration
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SpatialExtentConfig {
     /// Bounding box [minx, miny, minz, maxx, maxy, maxz] or [minx, miny, maxx, maxy]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -105,7 +105,7 @@ pub struct SpatialExtentConfig {
 }
 
 /// Temporal extent configuration
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct TemporalExtentConfig {
     /// Start datetime (RFC3339 format)
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -117,7 +117,7 @@ pub struct TemporalExtentConfig {
 }
 
 /// Link configuration from YAML
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct LinkConfig {
     /// Link relation type
     pub rel: String,
@@ -136,12 +136,18 @@ pub struct LinkConfig {
 }
 
 impl CollectionConfigFile {
-    /// Load config from YAML file
+    /// Load config from YAML or TOML file
     pub fn from_file(path: &Path) -> Result<Self> {
         let content = std::fs::read_to_string(path)?;
-        let config: Self = serde_yaml::from_str(&content)
-            .map_err(|e| CityJsonStacError::Other(format!("Invalid YAML: {e}")))?;
-        Ok(config)
+
+        let extension = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+
+        match extension {
+            "toml" => toml::from_str(&content)
+                .map_err(|e| CityJsonStacError::Other(format!("Invalid TOML: {e}"))),
+            "yaml" | "yml" | _ => serde_yaml::from_str(&content)
+                .map_err(|e| CityJsonStacError::Other(format!("Invalid YAML: {e}"))),
+        }
     }
 
     /// Merge with CLI arguments (CLI takes precedence)
@@ -165,6 +171,52 @@ impl CollectionConfigFile {
     }
 }
 
+/// Catalog configuration from YAML/TOML file
+#[derive(Debug, Deserialize, Serialize, Default)]
+pub struct CatalogConfigFile {
+    /// Catalog ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+
+    /// Catalog title
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub title: Option<String>,
+
+    /// Catalog description
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+
+    /// Collections to include in the catalog
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub collections: Option<Vec<String>>,
+}
+
+impl CatalogConfigFile {
+    /// Load config from YAML or TOML file
+    pub fn from_file(path: &Path) -> Result<Self> {
+        let content = std::fs::read_to_string(path)?;
+
+        let extension = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+
+        match extension {
+            "toml" => toml::from_str(&content)
+                .map_err(|e| CityJsonStacError::Other(format!("Invalid TOML: {e}"))),
+            "yaml" | "yml" | _ => serde_yaml::from_str(&content)
+                .map_err(|e| CityJsonStacError::Other(format!("Invalid YAML: {e}"))),
+        }
+    }
+
+    /// Merge with CLI arguments
+    pub fn merge_with_cli(self, cli_args: &CatalogCliArgs) -> Self {
+        CatalogConfigFile {
+            id: cli_args.id.clone().or(self.id),
+            title: cli_args.title.clone().or(self.title),
+            description: cli_args.description.clone().or(self.description),
+            collections: self.collections,
+        }
+    }
+}
+
 /// CLI arguments that can override config
 #[derive(Debug, Default)]
 pub struct CollectionCliArgs {
@@ -172,6 +224,14 @@ pub struct CollectionCliArgs {
     pub title: Option<String>,
     pub description: Option<String>,
     pub license: Option<String>,
+}
+
+/// CLI arguments that can override catalog config
+#[derive(Debug, Default)]
+pub struct CatalogCliArgs {
+    pub id: Option<String>,
+    pub title: Option<String>,
+    pub description: Option<String>,
 }
 
 #[cfg(test)]

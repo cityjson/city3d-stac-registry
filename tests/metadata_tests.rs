@@ -1,6 +1,6 @@
 //! Unit tests for metadata structures
 
-use cityjson_stac::metadata::{AttributeDefinition, AttributeType, BBox3D, Transform, CRS};
+use city3d_stac::metadata::{AttributeDefinition, AttributeType, BBox3D, Transform, CRS};
 
 mod bbox_tests {
     use super::*;

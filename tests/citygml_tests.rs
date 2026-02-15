@@ -1,7 +1,7 @@
 //! CityGML reader tests
 
-use cityjson_stac::reader::CityGMLReader;
-use cityjson_stac::reader::CityModelMetadataReader;
+use city3d_stac::reader::CityGMLReader;
+use city3d_stac::reader::CityModelMetadataReader;
 use std::path::Path;
 
 #[test]

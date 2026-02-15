@@ -1,5 +1,5 @@
 [package]
-name = "city3d-stac"
+name = "city3d_stac"
 version = "0.1.0"
 edition = "2021"
 authors = ["CityJSON Contributors"]
@@ -65,6 +65,7 @@ rayon = { version = "1.10", optional = true }
 
 # Optional: runtime JSON Schema validation
 jsonschema = { version = "0.26", optional = true }
+toml = "0.8"
 
 [dev-dependencies]
 # tempfile is now in main dependencies
@@ -84,7 +85,7 @@ name = "cjstac"
 path = "src/main.rs"
 
 [lib]
-name = "cityjson_stac"
+name = "city3d_stac"
 path = "src/lib.rs"
 
 [profile.release]

@@ -1,6 +1,6 @@
 //! Unit tests for error handling
 
-use cityjson_stac::error::CityJsonStacError;
+use city3d_stac::error::CityJsonStacError;
 use std::io;
 
 mod error_type_tests {
@@ -127,7 +127,7 @@ mod error_display_tests {
 }
 
 mod result_type_tests {
-    use cityjson_stac::error::Result;
+    use city3d_stac::error::Result;
 
     #[test]
     fn test_result_ok() {

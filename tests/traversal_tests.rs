@@ -1,6 +1,6 @@
 //! Unit tests for file traversal
 
-use cityjson_stac::traversal;
+use city3d_stac::traversal;
 use std::fs;
 use std::path::Path;
 use tempfile::tempdir;

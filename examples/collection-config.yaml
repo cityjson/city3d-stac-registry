@@ -1,6 +1,7 @@
 # Example YAML configuration file for STAC collection metadata
 # Usage: cjstac collection --config examples/collection-config.yaml -o ./stac_output
 # Or override inputs via CLI: cjstac collection data/*.json --config examples/collection-config.yaml -o ./stac_output
+# Note: This config format is also supported for defining collections within a catalog configuration.
 
 # Input paths (files, directories, or glob patterns)
 # These are used if no inputs are provided via CLI

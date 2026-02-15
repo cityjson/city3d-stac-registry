@@ -1,7 +1,7 @@
 //! End-to-end integration tests
 
-use cityjson_stac::reader::{get_reader, CityJSONReader, CityModelMetadataReader};
-use cityjson_stac::stac::{StacCollectionBuilder, StacItemBuilder};
+use city3d_stac::reader::{get_reader, CityJSONReader, CityModelMetadataReader};
+use city3d_stac::stac::{StacCollectionBuilder, StacItemBuilder};
 use std::path::Path;
 use tempfile::tempdir;
 

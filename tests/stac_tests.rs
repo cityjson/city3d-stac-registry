@@ -1,8 +1,8 @@
 //! Unit tests for STAC item and collection building
 
-use cityjson_stac::metadata::BBox3D;
-use cityjson_stac::reader::{CityJSONReader, CityModelMetadataReader};
-use cityjson_stac::stac::{Asset, Link, StacCollectionBuilder, StacItemBuilder};
+use city3d_stac::metadata::BBox3D;
+use city3d_stac::reader::{CityJSONReader, CityModelMetadataReader};
+use city3d_stac::stac::{Asset, Link, StacCollectionBuilder, StacItemBuilder};
 use serde_json::Value;
 use std::path::Path;
 
@@ -492,7 +492,7 @@ mod asset_tests {
 
 mod stac_collection_aggregate_from_items_tests {
     use super::*;
-    use cityjson_stac::stac::StacItem;
+    use city3d_stac::stac::StacItem;
     use std::collections::HashMap;
 
     /// Helper to create a test STAC item with CityJSON properties

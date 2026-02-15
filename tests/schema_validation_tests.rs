@@ -7,10 +7,8 @@
 //!
 //! This ensures generated output is fully schema-compliant.
 
-use cityjson_stac::reader::{
-    get_reader, CityJSONReader, CityJSONSeqReader, CityModelMetadataReader,
-};
-use cityjson_stac::stac::{StacCollectionBuilder, StacItemBuilder};
+use city3d_stac::reader::{get_reader, CityJSONReader, CityJSONSeqReader, CityModelMetadataReader};
+use city3d_stac::stac::{StacCollectionBuilder, StacItemBuilder};
 use serde_json::Value;
 use std::path::PathBuf;
 
@@ -676,7 +674,7 @@ mod collection_property_tests {
 
 mod aggregate_collection_schema_tests {
     use super::*;
-    use cityjson_stac::stac::StacItem;
+    use city3d_stac::stac::StacItem;
 
     #[test]
     fn test_aggregate_collection_validates_against_schemas() {

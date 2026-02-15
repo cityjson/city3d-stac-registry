@@ -1,0 +1,25 @@
+# Example TOML configuration file for STAC catalog metadata
+# Usage: cjstac catalog --config examples/catalog-config.toml -o ./catalog_output
+
+# Catalog identifier (optional - defaults to output directory name)
+id = "my-city-catalog"
+
+# Catalog title (optional)
+title = "My City Models Catalog"
+
+# Catalog description (optional)
+description = """
+A catalog containing multiple 3D city models.
+"""
+
+# Collections to include (paths to directories containing CityJSON files)
+# These are processed recursively to generate sub-collections
+collections = [
+  "../tests/data",
+  # "data/rotterdam",
+  # "data/amsterdam"
+]
+
+# Note: The license and other metadata validation for sub-collections
+# are currently derived from the CLI arguments or defaults when running 'catalog'.
+# Future versions may support per-collection configuration overrides.

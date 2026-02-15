@@ -14,10 +14,12 @@
 //!
 //! To modify STAC types, edit `src/stac/models.rs` and run `cargo build`.
 
+mod catalog;
 mod collection;
 mod item;
 mod models;
 
+pub use catalog::{StacCatalog, StacCatalogBuilder};
 pub use collection::StacCollectionBuilder;
 pub use item::StacItemBuilder;
 pub use models::{

@@ -12,8 +12,8 @@
 //! ## Example
 //!
 //! ```no_run
-//! use cityjson_stac::reader::get_reader;
-//! use cityjson_stac::stac::StacItemBuilder;
+//! use city3d_stac::reader::get_reader;
+//! use city3d_stac::stac::StacItemBuilder;
 //! use std::path::Path;
 //!
 //! # fn example() -> Result<(), Box<dyn std::error::Error>> {
