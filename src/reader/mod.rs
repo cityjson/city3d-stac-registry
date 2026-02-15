@@ -4,10 +4,12 @@
 //! from both local filesystem and remote storage (HTTP, S3, Azure, GCS)
 //! using the object_store crate.
 //!
+pub mod citygml;
 pub mod cityjson;
 pub mod cjseq;
 pub mod fcb;
 
+pub use citygml::{CityGMLReader, CityGMLVersion};
 pub use cityjson::CityJSONReader;
 pub use cjseq::CityJSONSeqReader;
 pub use fcb::FlatCityBufReader;
@@ -176,10 +178,35 @@ pub fn get_reader(path: &Path) -> Result<Box<dyn CityModelMetadataReader>> {
         "json" => Ok(Box::new(CityJSONReader::new(path)?)),
         "jsonl" => Ok(Box::new(CityJSONSeqReader::new(path)?)),
         "fcb" => Ok(Box::new(FlatCityBufReader::new(path)?)),
+        "gml" | "xml" => {
+            // Check if it's a valid CityGML file
+            if is_citygml(path)? {
+                Ok(Box::new(CityGMLReader::new(path)?))
+            } else {
+                Err(CityJsonStacError::UnsupportedFormat(format!(
+                    "File is not a valid CityGML file: {extension}"
+                )))
+            }
+        }
         _ => Err(CityJsonStacError::InvalidCityJson(format!(
             "Unsupported file extension: {extension}",
         ))),
     }
+}
+
+/// Quick check if file is CityGML by looking for namespace in first few KB
+fn is_citygml(path: &Path) -> Result<bool> {
+    use std::io::{BufRead, BufReader};
+    let file = std::fs::File::open(path)?;
+    let reader = BufReader::new(file);
+
+    for line in reader.lines().take(20) {
+        let line = line?;
+        if line.contains("citygml") || line.contains("www.opengis.net/gml") {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 #[cfg(test)]

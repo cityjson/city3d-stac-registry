@@ -43,6 +43,9 @@ env_logger = "0.11"
 fcb_core = "0.6"
 cjseq = "0.4"
 
+# XML parsing for CityGML support
+quick-xml = { version = "0.37", features = ["serialize"] }
+
 # URL handling for STAC links
 url = { version = "2.5", features = ["serde"] }
 
