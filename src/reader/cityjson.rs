@@ -772,4 +772,11 @@ mod tests {
         let result = CityJSONReader::from_content("not valid json", PathBuf::from("bad.json"));
         assert!(result.is_err());
     }
+
+    #[test]
+    fn test_cityjson_not_streamable() {
+        let temp_file = create_test_cityjson();
+        let reader = CityJSONReader::new(temp_file.path()).unwrap();
+        assert!(!reader.streamable());
+    }
 }

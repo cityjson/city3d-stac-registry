@@ -151,6 +151,85 @@ impl CityJSONSeqReader {
         })
     }
 
+    /// Create a CityJSONSeq reader by streaming from a remote URL
+    ///
+    /// Instead of downloading the entire file into memory, this streams the
+    /// data line-by-line using `object_store`. The first line (header) is parsed
+    /// to get metadata, then features are processed incrementally.
+    ///
+    /// This is more memory-efficient for large remote `.jsonl` files since
+    /// only one line is held in memory at a time.
+    pub async fn from_url_stream(url: &str, virtual_path: PathBuf) -> Result<Self> {
+        use futures::TryStreamExt;
+        use tokio::io::AsyncBufReadExt;
+        use tokio_util::io::StreamReader;
+
+        let parsed_url = url::Url::parse(url).map_err(CityJsonStacError::UrlError)?;
+        let (store, path) =
+            object_store::parse_url_opts(&parsed_url, Vec::<(String, String)>::new()).map_err(
+                |e| CityJsonStacError::StorageError(format!("Failed to create object store: {e}")),
+            )?;
+
+        log::info!("Streaming CityJSONSeq from: {}", url);
+
+        let result = store.get(&path).await?;
+        let stream = result.into_stream();
+
+        // Convert object_store byte stream to an async line reader
+        let async_reader = StreamReader::new(stream.map_err(std::io::Error::other));
+        let buf_reader = tokio::io::BufReader::new(async_reader);
+        let mut lines = buf_reader.lines();
+
+        // First line: CityJSON header (metadata only)
+        let first_line = lines
+            .next_line()
+            .await
+            .map_err(|e| CityJsonStacError::Other(format!("Failed to read stream: {e}")))?
+            .ok_or_else(|| CityJsonStacError::Other("Empty CityJSONSeq stream".to_string()))?;
+
+        let metadata_header = cjseq::CityJSON::from_str(&first_line).map_err(|e| {
+            CityJsonStacError::Other(format!("Failed to parse CityJSONSeq header: {e}"))
+        })?;
+
+        // Stream through remaining lines to aggregate statistics
+        let mut aggregated = AggregatedMetadata {
+            lods: HashSet::new(),
+            city_object_types: HashSet::new(),
+            city_object_count: 0,
+            attributes: HashMap::new(),
+            has_semantic_surfaces: false,
+            has_textures: false,
+            has_materials: false,
+        };
+
+        while let Some(line) = lines
+            .next_line()
+            .await
+            .map_err(|e| CityJsonStacError::Other(format!("Failed to read stream: {e}")))?
+        {
+            if line.trim().is_empty() {
+                continue;
+            }
+
+            let feature = cjseq::CityJSONFeature::from_str(&line).map_err(|e| {
+                CityJsonStacError::Other(format!("Failed to parse CityJSONFeature: {e}"))
+            })?;
+            Self::process_feature(&feature, &mut aggregated);
+        }
+
+        log::debug!(
+            "Streamed {} city objects from {}",
+            aggregated.city_object_count,
+            url
+        );
+
+        Ok(Self {
+            file_path: virtual_path,
+            metadata_header,
+            aggregated: RwLock::new(Some(aggregated)),
+        })
+    }
+
     /// Process a single feature and update aggregated statistics
     fn process_feature(feature: &cjseq::CityJSONFeature, aggregated: &mut AggregatedMetadata) {
         for city_object in feature.city_objects.values() {
@@ -383,6 +462,10 @@ impl CityModelMetadataReader for CityJSONSeqReader {
         let aggregated = self.get_aggregated()?;
         Ok(aggregated.has_materials)
     }
+
+    fn streamable(&self) -> bool {
+        true
+    }
 }
 
 #[cfg(test)]
@@ -567,5 +650,24 @@ mod tests {
     fn test_cityjsonseq_from_content_invalid_header() {
         let result = CityJSONSeqReader::from_content("not valid json", PathBuf::from("bad.jsonl"));
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_cityjsonseq_streamable() {
+        let temp_file = create_test_cityjsonseq();
+        let reader = CityJSONSeqReader::new(temp_file.path()).unwrap();
+        assert!(reader.streamable());
+    }
+
+    #[test]
+    fn test_cityjsonseq_from_content_streamable() {
+        let content = [
+            r#"{"type":"CityJSON","version":"2.0","transform":{"scale":[1.0,1.0,1.0],"translate":[0,0,0]},"CityObjects":{},"vertices":[],"metadata":{"geographicalExtent":[0,0,0,1,1,1]}}"#,
+            r#"{"type":"CityJSONFeature","id":"b1","CityObjects":{"b1":{"type":"Building","geometry":[]}},"vertices":[]}"#,
+        ].join("\n");
+
+        let reader =
+            CityJSONSeqReader::from_content(&content, PathBuf::from("test.jsonl")).unwrap();
+        assert!(reader.streamable());
     }
 }

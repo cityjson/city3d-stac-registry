@@ -76,31 +76,30 @@ pub async fn get_reader_from_source(
                 }
             }
 
-            log::info!("Downloading remote file: {}", url);
-
-            let bytes = download_from_url(url).await?;
-            let content = String::from_utf8(bytes.to_vec()).map_err(|e| {
-                CityJsonStacError::Other(format!("Remote file is not valid UTF-8: {e}"))
-            })?;
-
             let filename = url_filename(url);
             let virtual_path = PathBuf::from(&filename);
 
-            log::debug!(
-                "Remote file downloaded: {} bytes, extension: {}",
-                content.len(),
-                extension
-            );
-
             match extension.as_str() {
-                "json" => Ok(Box::new(CityJSONReader::from_content(
-                    &content,
-                    virtual_path,
-                )?)),
-                "jsonl" | "cjseq" => Ok(Box::new(CityJSONSeqReader::from_content(
-                    &content,
-                    virtual_path,
-                )?)),
+                "json" => {
+                    // CityJSON: not streamable, download entire file then parse
+                    log::info!("Downloading remote CityJSON file: {}", url);
+                    let bytes = download_from_url(url).await?;
+                    let content = String::from_utf8(bytes.to_vec()).map_err(|e| {
+                        CityJsonStacError::Other(format!("Remote file is not valid UTF-8: {e}"))
+                    })?;
+                    log::debug!("Downloaded {} bytes for {}", content.len(), filename);
+                    Ok(Box::new(CityJSONReader::from_content(
+                        &content,
+                        virtual_path,
+                    )?))
+                }
+                "jsonl" | "cjseq" => {
+                    // CityJSONSeq: streamable, process line-by-line as data arrives
+                    log::info!("Streaming remote CityJSONSeq file: {}", url);
+                    Ok(Box::new(
+                        CityJSONSeqReader::from_url_stream(url, virtual_path).await?,
+                    ))
+                }
                 _ => unreachable!("extension already validated above"),
             }
         }
@@ -155,6 +154,15 @@ pub trait CityModelMetadataReader: Send + Sync {
 
     /// Check if materials are present
     fn materials(&self) -> Result<bool>;
+
+    /// Whether this format supports streaming I/O
+    ///
+    /// Streaming formats (e.g., CityJSONSeq) can be processed line-by-line
+    /// without buffering the entire file into memory. This is especially
+    /// beneficial for remote files where data can be processed as it arrives.
+    fn streamable(&self) -> bool {
+        false
+    }
 }
 
 /// Factory function to get the appropriate reader based on file extension
@@ -219,5 +227,42 @@ mod tests {
             }
             _ => panic!("Expected InvalidCityJson error for unsupported extension"),
         }
+    }
+
+    #[test]
+    fn test_cityjson_reader_not_streamable() {
+        use std::io::Write;
+
+        let mut temp_file = tempfile::Builder::new().suffix(".json").tempfile().unwrap();
+        let cityjson = r#"{
+            "type": "CityJSON",
+            "version": "2.0",
+            "transform": {"scale": [1.0, 1.0, 1.0], "translate": [0, 0, 0]},
+            "metadata": {"geographicalExtent": [0, 0, 0, 1, 1, 1]},
+            "CityObjects": {},
+            "vertices": []
+        }"#;
+        writeln!(temp_file, "{}", cityjson).unwrap();
+
+        let reader = get_reader(temp_file.path()).unwrap();
+        assert!(!reader.streamable());
+    }
+
+    #[test]
+    fn test_cjseq_reader_streamable() {
+        use std::io::Write;
+
+        let mut temp_file = tempfile::Builder::new()
+            .suffix(".jsonl")
+            .tempfile()
+            .unwrap();
+        let header = r#"{"type":"CityJSON","version":"2.0","transform":{"scale":[1.0,1.0,1.0],"translate":[0,0,0]},"CityObjects":{},"vertices":[],"metadata":{"geographicalExtent":[0,0,0,1,1,1]}}"#;
+        let feature = r#"{"type":"CityJSONFeature","id":"b1","CityObjects":{"b1":{"type":"Building","geometry":[]}},"vertices":[]}"#;
+        writeln!(temp_file, "{}", header).unwrap();
+        writeln!(temp_file, "{}", feature).unwrap();
+        temp_file.flush().unwrap();
+
+        let reader = get_reader(temp_file.path()).unwrap();
+        assert!(reader.streamable());
     }
 }
