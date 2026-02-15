@@ -294,6 +294,9 @@ impl StacItemBuilder {
 
     /// Helper to create item from file path
     ///
+    /// Bbox and geometry are automatically transformed to WGS84 (EPSG:4326)
+    /// as required by the STAC specification (per GeoJSON RFC 7946).
+    ///
     /// # Arguments
     /// * `file_path` - Path to the CityJSON file
     /// * `reader` - Reader instance for the file
@@ -313,9 +316,11 @@ impl StacItemBuilder {
 
         let mut builder = Self::new(id);
 
-        // Set bbox
+        // Set bbox (transformed to WGS84 for STAC compliance)
         if let Ok(bbox) = reader.bbox() {
-            builder = builder.bbox(bbox.clone()).geometry_from_bbox();
+            let crs = reader.crs().unwrap_or_default();
+            let wgs84_bbox = bbox.to_wgs84(&crs)?;
+            builder = builder.bbox(wgs84_bbox).geometry_from_bbox();
         }
 
         // Add CityJSON metadata
@@ -363,6 +368,9 @@ impl StacItemBuilder {
     /// This variant generates IDs with format suffixes (e.g., "delft_cj", "delft_cjseq", "delft_fcb")
     /// to handle filename collisions where multiple formats have the same stem.
     ///
+    /// Bbox and geometry are automatically transformed to WGS84 (EPSG:4326)
+    /// as required by the STAC specification (per GeoJSON RFC 7946).
+    ///
     /// # Arguments
     /// * `file_path` - Path to the CityJSON file
     /// * `reader` - Reader instance for the file
@@ -389,9 +397,11 @@ impl StacItemBuilder {
 
         let mut builder = Self::new(id);
 
-        // Set bbox
+        // Set bbox (transformed to WGS84 for STAC compliance)
         if let Ok(bbox) = reader.bbox() {
-            builder = builder.bbox(bbox.clone()).geometry_from_bbox();
+            let crs = reader.crs().unwrap_or_default();
+            let wgs84_bbox = bbox.to_wgs84(&crs)?;
+            builder = builder.bbox(wgs84_bbox).geometry_from_bbox();
         }
 
         // Add CityJSON metadata

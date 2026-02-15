@@ -319,23 +319,54 @@ mod e2e_workflow_tests {
         let item_version = item.properties["city3d:version"].as_str().unwrap();
         assert_eq!(source_version, item_version);
 
-        // Verify bbox matches geographicalExtent
+        // Verify bbox is transformed to WGS84 (lon/lat coordinates)
+        // The source data is in EPSG:7415 (RD New), so the bbox should now be
+        // in WGS84 with longitude/latitude values reasonable for Delft, Netherlands
+        let item_bbox = item.bbox.as_ref().unwrap();
+        assert_eq!(item_bbox.len(), 6);
+
+        // Delft is approximately at lon 4.3, lat 52.0
+        let lon_min = item_bbox[0];
+        let lat_min = item_bbox[1];
+        let lon_max = item_bbox[3];
+        let lat_max = item_bbox[4];
+
+        assert!(
+            lon_min > 3.0 && lon_min < 6.0,
+            "lon_min={lon_min} should be ~4.x"
+        );
+        assert!(
+            lat_min > 51.0 && lat_min < 53.0,
+            "lat_min={lat_min} should be ~52.x"
+        );
+        assert!(
+            lon_max > 3.0 && lon_max < 6.0,
+            "lon_max={lon_max} should be ~4.x"
+        );
+        assert!(
+            lat_max > 51.0 && lat_max < 53.0,
+            "lat_max={lat_max} should be ~52.x"
+        );
+        assert!(lon_min <= lon_max, "lon_min should be <= lon_max");
+        assert!(lat_min <= lat_max, "lat_min should be <= lat_max");
+
+        // Z values should be preserved from original extent
         let source_extent = source_json["metadata"]["geographicalExtent"]
             .as_array()
             .unwrap();
-        let item_bbox = item.bbox.as_ref().unwrap();
+        let source_zmin = source_extent[2].as_f64().unwrap();
+        let source_zmax = source_extent[5].as_f64().unwrap();
+        assert!(
+            (item_bbox[2] - source_zmin).abs() < 0.001,
+            "zmin should be preserved"
+        );
+        assert!(
+            (item_bbox[5] - source_zmax).abs() < 0.001,
+            "zmax should be preserved"
+        );
 
-        for i in 0..6 {
-            let source_val = source_extent[i].as_f64().unwrap();
-            let item_val = item_bbox[i];
-            assert!(
-                (source_val - item_val).abs() < 0.001,
-                "bbox[{}] mismatch: source={}, item={}",
-                i,
-                source_val,
-                item_val
-            );
-        }
+        // Verify the native CRS is preserved in proj:epsg
+        assert!(item.properties.contains_key("proj:epsg"));
     }
 }
 

@@ -242,8 +242,15 @@ impl StacCollectionBuilder {
                 .insert("proj:epsg".to_string(), serde_json::to_value(codes)?);
         }
 
-        // Merge all bounding boxes for spatial extent
-        let bboxes: Vec<BBox3D> = readers.iter().filter_map(|r| r.bbox().ok()).collect();
+        // Merge all bounding boxes for spatial extent (transformed to WGS84)
+        let bboxes: Vec<BBox3D> = readers
+            .iter()
+            .filter_map(|r| {
+                let bbox = r.bbox().ok()?;
+                let crs = r.crs().unwrap_or_default();
+                bbox.to_wgs84(&crs).ok()
+            })
+            .collect();
 
         if !bboxes.is_empty() {
             let mut merged = bboxes[0].clone();
