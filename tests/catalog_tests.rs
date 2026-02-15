@@ -90,7 +90,7 @@ fn test_cli_catalog_command() {
     let output_dir = dir.path().join("catalog");
 
     // Run catalog command
-    let mut cmd = Command::cargo_bin("cjstac").unwrap();
+    let mut cmd = Command::cargo_bin("city3dstac").unwrap();
     cmd.args([
         "catalog",
         data_dir.to_str().unwrap(),

@@ -81,7 +81,7 @@ default = []
 parallel = ["rayon"]
 
 [[bin]]
-name = "cjstac"
+name = "city3dstac"
 path = "src/main.rs"
 
 [lib]

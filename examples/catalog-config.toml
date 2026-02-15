@@ -1,5 +1,5 @@
 # Example TOML configuration file for STAC catalog metadata
-# Usage: cjstac catalog --config examples/catalog-config.toml -o ./catalog_output
+# Usage: city3dstac catalog --config examples/catalog-config.toml -o ./catalog_output
 
 # Catalog identifier (optional - defaults to output directory name)
 id = "my-city-catalog"
