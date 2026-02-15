@@ -119,6 +119,39 @@ cityjson-stac/
 
 ## Coding Guidelines
 
+### Pre-Commit Checklist
+
+Before committing any code, ensure:
+1. **Format**: `cargo fmt`
+2. **Lint**: `cargo clippy -- -D warnings` (no warnings allowed)
+3. **Test**: `cargo test --lib` (all unit tests pass)
+
+The git hooks enforce this automatically. To bypass in emergencies:
+```bash
+git commit --no-verify -m "emergency fix"
+```
+
+### Design Philosophy
+
+**Interface Programming**: All readers implement `CityModelMetadataReader` trait
+- Factory pattern (`get_reader()`) returns appropriate reader based on file extension
+- Caller doesn't need to know internal implementation (local vs remote, format specifics)
+- Trait abstraction enables polymorphism and extensibility
+
+**Streaming-First Approach**:
+- CityJSONSeq uses streaming (`BufReader::lines()`) for memory efficiency
+- CityJSON loads entirely (typically small files)
+- All readers use lazy loading via `RwLock` for interior mutability
+
+**Module Dependencies**: Reader → Metadata (not vice versa)
+- `CityModelMetadataReader` trait in `src/reader/mod.rs`
+- Metadata types (`BBox3D`, `CRS`, `Transform`, `AttributeDefinition`) in `src/metadata/`
+- STAC builders consume metadata from readers
+
+**Never Use**:
+- `#[allow(dead_code)]` or `#[allow(unused)]` as workarounds
+- Real data in tests (use mocked/fabricated data)
+
 ### Rust Conventions
 
 1. **Error Handling**: Use `thiserror` for library errors, `anyhow` for application-level errors

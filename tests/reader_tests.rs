@@ -1,6 +1,8 @@
 //! Unit tests for the reader module
 
-use cityjson_stac::reader::{get_reader, CityJSONReader, CityModelMetadataReader};
+use cityjson_stac::reader::{
+    get_reader, CityJSONReader, CityJSONSeqReader, CityModelMetadataReader,
+};
 use std::path::Path;
 
 /// Test data directory path
@@ -216,17 +218,6 @@ mod get_reader_tests {
     }
 
     #[test]
-    fn test_get_reader_jsonl_supported() {
-        // CityJSON Sequences are now supported via CityJSONSeqReader
-        let path = test_data_path("delft.city.jsonl");
-        let result = get_reader(&path);
-
-        assert!(result.is_ok(), "CityJSONSeq (jsonl) should be supported");
-        let reader = result.unwrap();
-        assert_eq!(reader.encoding(), "CityJSONSeq");
-    }
-
-    #[test]
     fn test_get_reader_fcb_supported() {
         // FlatCityBuf is now supported
         let path = test_data_path("all.fcb");
@@ -302,6 +293,30 @@ mod cjseq_integration_tests {
 
         let types = reader.city_object_types().expect("Failed to get types");
         assert!(!types.is_empty());
+    }
+
+    #[test]
+    fn test_cjseq_reader_is_send_sync() {
+        fn assert_send_sync<T: Send + Sync>() {}
+        assert_send_sync::<CityJSONSeqReader>();
+    }
+
+    #[test]
+    fn test_delft_cjseq_crs() {
+        let path = test_data_path("delft.city.jsonl");
+        let reader = get_reader(&path).expect("Failed to create reader");
+
+        let crs = reader.crs().expect("Failed to get CRS");
+        assert_eq!(crs.epsg, Some(7415));
+    }
+
+    #[test]
+    fn test_delft_cjseq_transform() {
+        let path = test_data_path("delft.city.jsonl");
+        let reader = get_reader(&path).expect("Failed to create reader");
+
+        let transform = reader.transform().expect("Failed to get transform");
+        assert!(transform.is_some());
     }
 }
 

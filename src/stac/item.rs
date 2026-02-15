@@ -294,6 +294,9 @@ impl StacItemBuilder {
 
     /// Helper to create item from file path
     ///
+    /// Bbox and geometry are automatically transformed to WGS84 (EPSG:4326)
+    /// as required by the STAC specification (per GeoJSON RFC 7946).
+    ///
     /// # Arguments
     /// * `file_path` - Path to the CityJSON file
     /// * `reader` - Reader instance for the file
@@ -313,9 +316,11 @@ impl StacItemBuilder {
 
         let mut builder = Self::new(id);
 
-        // Set bbox
+        // Set bbox (transformed to WGS84 for STAC compliance)
         if let Ok(bbox) = reader.bbox() {
-            builder = builder.bbox(bbox.clone()).geometry_from_bbox();
+            let crs = reader.crs().unwrap_or_default();
+            let wgs84_bbox = bbox.to_wgs84(&crs)?;
+            builder = builder.bbox(wgs84_bbox).geometry_from_bbox();
         }
 
         // Add CityJSON metadata
@@ -363,6 +368,9 @@ impl StacItemBuilder {
     /// This variant generates IDs with format suffixes (e.g., "delft_cj", "delft_cjseq", "delft_fcb")
     /// to handle filename collisions where multiple formats have the same stem.
     ///
+    /// Bbox and geometry are automatically transformed to WGS84 (EPSG:4326)
+    /// as required by the STAC specification (per GeoJSON RFC 7946).
+    ///
     /// # Arguments
     /// * `file_path` - Path to the CityJSON file
     /// * `reader` - Reader instance for the file
@@ -389,9 +397,11 @@ impl StacItemBuilder {
 
         let mut builder = Self::new(id);
 
-        // Set bbox
+        // Set bbox (transformed to WGS84 for STAC compliance)
         if let Ok(bbox) = reader.bbox() {
-            builder = builder.bbox(bbox.clone()).geometry_from_bbox();
+            let crs = reader.crs().unwrap_or_default();
+            let wgs84_bbox = bbox.to_wgs84(&crs)?;
+            builder = builder.bbox(wgs84_bbox).geometry_from_bbox();
         }
 
         // Add CityJSON metadata
@@ -448,6 +458,10 @@ mod tests {
         let cityjson = r#"{
             "type": "CityJSON",
             "version": "2.0",
+            "transform": {
+                "scale": [0.01, 0.01, 0.01],
+                "translate": [100000, 200000, 0]
+            },
             "metadata": {
                 "geographicalExtent": [1.0, 2.0, 0.0, 10.0, 20.0, 30.0],
                 "referenceSystem": "https://www.opengis.net/def/crs/EPSG/0/7415"
@@ -458,14 +472,14 @@ mod tests {
                     "geometry": [{
                         "type": "Solid",
                         "lod": "2",
-                        "boundaries": []
+                        "boundaries": [[[[0,0,0]]]]
                     }],
                     "attributes": {
                         "yearOfConstruction": 2020
                     }
                 }
             },
-            "vertices": []
+            "vertices": [[0,0,0]]
         }"#;
 
         writeln!(temp_file, "{}", cityjson).unwrap();

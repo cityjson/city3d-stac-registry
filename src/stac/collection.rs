@@ -242,8 +242,15 @@ impl StacCollectionBuilder {
                 .insert("proj:epsg".to_string(), serde_json::to_value(codes)?);
         }
 
-        // Merge all bounding boxes for spatial extent
-        let bboxes: Vec<BBox3D> = readers.iter().filter_map(|r| r.bbox().ok()).collect();
+        // Merge all bounding boxes for spatial extent (transformed to WGS84)
+        let bboxes: Vec<BBox3D> = readers
+            .iter()
+            .filter_map(|r| {
+                let bbox = r.bbox().ok()?;
+                let crs = r.crs().unwrap_or_default();
+                bbox.to_wgs84(&crs).ok()
+            })
+            .collect();
 
         if !bboxes.is_empty() {
             let mut merged = bboxes[0].clone();
@@ -506,6 +513,10 @@ mod tests {
             r#"{{
             "type": "CityJSON",
             "version": "{}",
+            "transform": {{
+                "scale": [0.01, 0.01, 0.01],
+                "translate": [100000, 200000, 0]
+            }},
             "metadata": {{
                 "geographicalExtent": [1.0, 2.0, 0.0, 10.0, 20.0, 30.0],
                 "referenceSystem": "https://www.opengis.net/def/crs/EPSG/0/7415"
@@ -516,11 +527,11 @@ mod tests {
                     "geometry": [{{
                         "type": "Solid",
                         "lod": "{}",
-                        "boundaries": []
+                        "boundaries": [[[[0,0,0]]]]
                     }}]
                 }}
             }},
-            "vertices": []
+            "vertices": [[0,0,0]]
         }}"#,
             version, obj_type, lod
         );

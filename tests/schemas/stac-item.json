@@ -1,0 +1,140 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schemas.stacspec.org/v1.0.0/item-spec/json-schema/item.json",
+  "title": "STAC Item (self-contained for testing)",
+  "description": "Simplified self-contained STAC Item schema for offline validation. Based on STAC v1.0.0 spec, without external $ref dependencies.",
+  "type": "object",
+  "required": [
+    "stac_version",
+    "type",
+    "id",
+    "properties",
+    "assets",
+    "links"
+  ],
+  "properties": {
+    "stac_version": {
+      "title": "STAC version",
+      "type": "string",
+      "pattern": "^1\\."
+    },
+    "stac_extensions": {
+      "title": "STAC extensions",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "type": {
+      "title": "GeoJSON Feature type",
+      "const": "Feature"
+    },
+    "id": {
+      "title": "Item ID",
+      "type": "string",
+      "minLength": 1
+    },
+    "bbox": {
+      "title": "Bounding box",
+      "type": "array",
+      "oneOf": [
+        { "minItems": 4, "maxItems": 4 },
+        { "minItems": 6, "maxItems": 6 }
+      ],
+      "items": { "type": "number" }
+    },
+    "geometry": {
+      "title": "GeoJSON Geometry",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["type", "coordinates"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["Point", "MultiPoint", "LineString", "MultiLineString", "Polygon", "MultiPolygon", "GeometryCollection"]
+            },
+            "coordinates": {}
+          }
+        }
+      ]
+    },
+    "properties": {
+      "title": "Item properties",
+      "type": "object",
+      "required": ["datetime"],
+      "properties": {
+        "datetime": {
+          "title": "Datetime",
+          "type": ["string", "null"]
+        },
+        "title": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
+    "assets": {
+      "title": "Assets",
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/definitions/asset"
+      }
+    },
+    "links": {
+      "title": "Links",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/link"
+      }
+    }
+  },
+  "definitions": {
+    "asset": {
+      "type": "object",
+      "required": ["href"],
+      "properties": {
+        "href": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "title": "Media type",
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "roles": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "link": {
+      "type": "object",
+      "required": ["rel", "href"],
+      "properties": {
+        "rel": {
+          "type": "string",
+          "minLength": 1
+        },
+        "href": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
