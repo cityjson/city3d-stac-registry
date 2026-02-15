@@ -1,10 +1,10 @@
 [package]
-name = "cityjson-stac"
+name = "city3d-stac"
 version = "0.1.0"
 edition = "2021"
 authors = ["CityJSON Contributors"]
 description = "Generate STAC metadata for CityJSON datasets"
-license = "MIT OR Apache-2.0"
+license = "MIT"
 repository = "https://github.com/cityjson/cityjson-stac"
 readme = "README.md"
 keywords = ["stac", "cityjson", "3d", "gis", "geospatial"]
