@@ -65,6 +65,7 @@ assert_cmd = "2.0"
 predicates = "3.1"
 pretty_assertions = "1.4"
 typify = "0.6.1"
+jsonschema = "0.26"
 
 
 [features]
