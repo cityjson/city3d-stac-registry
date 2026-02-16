@@ -65,7 +65,7 @@ rayon = { version = "1.10", optional = true }
 
 # Optional: runtime JSON Schema validation
 jsonschema = { version = "0.26", optional = true }
-toml = "0.8"
+toml = "1.0"
 
 [dev-dependencies]
 # tempfile is now in main dependencies
