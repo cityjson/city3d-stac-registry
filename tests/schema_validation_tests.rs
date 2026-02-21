@@ -857,3 +857,151 @@ mod remote_url_schema_tests {
         );
     }
 }
+
+mod citygml_schema_tests {
+    use super::*;
+
+    #[test]
+    fn test_citygml2_item_validates_against_stac_item_schema() {
+        let item = build_item_from_file("3dbag_citygml2.gml");
+        let schema = load_stac_item_schema();
+        validate_against_schema(&item, &schema, "STAC Item (3dbag_citygml2.gml)");
+    }
+
+    #[test]
+    fn test_citygml2_item_validates_against_extension_schema() {
+        let item = build_item_from_file("3dbag_citygml2.gml");
+        let schema = load_cityjson_extension_schema();
+        validate_against_schema(&item, &schema, "CityJSON Extension (3dbag_citygml2.gml)");
+    }
+
+    #[test]
+    fn test_citygml3_item_validates_against_stac_item_schema() {
+        let item = build_item_from_file("3dbag_citygml3.gml");
+        let schema = load_stac_item_schema();
+        validate_against_schema(&item, &schema, "STAC Item (3dbag_citygml3.gml)");
+    }
+
+    #[test]
+    fn test_citygml3_item_validates_against_extension_schema() {
+        let item = build_item_from_file("3dbag_citygml3.gml");
+        let schema = load_cityjson_extension_schema();
+        validate_against_schema(&item, &schema, "CityJSON Extension (3dbag_citygml3.gml)");
+    }
+
+    #[test]
+    fn test_citygml2_collection_validates() {
+        let readers: Vec<Box<dyn CityModelMetadataReader>> =
+            vec![get_reader(&test_data_path("3dbag_citygml2.gml")).unwrap()];
+        let collection = build_collection_from_readers(&readers, "citygml2-collection");
+        validate_against_schema(
+            &collection,
+            &load_stac_collection_schema(),
+            "STAC Collection (3dbag_citygml2.gml)",
+        );
+        validate_against_schema(
+            &collection,
+            &load_cityjson_extension_schema(),
+            "CityJSON Extension (citygml2 collection)",
+        );
+    }
+
+    #[test]
+    fn test_citygml3_collection_validates() {
+        let readers: Vec<Box<dyn CityModelMetadataReader>> =
+            vec![get_reader(&test_data_path("3dbag_citygml3.gml")).unwrap()];
+        let collection = build_collection_from_readers(&readers, "citygml3-collection");
+        validate_against_schema(
+            &collection,
+            &load_stac_collection_schema(),
+            "STAC Collection (3dbag_citygml3.gml)",
+        );
+        validate_against_schema(
+            &collection,
+            &load_cityjson_extension_schema(),
+            "CityJSON Extension (citygml3 collection)",
+        );
+    }
+}
+
+mod remote_citygml_schema_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_remote_citygml2_validates_against_schemas() {
+        let url = "https://storage.googleapis.com/cityjson/3dbag_citygml2.gml";
+        let source = InputSource::from_str_input(url).expect("Failed to parse URL");
+        let reader = get_reader_from_source(&source)
+            .await
+            .expect("Failed to fetch remote reader");
+
+        let mut builder = StacItemBuilder::new("remote-citygml2")
+            .cityjson_metadata(reader.as_ref())
+            .expect("Failed to add metadata");
+
+        if let Ok(bbox) = reader.bbox() {
+            let crs = reader.crs().unwrap_or_default();
+            let wgs84_bbox = bbox
+                .to_wgs84(&crs)
+                .expect("Failed to transform bbox to WGS84");
+            builder = builder.bbox(wgs84_bbox).geometry_from_bbox();
+        }
+
+        let item = builder
+            .data_asset(url, "application/gml+xml")
+            .build()
+            .expect("Failed to build item");
+
+        let item_json = serde_json::to_value(item).unwrap();
+
+        validate_against_schema(
+            &item_json,
+            &load_stac_item_schema(),
+            "STAC Item (remote 3dbag_citygml2.gml)",
+        );
+        validate_against_schema(
+            &item_json,
+            &load_cityjson_extension_schema(),
+            "CityJSON Extension (remote 3dbag_citygml2.gml)",
+        );
+    }
+
+    #[tokio::test]
+    async fn test_remote_citygml3_validates_against_schemas() {
+        let url = "https://storage.googleapis.com/cityjson/3dbag_citygml3.gml";
+        let source = InputSource::from_str_input(url).expect("Failed to parse URL");
+        let reader = get_reader_from_source(&source)
+            .await
+            .expect("Failed to fetch remote reader");
+
+        let mut builder = StacItemBuilder::new("remote-citygml3")
+            .cityjson_metadata(reader.as_ref())
+            .expect("Failed to add metadata");
+
+        if let Ok(bbox) = reader.bbox() {
+            let crs = reader.crs().unwrap_or_default();
+            let wgs84_bbox = bbox
+                .to_wgs84(&crs)
+                .expect("Failed to transform bbox to WGS84");
+            builder = builder.bbox(wgs84_bbox).geometry_from_bbox();
+        }
+
+        let item = builder
+            .data_asset(url, "application/gml+xml")
+            .build()
+            .expect("Failed to build item");
+
+        let item_json = serde_json::to_value(item).unwrap();
+
+        validate_against_schema(
+            &item_json,
+            &load_stac_item_schema(),
+            "STAC Item (remote 3dbag_citygml3.gml)",
+        );
+        validate_against_schema(
+            &item_json,
+            &load_cityjson_extension_schema(),
+            "CityJSON Extension (remote 3dbag_citygml3.gml)",
+        );
+    }
+}

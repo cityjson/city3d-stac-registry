@@ -42,6 +42,7 @@ struct CityGMLMetadata {
 pub struct CityGMLReader {
     file_path: PathBuf,
     metadata: RwLock<Option<CityGMLMetadata>>,
+    _temp_path: Option<tempfile::TempPath>,
 }
 
 impl CityGMLReader {
@@ -57,7 +58,14 @@ impl CityGMLReader {
         Ok(Self {
             file_path: file_path.to_path_buf(),
             metadata: RwLock::new(None),
+            _temp_path: None,
         })
+    }
+
+    /// Keep a temporary file alive for the lifetime of the reader
+    pub fn with_temp_path(mut self, temp_path: tempfile::TempPath) -> Self {
+        self._temp_path = Some(temp_path);
+        self
     }
 
     /// Lazy load and cache metadata using interior mutability

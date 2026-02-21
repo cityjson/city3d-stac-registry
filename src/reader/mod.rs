@@ -70,10 +70,10 @@ pub async fn get_reader_from_source(
             // Validate extension before downloading to avoid wasting bandwidth
             let extension = extract_extension_from_url(url)?;
             match extension.as_str() {
-                "json" | "jsonl" | "cjseq" => {}
+                "json" | "jsonl" | "cjseq" | "gml" | "xml" => {}
                 _ => {
                     return Err(CityJsonStacError::InvalidCityJson(format!(
-                        "Unsupported remote file extension: {extension}. Supported: .json, .jsonl, .cjseq",
+                        "Unsupported remote file extension: {extension}. Supported: .json, .jsonl, .cjseq, .gml, .xml",
                     )));
                 }
             }
@@ -101,6 +101,20 @@ pub async fn get_reader_from_source(
                     Ok(Box::new(
                         CityJSONSeqReader::from_url_stream(url, virtual_path).await?,
                     ))
+                }
+                "gml" | "xml" => {
+                    log::info!("Downloading remote CityGML file: {}", url);
+                    let bytes = download_from_url(url).await?;
+                    // write temporary file to handle it local
+                    let mut temp_file = tempfile::Builder::new()
+                        .suffix(&format!(".{}", extension))
+                        .tempfile()?;
+                    use std::io::Write;
+                    temp_file.write_all(&bytes)?;
+                    let path = temp_file.path().to_path_buf();
+                    let reader =
+                        CityGMLReader::new(&path)?.with_temp_path(temp_file.into_temp_path());
+                    Ok(Box::new(reader))
                 }
                 _ => unreachable!("extension already validated above"),
             }
