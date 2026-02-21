@@ -31,7 +31,7 @@ mod e2e_single_file_tests {
             .expect("Failed to build item");
 
         // Step 3: Validate STAC item structure
-        assert_eq!(item.stac_version, "1.0.0");
+        assert_eq!(item.stac_version, "1.1.0");
         assert_eq!(item.item_type, "Feature");
         assert!(!item.id.is_empty());
 
@@ -103,7 +103,7 @@ mod e2e_single_file_tests {
             serde_json::from_str(&json).expect("Failed to deserialize");
 
         // Validate structure
-        assert_eq!(deserialized["stac_version"], "1.0.0");
+        assert_eq!(deserialized["stac_version"], "1.1.0");
         assert_eq!(deserialized["type"], "Feature");
         // city3d:encoding removed
     }
@@ -129,7 +129,7 @@ mod e2e_single_file_tests {
         // Verify content
         let content = std::fs::read_to_string(&output_path).expect("Failed to read file");
         let parsed: serde_json::Value = serde_json::from_str(&content).expect("Failed to parse");
-        assert_eq!(parsed["stac_version"], "1.0.0");
+        assert_eq!(parsed["stac_version"], "1.1.0");
     }
 }
 
@@ -153,7 +153,7 @@ mod e2e_collection_tests {
 
         assert_eq!(collection.id, "test-collection");
         assert_eq!(collection.title, Some("Test Collection".to_string()));
-        assert_eq!(collection.stac_version, "1.0.0");
+        assert_eq!(collection.stac_version, "1.1.0");
         assert_eq!(collection.collection_type, "Collection");
 
         // Validate extent
@@ -207,7 +207,7 @@ mod e2e_collection_tests {
         let parsed: serde_json::Value = serde_json::from_str(&json).expect("Failed to parse");
 
         assert_eq!(parsed["type"], "Collection");
-        assert_eq!(parsed["stac_version"], "1.0.0");
+        assert_eq!(parsed["stac_version"], "1.1.0");
     }
 
     #[test]

@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://schemas.stacspec.org/v1.0.0/item-spec/json-schema/item.json",
+  "$id": "https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/item.json",
   "title": "STAC Item (self-contained for testing)",
-  "description": "Simplified self-contained STAC Item schema for offline validation. Based on STAC v1.0.0 spec, without external $ref dependencies.",
+  "description": "Simplified self-contained STAC Item schema for offline validation. Based on STAC v1.1.0 spec, without external $ref dependencies.",
   "type": "object",
   "required": [
     "stac_version",

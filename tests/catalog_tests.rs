@@ -58,7 +58,7 @@ fn test_catalog_serialization() {
     let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
 
     assert_eq!(parsed["type"], "Catalog");
-    assert_eq!(parsed["stac_version"], "1.0.0");
+    assert_eq!(parsed["stac_version"], "1.1.0");
     assert_eq!(parsed["id"], "cat-json");
     assert_eq!(parsed["description"], "serialization test");
     assert!(parsed.get("extent").is_none()); // Catalog shouldn't have extent

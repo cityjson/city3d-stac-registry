@@ -103,7 +103,7 @@ cityjson-stac/
 
 ### Specifications
 
-- [STAC Specification v1.0.0](https://stacspec.org/) - Core STAC standard
+- [STAC Specification v1.1.0](https://stacspec.org/) - Core STAC standard
 - [CityJSON Specification](https://www.cityjson.org/specs/) - CityJSON format spec
 - [STAC Extensions Registry](https://stac-extensions.github.io/) - Extension examples
 

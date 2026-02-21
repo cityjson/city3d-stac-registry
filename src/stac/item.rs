@@ -267,7 +267,7 @@ impl StacItemBuilder {
         }
 
         Ok(StacItem {
-            stac_version: "1.0.0".to_string(),
+            stac_version: "1.1.0".to_string(),
             stac_extensions,
             item_type: "Feature".to_string(),
             id: self.id,
@@ -509,7 +509,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(item.id, "test-item");
-        assert_eq!(item.stac_version, "1.0.0");
+        assert_eq!(item.stac_version, "1.1.0");
         assert_eq!(item.properties.get("title").unwrap(), "Test Item");
     }
 

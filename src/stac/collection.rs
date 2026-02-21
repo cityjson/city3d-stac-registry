@@ -493,7 +493,7 @@ impl StacCollectionBuilder {
         }
 
         Ok(StacCollection {
-            stac_version: "1.0.0".to_string(),
+            stac_version: "1.1.0".to_string(),
             stac_extensions,
             collection_type: "Collection".to_string(),
             id: self.id,

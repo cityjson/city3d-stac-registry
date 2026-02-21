@@ -31,7 +31,7 @@ pub struct StacCatalog {
 impl StacCatalog {
     pub fn new(id: impl Into<String>, description: impl Into<String>) -> Self {
         Self {
-            stac_version: "1.0.0".to_string(),
+            stac_version: "1.1.0".to_string(),
             stac_extensions: Vec::new(),
             catalog_type: "Catalog".to_string(),
             id: id.into(),

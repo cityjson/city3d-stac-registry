@@ -28,7 +28,7 @@ mod stac_item_builder_tests {
             .expect("Failed to build item");
 
         assert_eq!(item.id, "test-id");
-        assert_eq!(item.stac_version, "1.0.0");
+        assert_eq!(item.stac_version, "1.1.0");
         assert_eq!(item.item_type, "Feature");
     }
 
@@ -258,7 +258,7 @@ mod stac_collection_builder_tests {
             .expect("Failed to build collection");
 
         assert_eq!(collection.id, "test-collection");
-        assert_eq!(collection.stac_version, "1.0.0");
+        assert_eq!(collection.stac_version, "1.1.0");
         assert_eq!(collection.collection_type, "Collection");
     }
 
@@ -531,7 +531,7 @@ mod stac_collection_aggregate_from_items_tests {
         }
 
         StacItem {
-            stac_version: "1.0.0".to_string(),
+            stac_version: "1.1.0".to_string(),
             stac_extensions: vec![],
             item_type: "Feature".to_string(),
             id: id.to_string(),
@@ -660,7 +660,7 @@ mod stac_collection_aggregate_from_items_tests {
         );
 
         let item = StacItem {
-            stac_version: "1.0.0".to_string(),
+            stac_version: "1.1.0".to_string(),
             stac_extensions: vec![],
             item_type: "Feature".to_string(),
             id: "minimal-item".to_string(),

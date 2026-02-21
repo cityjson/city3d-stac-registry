@@ -1,7 +1,7 @@
 //! STAC data models
 //!
 //! This file contains STAC type definitions that are derived from
-//! [STAC Specification v1.0.0](https://github.com/radiantearth/stac-spec) JSON schemas.
+//! [STAC Specification v1.1.0](https://github.com/radiantearth/stac-spec) JSON schemas.
 //!
 //! The types match the official STAC specification structure with serde
 //! annotations for proper JSON serialization/deserialization.
@@ -302,7 +302,7 @@ mod tests {
         assets.insert("data".to_string(), Asset::new("./data.json"));
 
         let item = StacItem {
-            stac_version: "1.0.0".to_string(),
+            stac_version: "1.1.0".to_string(),
             stac_extensions: vec![],
             item_type: "Feature".to_string(),
             id: "test-item".to_string(),
@@ -314,7 +314,7 @@ mod tests {
         };
 
         let json = serde_json::to_string(&item).unwrap();
-        assert!(json.contains("\"stac_version\":\"1.0.0\""));
+        assert!(json.contains("\"stac_version\":\"1.1.0\""));
         assert!(json.contains("\"id\":\"test-item\""));
     }
 }
