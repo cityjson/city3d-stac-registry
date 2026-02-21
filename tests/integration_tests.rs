@@ -46,7 +46,7 @@ mod e2e_single_file_tests {
         assert_eq!(geom["type"], "Polygon");
 
         // Validate CityJSON extension properties
-        assert_eq!(item.properties["city3d:encoding"], "CityJSON");
+        // city3d:encoding is removed
         assert_eq!(item.properties["city3d:version"], "2.0");
 
         // Validate projection extension
@@ -105,7 +105,7 @@ mod e2e_single_file_tests {
         // Validate structure
         assert_eq!(deserialized["stac_version"], "1.0.0");
         assert_eq!(deserialized["type"], "Feature");
-        assert!(deserialized["properties"]["city3d:encoding"].is_string());
+        // city3d:encoding removed
     }
 
     #[test]
@@ -186,8 +186,9 @@ mod e2e_collection_tests {
 
         // Summaries should contain merged metadata
         let summaries = collection.summaries.as_ref().unwrap();
-        let encodings = summaries["city3d:encoding"].as_array().unwrap();
-        assert!(encodings.iter().any(|e| e == "CityJSON"));
+        // Check proj:epsg
+        let epsg_codes = summaries["proj:epsg"].as_array().unwrap();
+        assert!(epsg_codes.iter().any(|c| c == 7415));
     }
 
     #[test]

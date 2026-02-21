@@ -136,13 +136,7 @@ impl StacCollectionBuilder {
         mut self,
         readers: &[Box<dyn CityModelMetadataReader>],
     ) -> Result<Self> {
-        // Collect all encodings
-        let encodings: HashSet<String> = readers.iter().map(|r| r.encoding().to_string()).collect();
-        let encoding_vec: Vec<String> = encodings.into_iter().collect();
-        self.summaries.insert(
-            "city3d:encoding".to_string(),
-            serde_json::to_value(encoding_vec)?,
-        );
+        // city3d:encoding is removed in favor of asset media type
 
         // Collect all versions
         let versions: HashSet<String> = readers.iter().filter_map(|r| r.version().ok()).collect();
@@ -162,10 +156,23 @@ impl StacCollectionBuilder {
             .collect();
 
         if !all_lods.is_empty() {
-            let mut lods: Vec<String> = all_lods.into_iter().collect();
-            lods.sort();
+            let numeric_lods: Vec<Value> = all_lods
+                .iter()
+                .map(|lod| {
+                    if let Ok(num) = lod.parse::<f64>() {
+                        if let Some(n) = serde_json::Number::from_f64(num) {
+                            Value::Number(n)
+                        } else {
+                            Value::String(lod.clone())
+                        }
+                    } else {
+                        Value::String(lod.clone())
+                    }
+                })
+                .collect();
+
             self.summaries
-                .insert("city3d:lods".to_string(), serde_json::to_value(lods)?);
+                .insert("city3d:lods".to_string(), Value::Array(numeric_lods));
         }
 
         // Aggregate city object types
@@ -229,17 +236,29 @@ impl StacCollectionBuilder {
                 .insert("city3d:materials".to_string(), serde_json::to_value(true)?);
         }
 
-        // Aggregate EPSG codes
-        let epsg_codes: HashSet<u32> = readers
+        // Aggregate encoding
+        let unique_encodings: HashSet<&str> = readers.iter().map(|r| r.encoding()).collect();
+        if !unique_encodings.is_empty() {
+            let mut enc_vec: Vec<String> = unique_encodings.into_iter().map(String::from).collect();
+            enc_vec.sort();
+            self.summaries.insert(
+                "city3d:encoding".to_string(),
+                serde_json::to_value(enc_vec)?,
+            );
+        }
+
+        // Aggregate EPSG codes -> proj:epsg (array of integers)
+        let unique_epsg: HashSet<u32> = readers
             .iter()
             .filter_map(|r| r.crs().ok())
             .filter_map(|crs| crs.to_stac_epsg())
             .collect();
 
-        if !epsg_codes.is_empty() {
-            let codes: Vec<u32> = epsg_codes.into_iter().collect();
+        if !unique_epsg.is_empty() {
+            let mut epsg_vec: Vec<u32> = unique_epsg.into_iter().collect();
+            epsg_vec.sort();
             self.summaries
-                .insert("proj:epsg".to_string(), serde_json::to_value(codes)?);
+                .insert("proj:epsg".to_string(), serde_json::to_value(epsg_vec)?);
         }
 
         // Merge all bounding boxes for spatial extent (transformed to WGS84)
@@ -273,6 +292,7 @@ impl StacCollectionBuilder {
     /// https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json
     pub fn aggregate_from_items(mut self, items: &[crate::stac::models::StacItem]) -> Result<Self> {
         use crate::stac::models::StacItem;
+        use serde_json::Value;
 
         // Helper to extract string array from item properties
         fn get_string_array(item: &StacItem, key: &str) -> Vec<String> {
@@ -285,6 +305,19 @@ impl StacCollectionBuilder {
                         .collect()
                 })
                 .unwrap_or_default()
+        }
+
+        // Helper to extract number array/mixed array from items
+        fn get_lod_array(item: &StacItem) -> Vec<Value> {
+            if let Some(arr) = item
+                .properties
+                .get("city3d:lods")
+                .and_then(|v| v.as_array())
+            {
+                arr.clone()
+            } else {
+                Vec::new()
+            }
         }
 
         // Helper to extract string from item properties
@@ -308,16 +341,31 @@ impl StacCollectionBuilder {
                 .unwrap_or(false)
         }
 
-        // Collect all encodings
-        let encodings: HashSet<String> = items
-            .iter()
-            .filter_map(|item| get_string(item, "city3d:encoding"))
-            .collect();
+        // Aggregate city3d:encoding from item assets (by media type) OR from properties directly
+        let mut encodings: HashSet<String> = HashSet::new();
+        for item in items {
+            for asset in item.assets.values() {
+                if let Some(media_type) = &asset.media_type {
+                    if media_type == "application/city+json" || media_type == "application/json" {
+                        encodings.insert("CityJSON".to_string());
+                    } else if media_type == "application/city+json-seq"
+                        || media_type == "application/json-seq"
+                    {
+                        encodings.insert("CityJSONSeq".to_string());
+                    }
+                }
+            }
+            // Also accept encoding directly from item properties (city3d:encoding)
+            if let Some(enc) = get_string(item, "city3d:encoding") {
+                encodings.insert(enc);
+            }
+        }
         if !encodings.is_empty() {
-            let encoding_vec: Vec<String> = encodings.into_iter().collect();
+            let mut enc_vec: Vec<String> = encodings.into_iter().collect();
+            enc_vec.sort();
             self.summaries.insert(
                 "city3d:encoding".to_string(),
-                serde_json::to_value(encoding_vec)?,
+                serde_json::to_value(enc_vec)?,
             );
         }
 
@@ -335,15 +383,23 @@ impl StacCollectionBuilder {
         }
 
         // Aggregate LODs
-        let all_lods: HashSet<String> = items
-            .iter()
-            .flat_map(|item| get_string_array(item, "city3d:lods"))
-            .collect();
-        if !all_lods.is_empty() {
-            let mut lods: Vec<String> = all_lods.into_iter().collect();
-            lods.sort();
+        // Since they are now Values (Numbers), we collect unique Values by stringifying them first
+        let mut unique_lods: HashSet<String> = HashSet::new();
+        let mut lod_values: Vec<Value> = Vec::new();
+
+        for item in items {
+            for lod in get_lod_array(item) {
+                let s = lod.to_string();
+                if !unique_lods.contains(&s) {
+                    unique_lods.insert(s);
+                    lod_values.push(lod);
+                }
+            }
+        }
+
+        if !lod_values.is_empty() {
             self.summaries
-                .insert("city3d:lods".to_string(), serde_json::to_value(lods)?);
+                .insert("city3d:lods".to_string(), Value::Array(lod_values));
         }
 
         // Aggregate city object types
@@ -403,16 +459,17 @@ impl StacCollectionBuilder {
                 .insert("city3d:materials".to_string(), serde_json::to_value(true)?);
         }
 
-        // Aggregate EPSG codes from proj:epsg property
-        let epsg_codes: HashSet<u32> = items
+        // Aggregate proj:epsg (array of integers)
+        let unique_epsg: HashSet<u64> = items
             .iter()
-            .filter_map(|item| get_int(item, "proj:epsg"))
-            .filter_map(|v| u32::try_from(v).ok())
+            .filter_map(|item| get_int(item, "proj:epsg").map(|v| v as u64))
             .collect();
-        if !epsg_codes.is_empty() {
-            let codes: Vec<u32> = epsg_codes.into_iter().collect();
+
+        if !unique_epsg.is_empty() {
+            let mut epsg_vec: Vec<u64> = unique_epsg.into_iter().collect();
+            epsg_vec.sort();
             self.summaries
-                .insert("proj:epsg".to_string(), serde_json::to_value(codes)?);
+                .insert("proj:epsg".to_string(), serde_json::to_value(epsg_vec)?);
         }
 
         // Merge spatial extents from item bboxes

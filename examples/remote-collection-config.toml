@@ -1,0 +1,16 @@
+# Remote Collection Configuration
+#
+# This file is used to configure a collection that pulls data from remote URLs.
+# It can be referenced in a catalog configuration file to include remote datasets.
+
+id = "remote-collection-example"
+title = "Example Remote Collection"
+description = "This collection demonstrates pulling CityJSON data from remote URLs."
+license = "CC-BY-4.0"
+
+inputs = [
+  # Example: A remote CityJSON file (replace with real URL)
+  "https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/3-20-DELFSHAVEN.city.json",
+  # "https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/Vienna_102081.city.json",
+] # List of remote URLs to include in this collection.
+# The CLI will fetch only the metadata (headers) from these files to generate STAC Items.

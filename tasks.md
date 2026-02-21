@@ -46,11 +46,13 @@ This document tracks the progress of refactoring the cityjson-stac codebase to u
 **Decision:** Use `cjseq` crate's typed API for **both** `CityJSONReader` and `CityJSONSeqReader`.
 
 The cjseq crate provides strongly-typed Rust structs for CityJSON data:
+
 - `cjseq::CityJSON` - For CityJSON files
 - `cjseq::CityJSONFeature` - For CityJSONSeq feature lines
 - `cjseq::CityObject`, `cjseq::Geometry`, `cjseq::Transform` - For accessing data
 
 Both readers should:
+
 1. Parse data using cjseq's `from_str()` methods
 2. Access typed fields directly instead of JSON pointer navigation
 3. Handle cases where files don't conform to cjseq's expected schema
@@ -64,6 +66,7 @@ The cjseq crate has a strict schema. Files that don't conform (e.g., missing req
 **File:** `src/reader/cityjson.rs`
 
 Replace `serde_json::Value` with `cjseq::CityJSON`:
+
 ```rust
 pub struct CityJSONReader {
     file_path: PathBuf,
@@ -72,6 +75,7 @@ pub struct CityJSONReader {
 ```
 
 Key implementation points:
+
 - Use `cjseq::CityJSON::from_str()` for parsing
 - Access fields directly: `data.version`, `data.transform`, `data.metadata`
 - Iterate `city_objects` for types, LODs, attributes
@@ -82,6 +86,7 @@ Key implementation points:
 **File:** `src/reader/cjseq.rs`
 
 Replace `serde_json::Value` with `cjseq` types:
+
 ```rust
 pub struct CityJSONSeqReader {
     file_path: PathBuf,
@@ -91,6 +96,7 @@ pub struct CityJSONSeqReader {
 ```
 
 Key implementation points:
+
 - Parse header line with `cjseq::CityJSON::from_str()`
 - Parse feature lines with `cjseq::CityJSONFeature::from_str()`
 - Use `HashSet` instead of `BTreeSet` for better performance (sorting not required)
@@ -125,6 +131,7 @@ See Task 2 above - CityJSONSeqReader is part of the combined refactoring effort 
 ### Streaming Design
 
 CityJSONSeq is designed for streaming. The reader:
+
 1. Reads first line as `cjseq::CityJSON` header (metadata only)
 2. Streams remaining lines using `BufReader::lines()`
 3. Parses each line as `cjseq::CityJSONFeature`
@@ -160,27 +167,33 @@ pub struct AggregatedMetadata {
 Remote files are downloaded via the `object_store` crate and parsed in-memory using `from_content()` constructors. No temporary files are needed.
 
 **Supported backends:**
+
 - HTTP/HTTPS URLs
 - Amazon S3 (`s3://`)
 - Azure Blob Storage (`az://`, `azure://`)
 - Google Cloud Storage (`gs://`)
 
 **Supported remote formats:**
+
 - CityJSON (`.json`)
 - CityJSONSeq (`.jsonl`, `.cjseq`)
 
 #### 4.1 Changes Made
 
 **`src/remote/mod.rs`**
+
 - [x] Added `download_from_url()` async function using `object_store::parse_url_opts`
 
 **`src/reader/cityjson.rs`**
+
 - [x] Added `CityJSONReader::from_content()` constructor for in-memory parsing
 
 **`src/reader/cjseq.rs`**
+
 - [x] Added `CityJSONSeqReader::from_content()` constructor for in-memory parsing
 
 **`src/reader/mod.rs`**
+
 - [x] Implemented `InputSource::Remote` variant in `get_reader_from_source()`
 - [x] Extension validation before download (avoids wasting bandwidth)
 - [x] Virtual file path from URL filename for STAC item ID generation
@@ -249,3 +262,32 @@ cat /tmp/test_item.json | jq .
 - Return `Result<T>` from all fallible operations
 - Use `RwLock` for thread-safe lazy loading
 - Document public APIs with rustdoc comments
+
+---
+
+## Task 5: CLI Enhancements for Catalog and Collection
+
+### Status: ✅ Complete
+
+#### 5.1 Async Collection Processing
+
+- [x] Refactored `process_collection_logic`, `handle_collection_command`, and `handle_catalog_command` to be `async`.
+- [x] Updated `main.rs` run loop to await commands.
+- [x] Enabled parallel fetching of headers (future enhancement, currently sequential async).
+
+#### 5.2 Remote URLs in Collections
+
+- [x] Updated `process_collection_logic` to accept remote URLs in `inputs`.
+- [x] Uses `InputSource::Remote` and `get_reader_from_source` to fetch metadata without full download (for supported formats).
+- [x] Validates extensions before fetching.
+
+#### 5.3 Config Files in Catalog Collections
+
+- [x] Updated `handle_catalog_command` to detect TOML/YAML files in `collections` list.
+- [x] Loads sub-collection configuration from these files instead of treating them as data directories.
+- [x] Allows mixing local directories, remote URLs (via config), and other config files in a single catalog.
+
+### Verification
+
+- [x] `cargo test` passes.
+- [x] `test_cli_catalog_command` passes.

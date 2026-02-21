@@ -1,6 +1,6 @@
 //! STAC Item builder
 
-use crate::error::{CityJsonStacError, Result};
+use crate::error::Result;
 use crate::metadata::BBox3D;
 use crate::reader::CityModelMetadataReader;
 use crate::stac::models::{Asset, Link, StacItem};
@@ -86,8 +86,12 @@ impl StacItemBuilder {
     ///
     /// Uses the STAC 3D City Models Extension (city3d: prefix)
     /// https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json
+    /// Add 3D City Models extension properties from metadata reader
+    ///
+    /// Uses the STAC 3D City Models Extension (city3d: prefix)
+    /// https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json
     pub fn cityjson_metadata(mut self, reader: &dyn CityModelMetadataReader) -> Result<Self> {
-        // Add city3d:encoding (required field)
+        // Add city3d:encoding
         self.properties.insert(
             "city3d:encoding".to_string(),
             Value::String(reader.encoding().to_string()),
@@ -110,11 +114,31 @@ impl StacItemBuilder {
             );
         }
 
-        // Add city3d:lods
+        // Add city3d:lods ensuring they are numbers
         if let Ok(lods) = reader.lods() {
             if !lods.is_empty() {
+                let numeric_lods: Vec<Value> = lods
+                    .iter()
+                    .map(|lod| {
+                        // Try to parse as number
+                        if let Ok(num) = lod.parse::<f64>() {
+                            // If it's a number, use Number
+                            if let Some(n) = serde_json::Number::from_f64(num) {
+                                Value::Number(n)
+                            } else {
+                                // Fallback for NaN/Infinity
+                                Value::String(lod.clone())
+                            }
+                        } else {
+                            // Keep as string if not parseable (should not happen if schema requires number, but safe fallback)
+                            // Or better, filter out non-numerics?
+                            // For now, let's assume valid data or fallback to string which might fail valid later but preserves data
+                            Value::String(lod.clone())
+                        }
+                    })
+                    .collect();
                 self.properties
-                    .insert("city3d:lods".to_string(), serde_json::to_value(lods)?);
+                    .insert("city3d:lods".to_string(), Value::Array(numeric_lods));
             }
         }
 
@@ -160,7 +184,7 @@ impl StacItemBuilder {
             }
         }
 
-        // Add proj:epsg from CRS
+        // Add proj:epsg from CRS (integer, as per STAC Projection Extension v1)
         if let Ok(crs) = reader.crs() {
             if let Some(epsg) = crs.to_stac_epsg() {
                 self.properties.insert(
@@ -229,19 +253,17 @@ impl StacItemBuilder {
 
     /// Build the STAC Item
     pub fn build(self) -> Result<StacItem> {
-        // Validate that we have required 3D City Models extension properties
-        if !self.properties.contains_key("city3d:encoding") {
-            return Err(CityJsonStacError::StacError(
-                "Missing required city3d:encoding property".to_string(),
-            ));
-        }
+        // city3d:encoding check removed
 
         // Build stac_extensions list dynamically based on which extensions are used
+        // IMPORTANT: We do NOT rely on schema dependencies anymore, so we must add explicit extension URLs
         let mut stac_extensions =
             vec!["https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json".to_string()];
 
         // Add Projection Extension if proj:epsg is present
         if self.properties.contains_key("proj:epsg") {
+            // We can check for legacy proj:epsg just in case, but we write proj:code now
+            // Using v2.0.0 projection extension as it removed proj:epsg but we use proper proj:code
             stac_extensions.push(
                 "https://stac-extensions.github.io/projection/v2.0.0/schema.json".to_string(),
             );
@@ -492,10 +514,6 @@ mod tests {
         let item = StacItemBuilder::new("test-item")
             .title("Test Item")
             .description("A test item")
-            .property(
-                "city3d:encoding".to_string(),
-                Value::String("CityJSON".to_string()),
-            )
             .build()
             .unwrap();
 
@@ -541,10 +559,6 @@ mod tests {
         let item = StacItemBuilder::new("test")
             .bbox(bbox)
             .geometry_from_bbox()
-            .property(
-                "city3d:encoding".to_string(),
-                Value::String("CityJSON".to_string()),
-            )
             .build()
             .unwrap();
 

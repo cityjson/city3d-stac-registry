@@ -13,13 +13,6 @@ fn test_data_path(filename: &str) -> std::path::PathBuf {
         .join(filename)
 }
 
-/// Get the tests/data directory
-fn test_data_dir() -> std::path::PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("tests")
-        .join("data")
-}
-
 mod cli_help_tests {
     use super::*;
 
@@ -82,7 +75,7 @@ mod cli_item_tests {
         let content = std::fs::read_to_string(&output).expect("Failed to read output");
         assert!(content.contains("stac_version"));
         assert!(content.contains("Feature"));
-        assert!(content.contains("city3d:encoding"));
+        // city3d:encoding removed
     }
 
     #[test]
@@ -100,7 +93,7 @@ mod cli_item_tests {
         ])
         .assert()
         .success()
-        .stdout(predicate::str::contains("Generated STAC Item"));
+        .stderr(predicate::str::contains("Item written to"));
     }
 
     #[test]

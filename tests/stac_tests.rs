@@ -141,13 +141,11 @@ mod stac_item_builder_tests {
     }
 
     #[test]
-    fn test_item_builder_requires_encoding() {
-        // Without city3d:encoding, build should fail
+    fn test_item_builder_without_cityjson_metadata() {
+        // Without cityjson_metadata(), build should still succeed
+        // (city3d:encoding is set by cityjson_metadata, not required at the raw builder level)
         let result = StacItemBuilder::new("test-id").build();
-
-        assert!(result.is_err());
-        let err = result.unwrap_err().to_string();
-        assert!(err.contains("city3d:encoding"));
+        assert!(result.is_ok());
     }
 
     #[test]

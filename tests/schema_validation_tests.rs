@@ -634,9 +634,9 @@ mod collection_property_tests {
         let lods = summaries["city3d:lods"].as_array();
         assert!(lods.is_some(), "Collection should have city3d:lods summary");
 
-        // All LODs should be strings
+        // All LODs should be numbers (matching the schema definition)
         for lod in lods.unwrap() {
-            assert!(lod.is_string(), "Each LOD should be a string, got: {lod}");
+            assert!(lod.is_number(), "Each LOD should be a number, got: {lod}");
         }
     }
 

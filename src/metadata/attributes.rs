@@ -47,9 +47,9 @@ impl AttributeDefinition {
 
 /// Data type for semantic attributes
 ///
-/// Serialized as SCREAMING_SNAKE_CASE to match STAC 3D City Models Extension specification.
+/// Serialized as PascalCase to match STAC 3D City Models Extension specification.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[serde(rename_all = "PascalCase")]
 pub enum AttributeType {
     String,
     Number,
@@ -123,6 +123,6 @@ mod tests {
         let attr = AttributeDefinition::new("function", AttributeType::String);
         let json = serde_json::to_string(&attr).unwrap();
         assert!(json.contains("\"name\":\"function\""));
-        assert!(json.contains("\"type\":\"STRING\""));
+        assert!(json.contains("\"type\":\"String\""));
     }
 }

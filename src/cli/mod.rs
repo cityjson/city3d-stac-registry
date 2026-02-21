@@ -1,12 +1,18 @@
 #![allow(clippy::uninlined_format_args)]
 //! Command-line interface
 
+pub mod progress;
+
 use crate::config::{CollectionCliArgs, CollectionConfigFile};
 use crate::error::{CityJsonStacError, Result};
-use crate::reader::{get_reader, get_reader_from_source, InputSource};
+use crate::reader::{get_reader_from_source, InputSource};
 use crate::stac::{StacCollectionBuilder, StacItemBuilder};
 use crate::traversal;
 use clap::{Parser, Subcommand};
+use progress::{
+    create_progress_bar, create_spinner, finish_spinner_err, finish_spinner_ok, print_banner,
+    print_error, print_info, print_success, print_warning, Summary,
+};
 use std::path::PathBuf;
 
 #[derive(Parser)]
@@ -221,9 +227,11 @@ pub async fn run() -> Result<()> {
             .init();
     } else {
         env_logger::Builder::from_default_env()
-            .filter_level(log::LevelFilter::Info)
+            .filter_level(log::LevelFilter::Warn)
             .init();
     }
+
+    print_banner();
 
     match cli.command {
         Commands::Item {
@@ -290,6 +298,7 @@ pub async fn run() -> Result<()> {
                 base_url,
                 pretty,
             })
+            .await
         }
 
         Commands::UpdateCollection {
@@ -326,17 +335,20 @@ pub async fn run() -> Result<()> {
             license,
             base_url,
             pretty,
-        } => handle_catalog_command(CatalogConfig {
-            inputs,
-            output,
-            config,
-            id,
-            title,
-            description,
-            license,
-            base_url,
-            pretty,
-        }),
+        } => {
+            handle_catalog_command(CatalogConfig {
+                inputs,
+                output,
+                config,
+                id,
+                title,
+                description,
+                license,
+                base_url,
+                pretty,
+            })
+            .await
+        }
     }
 }
 
@@ -351,12 +363,22 @@ async fn handle_item_command(
     base_url: Option<String>,
     pretty: bool,
 ) -> Result<()> {
-    log::info!("Processing input: {}", input);
-
     // Parse input as either local file or remote URL
+    let spinner = create_spinner(format!("Reading {input}…"));
     let source = InputSource::from_str_input(&input)?;
-    let reader = get_reader_from_source(&source).await?;
-    log::debug!("Using {} reader", reader.encoding());
+    let reader = match get_reader_from_source(&source).await {
+        Ok(r) => r,
+        Err(e) => {
+            finish_spinner_err(spinner, format!("Failed to read input: {e}"));
+            return Err(e);
+        }
+    };
+    finish_spinner_ok(
+        spinner,
+        format!("Loaded {} ({} format)", input, reader.encoding()),
+    );
+
+    let spinner = create_spinner("Building STAC Item…");
 
     // Build STAC Item
     // For remote URLs, use the virtual path from the reader
@@ -368,7 +390,9 @@ async fn handle_item_command(
         builder = StacItemBuilder::new(custom_id).cityjson_metadata(reader.as_ref())?;
 
         if let Ok(bbox) = reader.bbox() {
-            builder = builder.bbox(bbox).geometry_from_bbox();
+            let crs = reader.crs().unwrap_or_default();
+            let wgs84_bbox = bbox.to_wgs84(&crs)?;
+            builder = builder.bbox(wgs84_bbox).geometry_from_bbox();
         }
     }
 
@@ -417,7 +441,10 @@ async fn handle_item_command(
     // Write output
     std::fs::write(&output_path, json)?;
 
-    println!("✓ Generated STAC Item: {}", output_path.display());
+    finish_spinner_ok(
+        spinner,
+        format!("Item written to {}", output_path.display()),
+    );
 
     Ok(())
 }
@@ -435,7 +462,7 @@ struct CatalogConfig {
     pretty: bool,
 }
 
-fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
+async fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
     use crate::config::{CatalogCliArgs, CatalogConfigFile};
     use crate::stac::StacCatalogBuilder;
 
@@ -490,27 +517,37 @@ fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
     }
 
     if collection_targets.is_empty() {
-        eprintln!("Error: No collections provided. Specify input directories via CLI or 'collections' in config file.");
+        print_error("No collections provided. Specify input directories via CLI or 'collections' in config file.");
         std::process::exit(1);
     }
 
-    log::info!(
-        "Processing {} collections for catalog",
+    print_info(format!(
+        "Processing {} collection(s) for catalog",
         collection_targets.len()
-    );
+    ));
+
+    let total_collections = collection_targets.len() as u64;
+    let catalog_pb = create_progress_bar(total_collections, "Generating collections…");
 
     let mut generated_collections: Vec<(String, String)> = Vec::new(); // (href, title)
+    let mut catalog_errors: u64 = 0;
 
     for (input_dir, id_hint) in collection_targets {
         if !input_dir.exists() {
-            log::warn!("Input directory does not exist: {}", input_dir.display());
+            catalog_pb.println(format!(
+                "  {} Directory not found, skipping: {}",
+                console::style("⚠").yellow(),
+                input_dir.display()
+            ));
+            catalog_pb.inc(1);
+            catalog_errors += 1;
             continue;
         }
 
         let collection_output_dir = config.output.join(&id_hint);
 
-        let sub_collection_config = CollectionConfig {
-            inputs: vec![input_dir.clone()],
+        let mut collection_config = CollectionConfig {
+            inputs: Vec::new(),
             output: collection_output_dir.clone(),
             config: None,
             id: Some(id_hint.clone()),
@@ -526,8 +563,29 @@ fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
             pretty: config.pretty,
         };
 
-        println!("Processing collection: {}", input_dir.display());
-        match process_collection_logic(sub_collection_config) {
+        // Check if input is a config file
+        if input_dir.is_file() {
+            if let Some(ext) = input_dir.extension().and_then(|e| e.to_str()) {
+                if matches!(ext, "toml" | "yaml" | "yml") {
+                    catalog_pb.println(format!(
+                        "  {} Loading config: {}",
+                        console::style("›").blue(),
+                        input_dir.display()
+                    ));
+                    collection_config.config = Some(input_dir.clone());
+                } else {
+                    collection_config.inputs = vec![input_dir.clone()];
+                }
+            } else {
+                collection_config.inputs = vec![input_dir.clone()];
+            }
+        } else {
+            // Directory
+            collection_config.inputs = vec![input_dir.clone()];
+        }
+
+        catalog_pb.set_message(format!("Processing: {id_hint}"));
+        match process_collection_logic(collection_config).await {
             Ok((_col_path, col_id, col_title)) => {
                 let relative_href = format!("./{}/collection.json", id_hint);
 
@@ -542,17 +600,26 @@ fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
                     relative_href
                 };
 
+                catalog_pb.println(format!(
+                    "  {} Collection ready: {}",
+                    console::style("✓").green(),
+                    col_title.clone().unwrap_or_else(|| col_id.clone())
+                ));
                 generated_collections.push((href, col_title.unwrap_or(col_id)));
             }
             Err(e) => {
-                log::error!(
-                    "Failed to generate collection for {}: {}",
+                catalog_pb.println(format!(
+                    "  {} Failed ({}): {}",
+                    console::style("✗").red(),
                     input_dir.display(),
                     e
-                );
+                ));
+                catalog_errors += 1;
             }
         }
+        catalog_pb.inc(1);
     }
+    catalog_pb.finish_and_clear();
 
     // Generate Catalog
     let catalog_id = merged_config.id.unwrap_or_else(|| {
@@ -574,6 +641,7 @@ fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
         catalog_builder = catalog_builder.title(t);
     }
 
+    let collection_count = generated_collections.len();
     for (href, title) in generated_collections {
         catalog_builder = catalog_builder.child_link(href, Some(title));
     }
@@ -590,7 +658,12 @@ fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
     let catalog_path = config.output.join("catalog.json");
     std::fs::write(&catalog_path, catalog_json)?;
 
-    println!("\n✓ Generated Catalog: {}", catalog_path.display());
+    Summary::new()
+        .add("Catalog", catalog_path.display().to_string())
+        .add("Collections", format!("{collection_count}"))
+        .add("Errors", format!("{catalog_errors}"))
+        .print();
+    print_success("Catalog generated successfully");
 
     Ok(())
 }
@@ -613,14 +686,16 @@ struct CollectionConfig {
     pretty: bool,
 }
 
-fn handle_collection_command(config: CollectionConfig) -> Result<()> {
-    match process_collection_logic(config) {
+async fn handle_collection_command(config: CollectionConfig) -> Result<()> {
+    match process_collection_logic(config).await {
         Ok(_) => Ok(()),
         Err(e) => Err(e),
     }
 }
 
-fn process_collection_logic(config: CollectionConfig) -> Result<(PathBuf, String, Option<String>)> {
+async fn process_collection_logic(
+    config: CollectionConfig,
+) -> Result<(PathBuf, String, Option<String>)> {
     // Load config file if provided
     let base_config = if let Some(config_path) = &config.config {
         CollectionConfigFile::from_file(config_path)?
@@ -651,65 +726,118 @@ fn process_collection_logic(config: CollectionConfig) -> Result<(PathBuf, String
             .map(|s| PathBuf::from(s.as_str()))
             .collect()
     } else {
-        // No inputs anywhere - this should have been caught earlier
         return Err(CityJsonStacError::StacError(
             "No inputs provided".to_string(),
         ));
     };
 
-    log::info!("Scanning {} input(s)", final_inputs.len());
+    // Check for remote URLs vs local files
+    let mut sources: Vec<InputSource> = Vec::new();
+    let mut local_search_paths: Vec<PathBuf> = Vec::new();
 
-    // Find all supported files with pattern matching
-    let files = traversal::find_files_with_patterns(
-        &final_inputs,
-        &config.include,
-        &config.exclude,
-        config.recursive,
-        config.max_depth,
-    )?;
+    for input in &final_inputs {
+        let input_str = input.to_string_lossy();
+        if crate::remote::is_remote_url(&input_str) {
+            sources.push(InputSource::Remote(input_str.to_string()));
+        } else {
+            local_search_paths.push(input.clone());
+        }
+    }
 
-    if files.is_empty() {
+    log::info!(
+        "Scanning {} local path(s) and {} remote URL(s)",
+        local_search_paths.len(),
+        sources.len()
+    );
+
+    // Find all supported files in local search paths
+    if !local_search_paths.is_empty() {
+        let files = traversal::find_files_with_patterns(
+            &local_search_paths,
+            &config.include,
+            &config.exclude,
+            config.recursive,
+            config.max_depth,
+        )?;
+
+        // Add found local files to sources
+        for file in files {
+            sources.push(InputSource::Local(file));
+        }
+    }
+
+    if sources.is_empty() {
         return Err(crate::error::CityJsonStacError::NoFilesFound);
     }
 
-    println!("Found {} files", files.len());
+    print_info(format!("Found {} input source(s)", sources.len()));
 
-    // Detect filename collisions: count how many times each file stem appears
+    // Detect filename collisions (only relevant for local files really, but let's check all virtual names)
     let mut stem_counts: std::collections::HashMap<String, usize> =
         std::collections::HashMap::new();
-    for file in &files {
-        if let Some(stem) = file.file_stem().and_then(|s| s.to_str()) {
-            *stem_counts.entry(stem.to_string()).or_insert(0) += 1;
-        }
+
+    // Pre-scan sources to count filenames for collision detection
+    for source in &sources {
+        let filename = match source {
+            InputSource::Local(p) => p
+                .file_name()
+                .and_then(|s| s.to_str())
+                .unwrap_or("unknown")
+                .to_string(),
+            InputSource::Remote(u) => crate::remote::url_filename(u),
+        };
+        // Get stem (remove extension)
+        let path = PathBuf::from(&filename);
+        let stem = path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("unknown");
+        *stem_counts.entry(stem.to_string()).or_insert(0) += 1;
     }
 
     // Process each file and collect readers
     let mut readers: Vec<Box<dyn crate::reader::CityModelMetadataReader>> = Vec::new();
-    // (file_path, item_json, item_id) - we now track item_id separately
+    // (file_path, item_json, item_id)
     let mut items_data: Vec<(PathBuf, String, String)> = Vec::new();
-    let mut errors: Vec<(PathBuf, String)> = Vec::new();
+    let mut errors: Vec<(String, String)> = Vec::new();
 
-    for file in &files {
-        match get_reader(file) {
+    // Use loop instead of parallel iter because get_reader_from_source is async
+    let pb = create_progress_bar(sources.len() as u64, "Processing files…");
+    for source in &sources {
+        let source_desc = match source {
+            InputSource::Local(p) => p.display().to_string(),
+            InputSource::Remote(u) => u.clone(),
+        };
+        // Truncate long paths for the progress message
+        let short_desc = source_desc
+            .split(['/', '\\'])
+            .next_back()
+            .unwrap_or(&source_desc);
+        pb.set_message(format!("Processing: {short_desc}"));
+
+        match get_reader_from_source(source).await {
             Ok(reader) => {
-                log::debug!("Processing: {}", file.display());
-
                 // Check if this file stem has collisions
-                let stem = file
+                let file_path = reader.file_path();
+                let stem = file_path
                     .file_stem()
                     .and_then(|s| s.to_str())
                     .unwrap_or("unknown");
                 let has_collision = stem_counts.get(stem).is_some_and(|&count| count > 1);
 
-                // Generate STAC Item - use format suffix if there are collisions
+                // Generate STAC Item
                 let builder_result = if has_collision {
                     StacItemBuilder::from_file_with_format_suffix(
-                        file,
+                        file_path,
                         reader.as_ref(),
                         config.base_url.as_deref(),
                     )
                 } else {
-                    StacItemBuilder::from_file(file, reader.as_ref(), config.base_url.as_deref())
+                    StacItemBuilder::from_file(
+                        file_path,
+                        reader.as_ref(),
+                        config.base_url.as_deref(),
+                    )
                 };
 
                 match builder_result {
@@ -721,26 +849,31 @@ fn process_collection_logic(config: CollectionConfig) -> Result<(PathBuf, String
                             } else {
                                 serde_json::to_string(&item)?
                             };
-                            items_data.push((file.to_path_buf(), json, item_id));
+                            items_data.push((file_path.to_path_buf(), json, item_id));
                             readers.push(reader);
-                            print!(".");
                         }
                         Err(e) => {
                             if config.skip_errors {
-                                errors.push((file.to_path_buf(), e.to_string()));
-                                log::warn!("Skipping {}: {}", file.display(), e);
-                                print!("!");
+                                errors.push((source_desc.clone(), e.to_string()));
+                                pb.println(format!(
+                                    "  {} Skipping {short_desc}: {e}",
+                                    console::style("⚠").yellow()
+                                ));
                             } else {
+                                pb.finish_and_clear();
                                 return Err(e);
                             }
                         }
                     },
                     Err(e) => {
                         if config.skip_errors {
-                            errors.push((file.to_path_buf(), e.to_string()));
-                            log::warn!("Skipping {}: {}", file.display(), e);
-                            print!("!");
+                            errors.push((source_desc.clone(), e.to_string()));
+                            pb.println(format!(
+                                "  {} Skipping {short_desc}: {e}",
+                                console::style("⚠").yellow()
+                            ));
                         } else {
+                            pb.finish_and_clear();
                             return Err(e);
                         }
                     }
@@ -748,16 +881,20 @@ fn process_collection_logic(config: CollectionConfig) -> Result<(PathBuf, String
             }
             Err(e) => {
                 if config.skip_errors {
-                    errors.push((file.to_path_buf(), e.to_string()));
-                    log::warn!("Skipping {}: {}", file.display(), e);
-                    print!("!");
+                    errors.push((source_desc.clone(), e.to_string()));
+                    pb.println(format!(
+                        "  {} Skipping {short_desc}: {e}",
+                        console::style("⚠").yellow()
+                    ));
                 } else {
+                    pb.finish_and_clear();
                     return Err(e);
                 }
             }
         }
+        pb.inc(1);
     }
-    println!(); // New line after progress dots
+    pb.finish_and_clear();
 
     // Build collection
     let collection_id = merged_config.id.unwrap_or_else(|| {
@@ -836,12 +973,23 @@ fn process_collection_logic(config: CollectionConfig) -> Result<(PathBuf, String
     std::fs::write(&collection_path, collection_json)?;
 
     // Print summary
-    println!("\n✓ Generated {} items", items_data.len());
+    let mut summary = Summary::new()
+        .add("Collection", collection_path.display().to_string())
+        .add("Items dir", items_dir.display().to_string())
+        .add("Items generated", format!("{}", items_data.len()));
     if !errors.is_empty() {
-        println!("⚠ {} files skipped due to errors", errors.len());
+        summary = summary.add("Skipped", format!("{} file(s)", errors.len()));
     }
-    println!("Collection: {}", collection_path.display());
-    println!("Items: {}", items_dir.display());
+    summary.print();
+
+    if errors.is_empty() {
+        print_success("Collection generated successfully");
+    } else {
+        print_warning(format!(
+            "Collection generated with {} skipped file(s)",
+            errors.len()
+        ));
+    }
 
     Ok((collection_path, collection_id, merged_config.title))
 }
@@ -895,20 +1043,27 @@ fn handle_update_collection_command(config: UpdateCollectionConfig) -> Result<()
     let mut parsed_items: Vec<crate::stac::StacItem> = Vec::new();
     let mut errors: Vec<(PathBuf, String)> = Vec::new();
 
+    let pb = create_progress_bar(config.items.len() as u64, "Parsing STAC items…");
     for item_path in &config.items {
+        let fname = item_path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("unknown");
+        pb.set_message(format!("Parsing: {fname}"));
         match std::fs::read_to_string(item_path) {
             Ok(content) => match serde_json::from_str::<crate::stac::StacItem>(&content) {
                 Ok(item) => {
-                    log::debug!("Parsed STAC item: {} from {}", item.id, item_path.display());
                     parsed_items.push(item);
-                    print!(".");
                 }
                 Err(e) => {
                     if config.skip_errors {
                         errors.push((item_path.clone(), e.to_string()));
-                        log::warn!("Skipping {}: {}", item_path.display(), e);
-                        print!("!");
+                        pb.println(format!(
+                            "  {} Skipping {fname}: {e}",
+                            console::style("⚠").yellow()
+                        ));
                     } else {
+                        pb.finish_and_clear();
                         return Err(crate::error::CityJsonStacError::JsonError(e));
                     }
                 }
@@ -916,15 +1071,19 @@ fn handle_update_collection_command(config: UpdateCollectionConfig) -> Result<()
             Err(e) => {
                 if config.skip_errors {
                     errors.push((item_path.clone(), e.to_string()));
-                    log::warn!("Skipping {}: {}", item_path.display(), e);
-                    print!("!");
+                    pb.println(format!(
+                        "  {} Skipping {fname}: {e}",
+                        console::style("⚠").yellow()
+                    ));
                 } else {
+                    pb.finish_and_clear();
                     return Err(crate::error::CityJsonStacError::IoError(e));
                 }
             }
         }
+        pb.inc(1);
     }
-    println!(); // New line after progress dots
+    pb.finish_and_clear();
 
     if parsed_items.is_empty() {
         return Err(crate::error::CityJsonStacError::StacError(
@@ -1019,14 +1178,22 @@ fn handle_update_collection_command(config: UpdateCollectionConfig) -> Result<()
     std::fs::write(&config.output, collection_json)?;
 
     // Print summary
-    println!(
-        "\n✓ Aggregated {} items into collection",
-        parsed_items.len()
-    );
+    let mut summary = Summary::new()
+        .add("Collection", config.output.display().to_string())
+        .add("Items aggregated", format!("{}", parsed_items.len()));
     if !errors.is_empty() {
-        println!("⚠ {} items skipped due to errors", errors.len());
+        summary = summary.add("Skipped", format!("{} item(s)", errors.len()));
     }
-    println!("Collection: {}", config.output.display());
+    summary.print();
+
+    if errors.is_empty() {
+        print_success("Collection updated successfully");
+    } else {
+        print_warning(format!(
+            "Collection updated with {} skipped item(s)",
+            errors.len()
+        ));
+    }
 
     Ok(())
 }

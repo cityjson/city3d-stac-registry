@@ -37,6 +37,22 @@ impl CRS {
         }
     }
 
+    /// Create an unknown CRS (no coordinate reference system information available)
+    pub fn unknown() -> Self {
+        Self {
+            epsg: None,
+            wkt2: None,
+            proj4: None,
+            authority: None,
+            identifier: None,
+        }
+    }
+
+    /// Returns true if this CRS has a known EPSG code
+    pub fn is_known(&self) -> bool {
+        self.epsg.is_some()
+    }
+
     /// Create a CRS from CityJSON metadata format
     /// CityJSON stores CRS as a URL like: "https://www.opengis.net/def/crs/EPSG/0/7415"
     pub fn from_cityjson_url(url: &str) -> Option<Self> {
@@ -59,12 +75,23 @@ impl CRS {
         self.epsg
             .map(|code| format!("https://www.opengis.net/def/crs/EPSG/0/{code}"))
     }
+
+    /// WGS84 CRS (EPSG:4326)
+    pub fn wgs84() -> Self {
+        Self::from_epsg(4326)
+    }
+
+    /// Returns true if this CRS is WGS84 (EPSG:4326)
+    pub fn is_wgs84(&self) -> bool {
+        self.epsg == Some(4326)
+    }
 }
 
 impl Default for CRS {
-    /// Default to WGS84 (EPSG:4326)
+    /// Default to unknown CRS (no EPSG code).
+    /// Use `CRS::wgs84()` explicitly when WGS84 is intended.
     fn default() -> Self {
-        Self::from_epsg(4326)
+        Self::unknown()
     }
 }
 
@@ -104,7 +131,30 @@ mod tests {
 
     #[test]
     fn test_crs_default() {
+        // Default is now unknown CRS (not WGS84)
         let crs = CRS::default();
+        assert_eq!(crs.epsg, None);
+        assert!(!crs.is_known());
+    }
+
+    #[test]
+    fn test_crs_unknown() {
+        let crs = CRS::unknown();
+        assert_eq!(crs.epsg, None);
+        assert!(!crs.is_known());
+    }
+
+    #[test]
+    fn test_crs_wgs84() {
+        let crs = CRS::wgs84();
         assert_eq!(crs.epsg, Some(4326));
+        assert!(crs.is_known());
+        assert!(crs.is_wgs84());
+    }
+
+    #[test]
+    fn test_crs_is_wgs84_false_for_other_epsg() {
+        let crs = CRS::from_epsg(28992);
+        assert!(!crs.is_wgs84());
     }
 }

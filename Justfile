@@ -135,6 +135,11 @@ example-collection:
     cargo run -- collection tests/data -o target/example_collection --pretty
     @echo "Generated: target/example_collection/"
 
+# Generate example STAC catalog from config
+example-catalog:
+    cargo run -- catalog --config examples/full-catalog-config.toml -o target/example_catalog --pretty
+    @echo "Generated: target/example_catalog/"
+
 # ============================================================================
 # Dev Container
 # ============================================================================

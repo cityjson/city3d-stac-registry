@@ -73,10 +73,30 @@ impl BBox3D {
     /// enclosing bbox in WGS84. Z values are preserved as-is.
     ///
     /// If the source CRS is already WGS84, returns a clone unchanged.
+    /// If the source CRS is unknown (no EPSG code), checks whether the
+    /// coordinates are within WGS84 range. If they are not, returns an error
+    /// because the coordinates cannot be safely assumed to be in WGS84.
     pub fn to_wgs84(&self, source_crs: &CRS) -> Result<BBox3D> {
         let epsg = match source_crs.epsg {
             Some(code) => code,
-            None => return Ok(self.clone()), // No CRS info, assume already WGS84
+            None => {
+                // No CRS info: validate that bbox is within WGS84 valid range.
+                // WGS84 longitude: [-180, 180], latitude: [-90, 90].
+                let x_in_range = self.xmin >= -180.0 && self.xmax <= 180.0;
+                let y_in_range = self.ymin >= -90.0 && self.ymax <= 90.0;
+                if x_in_range && y_in_range {
+                    // Coordinates look like WGS84 — return unchanged.
+                    return Ok(self.clone());
+                }
+                // Coordinates are outside WGS84 range but CRS is unknown.
+                return Err(CityJsonStacError::Other(format!(
+                    "Bounding box [{}, {}, {}, {}] is outside WGS84 range but no CRS is \
+                     specified in the file. STAC requires WGS84 coordinates. Please add a \
+                     'referenceSystem' to the CityJSON metadata so the coordinates can be \
+                     reprojected correctly.",
+                    self.xmin, self.ymin, self.xmax, self.ymax
+                )));
+            }
         };
 
         // Already WGS84
@@ -226,17 +246,25 @@ mod tests {
     }
 
     #[test]
-    fn test_to_wgs84_no_crs() {
+    fn test_to_wgs84_no_crs_wgs84_range() {
+        // Coordinates in WGS84 range with unknown CRS → returned unchanged
         let bbox = BBox3D::new(4.0, 52.0, 0.0, 5.0, 53.0, 30.0);
-        let crs = CRS {
-            epsg: None,
-            wkt2: None,
-            proj4: None,
-            authority: None,
-            identifier: None,
-        };
+        let crs = CRS::unknown();
         let result = bbox.to_wgs84(&crs).unwrap();
         assert_eq!(result, bbox);
+    }
+
+    #[test]
+    fn test_to_wgs84_no_crs_out_of_range() {
+        // Coordinates outside WGS84 range with unknown CRS → should return an error
+        // (e.g. Vienna in Austrian projected coordinates)
+        let bbox = BBox3D::new(983.16, 340433.878, 27.861, 1510.432, 341048.5, 84.987);
+        let crs = CRS::unknown();
+        let result = bbox.to_wgs84(&crs);
+        assert!(
+            result.is_err(),
+            "Expected error for out-of-WGS84-range bbox with unknown CRS"
+        );
     }
 
     #[test]

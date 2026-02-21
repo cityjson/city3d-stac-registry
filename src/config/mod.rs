@@ -145,7 +145,7 @@ impl CollectionConfigFile {
         match extension {
             "toml" => toml::from_str(&content)
                 .map_err(|e| CityJsonStacError::Other(format!("Invalid TOML: {e}"))),
-            "yaml" | "yml" | _ => serde_yaml::from_str(&content)
+            _ => serde_yaml::from_str(&content)
                 .map_err(|e| CityJsonStacError::Other(format!("Invalid YAML: {e}"))),
         }
     }
@@ -201,7 +201,7 @@ impl CatalogConfigFile {
         match extension {
             "toml" => toml::from_str(&content)
                 .map_err(|e| CityJsonStacError::Other(format!("Invalid TOML: {e}"))),
-            "yaml" | "yml" | _ => serde_yaml::from_str(&content)
+            _ => serde_yaml::from_str(&content)
                 .map_err(|e| CityJsonStacError::Other(format!("Invalid YAML: {e}"))),
         }
     }

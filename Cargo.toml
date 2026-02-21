@@ -13,6 +13,8 @@ categories = ["command-line-utilities", "science::geo"]
 [dependencies]
 # CLI
 clap = { version = "4.5", features = ["derive", "cargo"] }
+indicatif = { version = "0.17", features = ["rayon"] }
+console = "0.15"
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }

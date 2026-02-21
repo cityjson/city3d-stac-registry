@@ -130,7 +130,8 @@ mod crs_tests {
     #[test]
     fn test_crs_default() {
         let crs = CRS::default();
-        assert_eq!(crs.epsg, Some(4326)); // WGS84
+        assert_eq!(crs.epsg, None); // Default is unknown CRS, use CRS::wgs84() explicitly for WGS84
+        assert!(!crs.is_known());
     }
 
     #[test]
@@ -322,6 +323,6 @@ mod attribute_tests {
         let attr = AttributeDefinition::new("year", AttributeType::Number);
         let json = serde_json::to_string(&attr).expect("Failed to serialize");
         assert!(json.contains("\"name\":\"year\""));
-        assert!(json.contains("\"type\":\"NUMBER\""));
+        assert!(json.contains("\"type\":\"Number\""));
     }
 }
