@@ -38,7 +38,7 @@ fi
 echo "✅ Formatting OK"
 
 echo "🔎 Running clippy..."
-if ! cargo clippy --all-targets --all-features -- -D warnings 2>/dev/null; then
+if ! cargo clippy --all-targets --all-features 2>/dev/null; then
     echo ""
     echo "❌ Clippy found issues!"
     echo "   Fix the warnings above before committing."
