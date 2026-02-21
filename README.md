@@ -4,12 +4,13 @@ A command-line tool for generating STAC (SpatioTemporal Asset Catalog) metadata 
 
 ## Overview
 
-STAC is the widely-adopted metadata standard for geospatial data, but it lacks native support for 3D city models. This tool bridges that gap by automatically generating STAC Items and Collections from various CityJSON-format files by traversing directories and extracting comprehensive metadata.
+STAC is the widely-adopted metadata standard for geospatial data, but it lacks native support for 3D city models. This tool bridges that gap by automatically generating STAC Items and Collections from various CityJSON and CityGML format files by traversing directories and extracting comprehensive metadata.
 
 ### Supported Formats
 
 - **CityJSON** (`.json`) - Standard CityJSON files
 - **CityJSONTextSequences** (`.jsonl`) - Line-delimited CityJSON features
+- **CityGML** (`.gml`, `.xml`) - 3D City Models standard XML format (v2.0, v3.0)
 - **FlatCityBuf** (`.fcb`) - Binary columnar format for CityJSON
 - **CityParquet** (`.parquet`) - Planned future support
 
@@ -18,7 +19,7 @@ STAC is the widely-adopted metadata standard for geospatial data, but it lacks n
 - Generate STAC Items from individual files
 - Generate STAC Collections by traversing directories
 - Custom STAC extension for 3D city model metadata
-- Support for multiple CityJSON formats
+- Support for multiple CityJSON formats and CityGML
 - Extract rich metadata including:
   - 3D bounding boxes
   - Coordinate reference systems
@@ -358,6 +359,7 @@ When processing a collection with files that have the same stem but different ex
 - [AGENTS.md](AGENTS.md) / [CLAUDE.md](CLAUDE.md) - Project overview and coding guidelines for AI agents
 - [DESIGN_DOC.md](DESIGN_DOC.md) - Detailed technical architecture and implementation
 - [STAC_EXTENSION.md](STAC_EXTENSION.md) - CityJSON STAC extension specification
+  - Detailed JSON schema of the STAC extension can be found in [`stac-cityjson-extension/json-schema/schema.json`](stac-cityjson-extension/json-schema/schema.json).
 
 ## Project Status
 
@@ -365,6 +367,7 @@ When processing a collection with files that have the same stem but different ex
 
 - CityJSON format support (`.json` files)
 - CityJSON Sequences support (`.jsonl` files)
+- CityGML support (`.gml`, `.xml` files)
 - FlatCityBuf support (`.fcb` files)
 - STAC Item and Collection generation
 - Full CLI with `item`, `collection`, `catalog`, and `update-collection` commands
