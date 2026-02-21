@@ -1,21 +1,43 @@
 {
   "stac_version": "1.0.0",
   "stac_extensions": [
-    "https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json",
+    "https://cityjson.github.io/stac-city3d/v0.1.0/schema.json",
     "https://stac-extensions.github.io/projection/v2.0.0/schema.json"
   ],
   "type": "Feature",
   "id": "rotterdam_buildings_district_a",
-  "bbox": [4.4650, 51.9100, -2.5, 4.4720, 51.9150, 85.3],
+  "bbox": [
+    4.4650,
+    51.9100,
+    -2.5,
+    4.4720,
+    51.9150,
+    85.3
+  ],
   "geometry": {
     "type": "Polygon",
     "coordinates": [
       [
-        [4.4650, 51.9100],
-        [4.4720, 51.9100],
-        [4.4720, 51.9150],
-        [4.4650, 51.9150],
-        [4.4650, 51.9100]
+        [
+          4.4650,
+          51.9100
+        ],
+        [
+          4.4720,
+          51.9100
+        ],
+        [
+          4.4720,
+          51.9150
+        ],
+        [
+          4.4650,
+          51.9150
+        ],
+        [
+          4.4650,
+          51.9100
+        ]
       ]
     ]
   },
@@ -27,8 +49,15 @@
     "city3d:encoding": "CityJSON",
     "city3d:version": "2.0",
     "city3d:city_objects": 1523,
-    "city3d:lods": ["2", "2.2"],
-    "city3d:co_types": ["Building", "BuildingPart", "BuildingInstallation"],
+    "city3d:lods": [
+      "2",
+      "2.2"
+    ],
+    "city3d:co_types": [
+      "Building",
+      "BuildingPart",
+      "BuildingInstallation"
+    ],
     "city3d:semantic_surfaces": true,
     "city3d:attributes": [
       {
@@ -59,8 +88,16 @@
     ],
     "file:values": {
       "transform": {
-        "scale": [0.001, 0.001, 0.001],
-        "translate": [4629170.0, 5804690.0, 0.0]
+        "scale": [
+          0.001,
+          0.001,
+          0.001
+        ],
+        "translate": [
+          4629170.0,
+          5804690.0,
+          0.0
+        ]
       }
     },
     "file:metadata": {
@@ -71,7 +108,14 @@
         "emailAddress": "gis@rotterdam.nl",
         "website": "https://data.rotterdam.nl"
       },
-      "geographicalExtent": [4.4650, 51.9100, -2.5, 4.4720, 51.9150, 85.3]
+      "geographicalExtent": [
+        4.4650,
+        51.9100,
+        -2.5,
+        4.4720,
+        51.9150,
+        85.3
+      ]
     }
   },
   "assets": {
@@ -79,7 +123,9 @@
       "href": "./rotterdam_buildings_district_a.json",
       "type": "application/json",
       "title": "CityJSON data file",
-      "roles": ["data"]
+      "roles": [
+        "data"
+      ]
     },
     "file:size": 15728640
   },

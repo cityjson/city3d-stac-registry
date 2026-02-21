@@ -163,7 +163,7 @@ mod stac_item_builder_tests {
         assert!(item
             .stac_extensions
             .iter()
-            .any(|e| e.contains("3d-city-models")));
+            .any(|e| e.contains("stac-city3d")));
         // Should NOT include projection extension (no proj:epsg property)
         assert!(!item
             .stac_extensions
@@ -187,7 +187,7 @@ mod stac_item_builder_tests {
         assert!(item
             .stac_extensions
             .iter()
-            .any(|e| e.contains("3d-city-models")));
+            .any(|e| e.contains("stac-city3d")));
         assert!(item
             .stac_extensions
             .iter()
@@ -208,7 +208,7 @@ mod stac_item_from_file_tests {
         let item = builder.build().expect("Failed to build item");
 
         // Check CityJSON extension properties
-        assert_eq!(item.properties.get("city3d:encoding").unwrap(), "CityJSON");
+
         assert_eq!(item.properties.get("city3d:version").unwrap(), "2.0");
         assert_eq!(item.properties.get("proj:epsg").unwrap(), 7415);
 
@@ -369,8 +369,6 @@ mod stac_collection_aggregate_tests {
 
         // Should have summaries
         assert!(collection.summaries.is_some());
-        let summaries = collection.summaries.unwrap();
-        assert!(summaries.contains_key("city3d:encoding"));
     }
 
     #[test]
@@ -390,17 +388,6 @@ mod stac_collection_aggregate_tests {
             .build()
             .expect("Failed to build collection");
 
-        let summaries = collection.summaries.unwrap();
-
-        // Both use CityJSON encoding
-        let encodings = summaries
-            .get("city3d:encoding")
-            .unwrap()
-            .as_array()
-            .unwrap();
-        assert!(encodings.iter().any(|e| e.as_str().unwrap() == "CityJSON"));
-
-        // Should have merged bbox
         assert_eq!(collection.extent.spatial.bbox.len(), 1);
     }
 }
@@ -578,17 +565,7 @@ mod stac_collection_aggregate_from_items_tests {
         assert!(!collection.extent.spatial.bbox.is_empty());
 
         // Should have summaries
-        let summaries = collection.summaries.unwrap();
-        assert!(summaries.contains_key("city3d:encoding"));
-
-        let encodings = summaries
-            .get("city3d:encoding")
-            .unwrap()
-            .as_array()
-            .unwrap();
-        assert!(encodings.iter().any(|e| e.as_str().unwrap() == "CityJSON"));
     }
-
     #[test]
     fn test_aggregate_from_multiple_items() {
         let item1 = create_test_stac_item(
@@ -616,16 +593,7 @@ mod stac_collection_aggregate_from_items_tests {
             .expect("Failed to aggregate")
             .build()
             .expect("Failed to build collection");
-
         let summaries = collection.summaries.unwrap();
-
-        // Should have both encodings
-        let encodings = summaries
-            .get("city3d:encoding")
-            .unwrap()
-            .as_array()
-            .unwrap();
-        assert_eq!(encodings.len(), 2);
 
         // Should have aggregated LODs
         let lods = summaries.get("city3d:lods").unwrap().as_array().unwrap();

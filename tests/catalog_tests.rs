@@ -68,7 +68,6 @@ fn test_catalog_serialization() {
 #[test]
 fn test_cli_catalog_command() {
     use assert_cmd::Command;
-    use predicates::prelude::*;
 
     let dir = tempdir().unwrap();
     let data_dir = dir.path().join("data");

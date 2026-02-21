@@ -85,26 +85,17 @@ impl StacItemBuilder {
     /// Add 3D City Models extension properties from metadata reader
     ///
     /// Uses the STAC 3D City Models Extension (city3d: prefix)
-    /// https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json
+    /// https://cityjson.github.io/stac-city3d/v0.1.0/schema.json
     /// Add 3D City Models extension properties from metadata reader
     ///
     /// Uses the STAC 3D City Models Extension (city3d: prefix)
-    /// https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json
+    /// https://cityjson.github.io/stac-city3d/v0.1.0/schema.json
     pub fn cityjson_metadata(mut self, reader: &dyn CityModelMetadataReader) -> Result<Self> {
-        // Add city3d:encoding
-        self.properties.insert(
-            "city3d:encoding".to_string(),
-            Value::String(reader.encoding().to_string()),
-        );
-
         // Add city3d:version
         if let Ok(version) = reader.version() {
             self.properties
                 .insert("city3d:version".to_string(), Value::String(version));
         }
-
-        // Add city3d:encoding_version (optional, for encodings with their own versioning)
-        // For FlatCityBuf, we could extract a specific encoding version here
 
         // Add city3d:city_objects
         if let Ok(count) = reader.city_object_count() {
@@ -258,7 +249,7 @@ impl StacItemBuilder {
         // Build stac_extensions list dynamically based on which extensions are used
         // IMPORTANT: We do NOT rely on schema dependencies anymore, so we must add explicit extension URLs
         let mut stac_extensions =
-            vec!["https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json".to_string()];
+            vec!["https://cityjson.github.io/stac-city3d/v0.1.0/schema.json".to_string()];
 
         // Add Projection Extension if proj:epsg is present
         if self.properties.contains_key("proj:epsg") {
@@ -533,7 +524,6 @@ mod tests {
             .build()
             .unwrap();
 
-        assert_eq!(item.properties.get("city3d:encoding").unwrap(), "CityJSON");
         assert_eq!(item.properties.get("city3d:version").unwrap(), "2.0");
         assert_eq!(item.properties.get("city3d:city_objects").unwrap(), 1);
         assert_eq!(item.properties.get("proj:epsg").unwrap(), 7415);

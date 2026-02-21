@@ -131,7 +131,7 @@ impl StacCollectionBuilder {
     /// Aggregate CityJSON metadata from multiple readers
     ///
     /// Uses the STAC 3D City Models Extension (city3d: prefix)
-    /// https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json
+    /// https://cityjson.github.io/stac-city3d/v0.1.0/schema.json
     pub fn aggregate_cityjson_metadata(
         mut self,
         readers: &[Box<dyn CityModelMetadataReader>],
@@ -236,17 +236,6 @@ impl StacCollectionBuilder {
                 .insert("city3d:materials".to_string(), serde_json::to_value(true)?);
         }
 
-        // Aggregate encoding
-        let unique_encodings: HashSet<&str> = readers.iter().map(|r| r.encoding()).collect();
-        if !unique_encodings.is_empty() {
-            let mut enc_vec: Vec<String> = unique_encodings.into_iter().map(String::from).collect();
-            enc_vec.sort();
-            self.summaries.insert(
-                "city3d:encoding".to_string(),
-                serde_json::to_value(enc_vec)?,
-            );
-        }
-
         // Aggregate EPSG codes -> proj:epsg (array of integers)
         let unique_epsg: HashSet<u32> = readers
             .iter()
@@ -289,7 +278,7 @@ impl StacCollectionBuilder {
     /// It extracts 3D City Models extension properties (city3d:*) from item properties and merges them.
     ///
     /// Uses the STAC 3D City Models Extension (city3d: prefix)
-    /// https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json
+    /// https://cityjson.github.io/stac-city3d/v0.1.0/schema.json
     pub fn aggregate_from_items(mut self, items: &[crate::stac::models::StacItem]) -> Result<Self> {
         use crate::stac::models::StacItem;
         use serde_json::Value;
@@ -339,34 +328,6 @@ impl StacCollectionBuilder {
                 .get(key)
                 .and_then(|v| v.as_bool())
                 .unwrap_or(false)
-        }
-
-        // Aggregate city3d:encoding from item assets (by media type) OR from properties directly
-        let mut encodings: HashSet<String> = HashSet::new();
-        for item in items {
-            for asset in item.assets.values() {
-                if let Some(media_type) = &asset.media_type {
-                    if media_type == "application/city+json" || media_type == "application/json" {
-                        encodings.insert("CityJSON".to_string());
-                    } else if media_type == "application/city+json-seq"
-                        || media_type == "application/json-seq"
-                    {
-                        encodings.insert("CityJSONSeq".to_string());
-                    }
-                }
-            }
-            // Also accept encoding directly from item properties (city3d:encoding)
-            if let Some(enc) = get_string(item, "city3d:encoding") {
-                encodings.insert(enc);
-            }
-        }
-        if !encodings.is_empty() {
-            let mut enc_vec: Vec<String> = encodings.into_iter().collect();
-            enc_vec.sort();
-            self.summaries.insert(
-                "city3d:encoding".to_string(),
-                serde_json::to_value(enc_vec)?,
-            );
         }
 
         // Collect all versions
@@ -516,7 +477,7 @@ impl StacCollectionBuilder {
 
         // Build stac_extensions list dynamically based on which extensions are used
         let mut stac_extensions =
-            vec!["https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json".to_string()];
+            vec!["https://cityjson.github.io/stac-city3d/v0.1.0/schema.json".to_string()];
 
         // Add Projection Extension if proj:epsg is in summaries
         if self.summaries.contains_key("proj:epsg") {

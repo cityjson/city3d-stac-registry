@@ -3,7 +3,7 @@
 **Extension Name:** 3D City Models
 **Extension Prefix:** `city3d`
 **Extension Version:** 0.1.0
-**Extension URL:** https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json
+**Extension URL:** https://cityjson.github.io/stac-city3d/v0.1.0/schema.json
 **Scope:** Item, Collection
 
 ## Purpose
@@ -109,7 +109,7 @@ Levels of Detail available. Supports decimal values per Biljecki et al. specific
 
 City object types present. Includes both standard types and extension types (prefixed with "+").
 
-**Standard Types:** Building, BuildingPart, BuildingInstallation, BuildingConstructionElement, BuildingFurniture, BuildingStorey, BuildingRoom, BuildingUnit, Bridge, BridgePart, BridgeInstallation, BridgeConstructionElement, BridgeRoom, BridgeFurniture, CityFurniture, CityObjectGroup, GenericCityObject, LandUse, OtherConstruction, PlantCover, SolitaryVegetationObject, Railway, Road, TINRelief, TransportSquare, Tunnel, TunnelPart, TunnelInstallation, TunnelConstructionElement, TunnelHollowSpace, TunnelFurniture, WaterBody, WaterSurface, WaterGround
+**Standard Types:** Building, BuildingPart, BuildingInstallation, BuildingConstructiveElement, BuildingFurniture, BuildingStorey, BuildingRoom, BuildingUnit, Bridge, BridgePart, BridgeInstallation, BridgeConstructiveElement, BridgeRoom, BridgeFurniture, CityFurniture, CityObjectGroup, GenericCityObject, LandUse, OtherConstruction, PlantCover, SolitaryVegetationObject, Railway, Road, TINRelief, TransportSquare, Tunnel, TunnelPart, TunnelInstallation, TunnelConstructiveElement, TunnelHollowSpace, TunnelFurniture, WaterBody, WaterSurface, WaterGroundSurface, Waterway
 
 ```json
 "city3d:co_types": ["Building", "BuildingPart", "TINRelief"]
@@ -165,7 +165,7 @@ This extension incorporates properties from these STAC extensions via `$ref`:
 {
   "stac_version": "1.1.0",
   "stac_extensions": [
-    "https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json",
+    "https://cityjson.github.io/stac-city3d/v0.1.0/schema.json",
     "https://stac-extensions.github.io/projection/v2.0.0/schema.json"
   ],
   "type": "Feature",
@@ -213,7 +213,7 @@ This extension incorporates properties from these STAC extensions via `$ref`:
 {
   "stac_version": "1.1.0",
   "stac_extensions": [
-    "https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json",
+    "https://cityjson.github.io/stac-city3d/v0.1.0/schema.json",
     "https://stac-extensions.github.io/projection/v2.1.0/schema.json"
   ],
   "type": "Feature",
@@ -259,7 +259,7 @@ This extension incorporates properties from these STAC extensions via `$ref`:
 {
   "stac_version": "1.1.0",
   "stac_extensions": [
-    "https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json",
+    "https://cityjson.github.io/stac-city3d/v0.1.0/schema.json",
     "https://stac-extensions.github.io/projection/v2.0.0/schema.json"
   ],
   "type": "Collection",
@@ -306,7 +306,7 @@ This extension incorporates properties from these STAC extensions via `$ref`:
 The JSON Schema for this extension is:
 
 ```
-https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json
+https://cityjson.github.io/stac-city3d/v0.1.0/schema.json
 ```
 
 Local development copy available at:

@@ -56,7 +56,7 @@ mod e2e_single_file_tests {
         assert!(item
             .stac_extensions
             .iter()
-            .any(|e| e.contains("3d-city-models")));
+            .any(|e| e.contains("stac-city3d")));
         assert!(item
             .stac_extensions
             .iter()

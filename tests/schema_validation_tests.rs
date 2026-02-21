@@ -7,7 +7,10 @@
 //!
 //! This ensures generated output is fully schema-compliant.
 
-use city3d_stac::reader::{get_reader, CityJSONReader, CityJSONSeqReader, CityModelMetadataReader};
+use city3d_stac::reader::{
+    get_reader, get_reader_from_source, CityJSONReader, CityJSONSeqReader, CityModelMetadataReader,
+    InputSource,
+};
 use city3d_stac::stac::{StacCollectionBuilder, StacItemBuilder};
 use serde_json::Value;
 use std::path::PathBuf;
@@ -174,8 +177,10 @@ mod item_property_tests {
         let item = build_item_from_file("railway.city.json");
         let extensions = item["stac_extensions"].as_array().unwrap();
         assert!(
-            extensions.iter().any(|e| e.as_str()
-                == Some("https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json")),
+            extensions
+                .iter()
+                .any(|e| e.as_str()
+                    == Some("https://cityjson.github.io/stac-city3d/v0.1.0/schema.json")),
             "Missing 3D City Models extension URL in stac_extensions"
         );
     }
@@ -189,24 +194,6 @@ mod item_property_tests {
                 .iter()
                 .any(|e| e.as_str().is_some_and(|s| s.contains("projection"))),
             "Missing Projection extension URL in stac_extensions"
-        );
-    }
-
-    #[test]
-    fn test_cityjson_item_encoding_is_correct() {
-        let item = build_item_from_file("delft.city.json");
-        assert_eq!(
-            item["properties"]["city3d:encoding"].as_str().unwrap(),
-            "CityJSON"
-        );
-    }
-
-    #[test]
-    fn test_cjseq_item_encoding_is_correct() {
-        let item = build_item_from_file("delft.city.jsonl");
-        assert_eq!(
-            item["properties"]["city3d:encoding"].as_str().unwrap(),
-            "CityJSONSeq"
         );
     }
 
@@ -523,8 +510,10 @@ mod collection_property_tests {
         let collection = build_mixed_collection();
         let extensions = collection["stac_extensions"].as_array().unwrap();
         assert!(
-            extensions.iter().any(|e| e.as_str()
-                == Some("https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json")),
+            extensions
+                .iter()
+                .any(|e| e.as_str()
+                    == Some("https://cityjson.github.io/stac-city3d/v0.1.0/schema.json")),
             "Missing 3D City Models extension URL in stac_extensions"
         );
     }
@@ -573,27 +562,7 @@ mod collection_property_tests {
     }
 
     #[test]
-    fn test_collection_summaries_encoding() {
-        let collection = build_mixed_collection();
-        let summaries = &collection["summaries"];
 
-        let encodings = summaries["city3d:encoding"]
-            .as_array()
-            .expect("Missing city3d:encoding in summaries");
-
-        // Mixed collection should contain both CityJSON and CityJSONSeq
-        let encoding_strings: Vec<&str> = encodings.iter().filter_map(|v| v.as_str()).collect();
-        assert!(
-            encoding_strings.contains(&"CityJSON"),
-            "Should contain CityJSON encoding"
-        );
-        assert!(
-            encoding_strings.contains(&"CityJSONSeq"),
-            "Should contain CityJSONSeq encoding"
-        );
-    }
-
-    #[test]
     fn test_collection_summaries_city_objects_statistics() {
         let collection = build_mixed_collection();
         let summaries = &collection["summaries"];
@@ -729,48 +698,6 @@ mod aggregate_collection_schema_tests {
             "CityJSON Extension (aggregated collection)",
         );
     }
-
-    #[test]
-    fn test_aggregate_collection_preserves_encoding_info() {
-        let files = vec!["delft.city.json", "delft.city.jsonl"];
-
-        let items: Vec<StacItem> = files
-            .iter()
-            .map(|f| {
-                let path = test_data_path(f);
-                let reader = get_reader(&path).unwrap();
-                StacItemBuilder::from_file(&path, reader.as_ref(), None)
-                    .unwrap()
-                    .build()
-                    .unwrap()
-            })
-            .collect();
-
-        let collection = StacCollectionBuilder::new("encoding-test")
-            .license("proprietary")
-            .description("Test encoding preservation")
-            .temporal_extent(Some(chrono::Utc::now()), None)
-            .aggregate_from_items(&items)
-            .expect("Failed to aggregate")
-            .self_link("./collection.json")
-            .build()
-            .expect("Failed to build");
-
-        let json = serde_json::to_value(collection).unwrap();
-        let encodings = json["summaries"]["city3d:encoding"]
-            .as_array()
-            .expect("Missing encodings");
-
-        let encoding_strings: Vec<&str> = encodings.iter().filter_map(|v| v.as_str()).collect();
-        assert!(
-            encoding_strings.contains(&"CityJSON"),
-            "Should preserve CityJSON encoding"
-        );
-        assert!(
-            encoding_strings.contains(&"CityJSONSeq"),
-            "Should preserve CityJSONSeq encoding"
-        );
-    }
 }
 
 // ===========================================================================
@@ -841,6 +768,92 @@ mod cross_format_consistency_tests {
         assert_eq!(
             json_types, jsonl_types,
             "City object types should match between formats"
+        );
+    }
+}
+
+// ===========================================================================
+// STAC Item from remote URL validation tests
+// ===========================================================================
+
+mod remote_url_schema_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_remote_cityjson_validates_against_schemas() {
+        let url = "https://storage.googleapis.com/cityjson/delft.city.json";
+        let source = InputSource::from_str_input(url).expect("Failed to parse URL");
+        let reader = get_reader_from_source(&source)
+            .await
+            .expect("Failed to fetch remote reader");
+
+        let mut builder = StacItemBuilder::new("remote-delft")
+            .cityjson_metadata(reader.as_ref())
+            .expect("Failed to add metadata");
+
+        if let Ok(bbox) = reader.bbox() {
+            let crs = reader.crs().unwrap_or_default();
+            let wgs84_bbox = bbox
+                .to_wgs84(&crs)
+                .expect("Failed to transform bbox to WGS84");
+            builder = builder.bbox(wgs84_bbox).geometry_from_bbox();
+        }
+
+        let item = builder
+            .data_asset(url, "application/json")
+            .build()
+            .expect("Failed to build item");
+
+        let item_json = serde_json::to_value(item).unwrap();
+
+        validate_against_schema(
+            &item_json,
+            &load_stac_item_schema(),
+            "STAC Item (remote delft.city.json)",
+        );
+        validate_against_schema(
+            &item_json,
+            &load_cityjson_extension_schema(),
+            "CityJSON Extension (remote delft.city.json)",
+        );
+    }
+
+    #[tokio::test]
+    async fn test_remote_cjseq_validates_against_schemas() {
+        let url = "https://storage.googleapis.com/cityjson/delft.city.jsonl";
+        let source = InputSource::from_str_input(url).expect("Failed to parse URL");
+        let reader = get_reader_from_source(&source)
+            .await
+            .expect("Failed to fetch remote reader");
+
+        let mut builder = StacItemBuilder::new("remote-delft-cjseq")
+            .cityjson_metadata(reader.as_ref())
+            .expect("Failed to add metadata");
+
+        if let Ok(bbox) = reader.bbox() {
+            let crs = reader.crs().unwrap_or_default();
+            let wgs84_bbox = bbox
+                .to_wgs84(&crs)
+                .expect("Failed to transform bbox to WGS84");
+            builder = builder.bbox(wgs84_bbox).geometry_from_bbox();
+        }
+
+        let item = builder
+            .data_asset(url, "application/json-seq")
+            .build()
+            .expect("Failed to build item");
+
+        let item_json = serde_json::to_value(item).unwrap();
+
+        validate_against_schema(
+            &item_json,
+            &load_stac_item_schema(),
+            "STAC Item (remote delft.city.jsonl)",
+        );
+        validate_against_schema(
+            &item_json,
+            &load_cityjson_extension_schema(),
+            "CityJSON Extension (remote delft.city.jsonl)",
         );
     }
 }

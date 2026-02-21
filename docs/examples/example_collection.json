@@ -1,7 +1,7 @@
 {
   "stac_version": "1.0.0",
   "stac_extensions": [
-    "https://stac-extensions.github.io/3d-city-models/v0.1.0/schema.json",
+    "https://cityjson.github.io/stac-city3d/v0.1.0/schema.json",
     "https://stac-extensions.github.io/projection/v2.0.0/schema.json"
   ],
   "type": "Collection",
@@ -22,32 +22,58 @@
     {
       "name": "Municipality of Rotterdam",
       "description": "Data provider and maintainer",
-      "roles": ["producer", "licensor"],
+      "roles": [
+        "producer",
+        "licensor"
+      ],
       "url": "https://data.rotterdam.nl"
     }
   ],
   "extent": {
     "spatial": {
       "bbox": [
-        [4.4200, 51.8800, -5.0, 4.6000, 51.9800, 120.5]
+        [
+          4.4200,
+          51.8800,
+          -5.0,
+          4.6000,
+          51.9800,
+          120.5
+        ]
       ]
     },
     "temporal": {
       "interval": [
-        ["2023-05-15T00:00:00Z", null]
+        [
+          "2023-05-15T00:00:00Z",
+          null
+        ]
       ]
     }
   },
   "summaries": {
-    "proj:epsg": [7415],
-    "city3d:encoding": ["CityJSON", "FlatCityBuf"],
-    "city3d:version": ["2.0"],
+    "proj:epsg": [
+      7415
+    ],
+    "city3d:encoding": [
+      "CityJSON",
+      "FlatCityBuf"
+    ],
+    "city3d:version": [
+      "2.0"
+    ],
     "city3d:city_objects": {
       "min": 45,
       "max": 5234,
       "total": 125432
     },
-    "city3d:lods": ["0", "1", "2", "2.2", "3"],
+    "city3d:lods": [
+      "0",
+      "1",
+      "2",
+      "2.2",
+      "3"
+    ],
     "city3d:co_types": [
       "Building",
       "BuildingPart",
@@ -77,13 +103,17 @@
       "href": "./thumbnail.png",
       "type": "image/png",
       "title": "Collection thumbnail",
-      "roles": ["thumbnail"]
+      "roles": [
+        "thumbnail"
+      ]
     },
     "documentation": {
       "href": "./README.md",
       "type": "text/markdown",
       "title": "Dataset documentation",
-      "roles": ["metadata"]
+      "roles": [
+        "metadata"
+      ]
     }
   },
   "links": [
