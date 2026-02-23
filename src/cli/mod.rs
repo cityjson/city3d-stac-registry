@@ -25,6 +25,10 @@ struct Cli {
     /// Verbose output
     #[arg(short, long, global = true)]
     verbose: bool,
+
+    /// Dry run: validate config and inputs without generating output
+    #[arg(long, global = true)]
+    dry_run: bool,
 }
 
 #[derive(Subcommand)]
@@ -253,6 +257,7 @@ pub async fn run() -> Result<()> {
                 collection,
                 base_url,
                 pretty,
+                cli.dry_run,
             )
             .await
         }
@@ -297,6 +302,7 @@ pub async fn run() -> Result<()> {
                 skip_errors,
                 base_url,
                 pretty,
+                dry_run: cli.dry_run,
             })
             .await
         }
@@ -323,6 +329,7 @@ pub async fn run() -> Result<()> {
             items_base_url,
             skip_errors,
             pretty,
+            dry_run: cli.dry_run,
         }),
 
         Commands::Catalog {
@@ -346,6 +353,7 @@ pub async fn run() -> Result<()> {
                 license,
                 base_url,
                 pretty,
+                dry_run: cli.dry_run,
             })
             .await
         }
@@ -362,6 +370,7 @@ async fn handle_item_command(
     collection: Option<String>,
     base_url: Option<String>,
     pretty: bool,
+    dry_run: bool,
 ) -> Result<()> {
     // Parse input as either local file or remote URL
     let spinner = create_spinner(format!("Reading {input}…"));
@@ -460,6 +469,7 @@ struct CatalogConfig {
     license: String,
     base_url: Option<String>,
     pretty: bool,
+    dry_run: bool,
 }
 
 async fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
@@ -561,6 +571,7 @@ async fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
             skip_errors: true,
             base_url: config.base_url.clone().map(|u| format!("{u}{id_hint}/")),
             pretty: config.pretty,
+            dry_run: config.dry_run,
         };
 
         // Check if input is a config file
@@ -684,6 +695,7 @@ struct CollectionConfig {
     skip_errors: bool,
     base_url: Option<String>,
     pretty: bool,
+    dry_run: bool,
 }
 
 async fn handle_collection_command(config: CollectionConfig) -> Result<()> {
@@ -1006,6 +1018,7 @@ struct UpdateCollectionConfig {
     items_base_url: Option<String>,
     skip_errors: bool,
     pretty: bool,
+    dry_run: bool,
 }
 
 fn handle_update_collection_command(config: UpdateCollectionConfig) -> Result<()> {
