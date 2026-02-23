@@ -370,6 +370,31 @@ RUST_LOG=debug cargo run -- item file.json -o output.json
 | ------------------ | ----------------- | ----------------------------------------------------------------------------------------------------------- |
 | `--base-url`       | item, collection  | Base URL for asset hrefs. Without it, hrefs are relative (filename only). With it, hrefs are absolute URLs. |
 | `--items-base-url` | update-collection | Base URL for item links in the collection. Without it, links are relative to the collection.                |
+| `--dry-run`        | all              | Validate config and inputs without generating output. Exits: 0=valid, 1=config error, 2=path error, 3=URL error |
+
+### Dry Run Mode
+
+Validate configuration and inputs before processing:
+
+```bash
+# Validate collection config
+cityjson-stac collection --config config.yaml --dry-run
+
+# Validate item input (local or remote)
+cityjson-stac item https://example.com/data.json --dry-run
+
+# Validate update-collection inputs
+cityjson-stac update-collection items/*.json --dry-run
+
+# Validate catalog configuration
+cityjson-stac catalog --config catalog-config.yaml --dry-run
+```
+
+**Exit codes:**
+- `0` - All validations passed
+- `1` - Config file error (syntax/semantic)
+- `2` - Missing input paths
+- `3` - Remote URL inaccessible
 
 ### Filename Collision Handling
 

@@ -7,6 +7,52 @@ use crate::error::{CityJsonStacError, Result};
 use result::ValidationResult;
 use std::path::PathBuf;
 
+/// Validate semantic content of a config file
+fn validate_config_semantics(config: &CollectionConfigFile) -> Vec<String> {
+    let mut errors = Vec::new();
+
+    // Check critical required fields
+    if config.id.is_none()
+        || config
+            .id
+            .as_ref()
+            .map(|s| s.trim())
+            .unwrap_or_default()
+            .is_empty()
+    {
+        errors.push("Missing required field: 'id'".to_string());
+    }
+
+    // Check for critical provider issues
+    if let Some(providers) = &config.providers {
+        if providers.is_empty() {
+            errors.push(
+                "Field 'providers' is empty (should contain at least one provider)".to_string(),
+            );
+        }
+        for (i, provider) in providers.iter().enumerate() {
+            if provider.name.trim().is_empty() {
+                errors.push(format!("Provider #{} has empty 'name'", i + 1));
+            }
+            // Validate URL if provided
+            if let Some(url) = &provider.url {
+                if !url.starts_with("http://") && !url.starts_with("https://") {
+                    errors.push(format!(
+                        "Provider #{} has invalid URL '{}': must start with http:// or https://",
+                        i + 1,
+                        url
+                    ));
+                }
+            }
+        }
+    }
+
+    // Note: We don't validate extent.bbox being empty as it may be intentionally
+    // left empty for auto-detection during collection generation
+
+    errors
+}
+
 /// Validate collection configuration without generating output
 pub async fn validate_collection_config(
     config_path: &Option<PathBuf>,
@@ -15,15 +61,31 @@ pub async fn validate_collection_config(
 ) -> Result<ValidationResult> {
     let mut result = ValidationResult::new();
 
-    // 1. Validate config file syntax if provided
+    // 1. Validate config file syntax and semantics if provided
     if let Some(path) = config_path {
         let spinner = console::style("→").blue();
         println!("  {} Checking config file: {}", spinner, path.display());
 
         match CollectionConfigFile::from_file(path) {
-            Ok(_config) => {
+            Ok(config) => {
+                // First check syntax
                 result.config_valid = true;
                 println!("  ✓ Config file syntax: valid");
+
+                // Then check semantic validity
+                let semantic_errors = validate_config_semantics(&config);
+                if !semantic_errors.is_empty() {
+                    result.config_valid = false;
+                    result.config_error = Some(format!(
+                        "Semantic errors:\n  {}",
+                        semantic_errors.join("\n  ")
+                    ));
+                    for error in &semantic_errors {
+                        println!("  ✗ {}", error);
+                    }
+                } else {
+                    println!("  ✓ Config file content: valid");
+                }
             }
             Err(e) => {
                 result.config_valid = false;

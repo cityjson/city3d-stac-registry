@@ -510,8 +510,56 @@ async fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
         if let Some(config_path) = &config.config {
             println!("  → Checking config file: {}", config_path.display());
             match CatalogConfigFile::from_file(config_path) {
-                Ok(_) => {
+                Ok(catalog_config) => {
                     println!("  ✓ Config file syntax: valid");
+
+                    // Validate semantic content
+                    let mut semantic_errors = Vec::new();
+
+                    if catalog_config.id.is_none()
+                        || catalog_config
+                            .id
+                            .as_ref()
+                            .map(|s| s.trim())
+                            .unwrap_or_default()
+                            .is_empty()
+                    {
+                        semantic_errors.push("Missing required field: 'id'".to_string());
+                    }
+
+                    if catalog_config.title.is_none()
+                        || catalog_config
+                            .title
+                            .as_ref()
+                            .map(|s| s.trim())
+                            .unwrap_or_default()
+                            .is_empty()
+                    {
+                        semantic_errors.push("Missing recommended field: 'title'".to_string());
+                    }
+
+                    if catalog_config.description.is_none()
+                        || catalog_config
+                            .description
+                            .as_ref()
+                            .map(|s| s.trim())
+                            .unwrap_or_default()
+                            .is_empty()
+                    {
+                        semantic_errors
+                            .push("Missing recommended field: 'description'".to_string());
+                    }
+
+                    if !semantic_errors.is_empty() {
+                        for error in &semantic_errors {
+                            println!("  ✗ {}", error);
+                        }
+                        println!();
+                        print_error("Dry run failed: Config semantic errors");
+                        std::process::exit(1);
+                    }
+
+                    println!("  ✓ Config file content: valid");
                 }
                 Err(e) => {
                     println!("  ✗ Config file syntax: {}", e);
