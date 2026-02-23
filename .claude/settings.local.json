@@ -33,7 +33,13 @@
       "mcp__zread__read_file",
       "mcp__plugin_serena_serena__read_file",
       "mcp__plugin_serena_serena__list_dir",
-      "mcp__plugin_serena_serena__activate_project"
+      "mcp__plugin_serena_serena__activate_project",
+      "mcp__plugin_serena_serena__execute_shell_command",
+      "mcp__plugin_serena_serena__create_text_file",
+      "mcp__plugin_serena_serena__replace_content",
+      "mcp__plugin_serena_serena__get_symbols_overview",
+      "Bash(cargo fmt:*)",
+      "Bash(cargo test:*)"
     ]
   }
 }

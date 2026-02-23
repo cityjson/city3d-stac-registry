@@ -1,0 +1,44 @@
+id: japan-plateau-3d
+title: Japan PLATEAU 3D City Models (LoD1+LoD2)
+description: "National 3D city model project covering 56 cities across Japan at LoD1 and LoD2.\nPart of the PLATEAU project by the Japanese government.\nAvailable in Shapefile, CityGML, and 3D Tiles/GeoPackage formats.\n"
+license: CC-BY-4.0
+keywords:
+- 3d city model
+- buildings
+- LOD1
+- LOD2
+- Japan
+- national
+- CityGML
+- PLATEAU
+- 56 cities
+- multi-city
+providers:
+- name: Ministry of Land, Infrastructure, Transport and Tourism (MLIT)
+  url: https://www.mlit.go.jp/
+  roles:
+  - producer
+  - licensor
+  description: Japanese government ministry
+- name: TU Delft 3D Geoinformation
+  url: https://3d.bk.tudelft.nl/
+  roles:
+  - host
+  description: 3D Geoinformation Research Group at TU Delft
+  inputs: []
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:6677
+  temporal:
+    start: '2021-01-01T00:00:00Z'
+    end: '2021-12-31T23:59:59Z'
+links:
+- rel: about
+  href: https://3d.bk.tudelft.nl/opendata/opencities/
+  type: text/html
+  title: TU Delft 3D Open Cities Portal
+- rel: source
+  href: https://www.mlit.go.jp/plateau/
+  type: text/html
+  title: PLATEAU Official Website

@@ -1,0 +1,39 @@
+id: hamburg-3d
+title: Hamburg 3D City Model (LoD1 and LoD2)
+description: "3D city model of Hamburg, Germany, available at both LoD1 and LoD2.\nCreated from cadastre footprints combined with LiDAR data.\nAvailable in CityGML format.\n"
+license: CC-BY-3.0-DE
+keywords:
+- 3d city model
+- buildings
+- LOD1
+- LOD2
+- Germany
+- Hamburg
+- CityGML
+- LiDAR
+- multi-LOD
+providers:
+- name: Free and Hanseatic City of Hamburg
+  url: https://www.hamburg.de/
+  roles:
+  - producer
+  - licensor
+  description: Hamburg city government
+- name: TU Delft 3D Geoinformation
+  url: https://3d.bk.tudelft.nl/
+  roles:
+  - host
+  description: 3D Geoinformation Research Group at TU Delft
+  inputs: []
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:25832
+  temporal:
+    start: '2017-01-01T00:00:00Z'
+    end: '2017-12-31T23:59:59Z'
+links:
+- rel: about
+  href: https://3d.bk.tudelft.nl/opendata/opencities/
+  type: text/html
+  title: TU Delft 3D Open Cities Portal

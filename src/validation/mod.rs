@@ -48,13 +48,13 @@ pub async fn validate_collection_config(
 
         result.paths_found = found;
         result.paths_total = inputs.len();
-        result.missing_paths = missing.clone();
+        result.missing_paths = missing;
 
-        if missing.is_empty() {
+        if result.missing_paths.is_empty() {
             println!("  ✓ Input paths: {}/{} found", found, inputs.len());
         } else {
             println!("  ⚠ Input paths: {}/{} found", found, inputs.len());
-            for path in &missing {
+            for path in &result.missing_paths {
                 println!("    ✗ {}", path.display());
             }
         }
@@ -81,74 +81,26 @@ pub async fn validate_collection_config(
 
 /// Validate URL with HEAD request (lightweight, doesn't download body)
 async fn validate_url_head(url: &str) -> Result<String> {
-    use object_store::path::Path as ObjectStorePath;
-    use object_store::ObjectStore;
+    use reqwest::Client;
+    use std::time::Duration;
 
-    // Parse the URL to determine the store type
-    let parsed_url = url::Url::parse(url)
-        .map_err(|e| CityJsonStacError::Other(format!("Invalid URL: {}", e)))?;
+    let client = Client::builder()
+        .timeout(Duration::from_secs(10))
+        .build()
+        .map_err(|e| CityJsonStacError::Other(format!("Failed to create HTTP client: {}", e)))?;
 
-    let store: Box<dyn ObjectStore> = match parsed_url.scheme() {
-        "http" | "https" => {
-            use object_store::http::HttpBuilder;
-            Box::new(
-                HttpBuilder::new()
-                    .with_url(parsed_url.to_string())
-                    .build()
-                    .map_err(|e| {
-                        CityJsonStacError::Other(format!("Failed to create HTTP store: {}", e))
-                    })?,
-            )
-        }
-        "s3" => {
-            use object_store::aws::AmazonS3Builder;
-            Box::new(
-                AmazonS3Builder::from_env()
-                    .with_url(parsed_url.to_string())
-                    .build()
-                    .map_err(|e| {
-                        CityJsonStacError::Other(format!("Failed to create S3 store: {}", e))
-                    })?,
-            )
-        }
-        "gs" | "gcs" => {
-            use object_store::gcp::GoogleCloudStorageBuilder;
-            Box::new(
-                GoogleCloudStorageBuilder::from_env()
-                    .with_url(parsed_url.to_string())
-                    .build()
-                    .map_err(|e| {
-                        CityJsonStacError::Other(format!("Failed to create GCS store: {}", e))
-                    })?,
-            )
-        }
-        "azure" | "az" => {
-            use object_store::azure::MicrosoftAzureBuilder;
-            Box::new(
-                MicrosoftAzureBuilder::from_env()
-                    .with_url(parsed_url.to_string())
-                    .build()
-                    .map_err(|e| {
-                        CityJsonStacError::Other(format!("Failed to create Azure store: {}", e))
-                    })?,
-            )
-        }
-        scheme => {
-            return Err(CityJsonStacError::Other(format!(
-                "Unsupported URL scheme: {}",
-                scheme
-            )))
-        }
-    };
+    let response = client
+        .head(url)
+        .send()
+        .await
+        .map_err(|e| CityJsonStacError::Other(format!("HTTP request failed: {}", e)))?;
 
-    // Extract path from URL (remove scheme and authority)
-    let path = ObjectStorePath::from_url_path(parsed_url.path())
-        .map_err(|e| CityJsonStacError::Other(format!("Invalid path: {}", e)))?;
+    let status = response.status();
 
-    // Check if the location exists
-    match store.head(&path).await {
-        Ok(_) => Ok("200 OK".to_string()),
-        Err(e) => Err(CityJsonStacError::Other(format!("URL check failed: {}", e))),
+    if status.is_success() {
+        Ok(status.to_string())
+    } else {
+        Err(CityJsonStacError::Other(format!("HTTP {}", status)))
     }
 }
 

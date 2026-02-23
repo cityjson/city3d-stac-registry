@@ -1,0 +1,53 @@
+id: netherlands-3d-bag
+title: Netherlands 3D BAG
+description: "All 10 million+ buildings in the Netherlands with LoD1 and LoD2 representations.\nDerived from the Dutch BAG (Basisregistratie Adressen en Gebouwen) registry.\nAvailable in CityJSON, GeoPackage, OBJ, and PostgreSQL dump formats.\n"
+license: CC-BY-4.0
+keywords:
+- 3d city model
+- buildings
+- LOD1
+- LOD2
+- Netherlands
+- national
+- CityJSON
+- BAG
+- 10M buildings
+- Kadaster
+providers:
+- name: Kadaster
+  url: https://www.kadaster.nl/
+  roles:
+  - producer
+  - licensor
+  description: Dutch Land Registry Office
+- name: TU Delft 3D Geoinformation
+  url: https://3d.bk.tudelft.nl/
+  roles:
+  - processor
+  - host
+  description: 3D Geoinformation Research Group at TU Delft
+- name: 3D Geoinformation Group
+  url: https://www.3d.bk.tudelft.nl/
+  roles:
+  - processor
+  description: Processed and hosts the 3D BAG data
+  inputs: []
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:28992
+  temporal:
+    start: '2021-01-01T00:00:00Z'
+links:
+- rel: about
+  href: https://3d.bk.tudelft.nl/opendata/opencities/
+  type: text/html
+  title: TU Delft 3D Open Cities Portal
+- rel: cite-as
+  href: https://doi.org/10.5281/zenodo.3568506
+  type: text/html
+  title: Dataset DOI
+- rel: related
+  href: https://www.3dbag.nl/
+  type: text/html
+  title: 3D BAG Website

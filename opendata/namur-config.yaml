@@ -1,0 +1,39 @@
+id: namur-3d
+title: Namur 3D City Model (LoD2)
+description: "3D LoD2 city model of Namur, Belgium, with textures.\nIncludes additional features: bridges and the citadel.\nAvailable in CityGML and SketchUp formats.\n"
+license: CC-BY-4.0
+keywords:
+- 3d city model
+- buildings
+- LOD2
+- Belgium
+- Namur
+- CityGML
+- textured
+- bridges
+- citadel
+providers:
+- name: City of Namur
+  url: https://www.namur.be/
+  roles:
+  - producer
+  - licensor
+  description: Namur municipality
+- name: TU Delft 3D Geoinformation
+  url: https://3d.bk.tudelft.nl/
+  roles:
+  - host
+  description: 3D Geoinformation Research Group at TU Delft
+  inputs: []
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:31370
+  temporal:
+    start: '2018-01-01T00:00:00Z'
+    end: '2018-12-31T23:59:59Z'
+links:
+- rel: about
+  href: https://3d.bk.tudelft.nl/opendata/opencities/
+  type: text/html
+  title: TU Delft 3D Open Cities Portal

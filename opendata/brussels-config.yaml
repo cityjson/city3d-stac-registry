@@ -1,0 +1,37 @@
+id: brussels-3d
+title: Brussels 3D City Model (LoD2)
+description: "3D LoD2 city model of Brussels, Belgium.\nAvailable in CityGML, DWG, DGN, GML, Shapefile, and SketchUp formats.\n"
+license: CC-BY-4.0
+keywords:
+- 3d city model
+- buildings
+- LOD2
+- Belgium
+- Brussels
+- CityGML
+- capital
+providers:
+- name: Region of Brussels
+  url: https://brussels.be/
+  roles:
+  - producer
+  - licensor
+  description: Brussels regional government
+- name: TU Delft 3D Geoinformation
+  url: https://3d.bk.tudelft.nl/
+  roles:
+  - host
+  description: 3D Geoinformation Research Group at TU Delft
+  inputs: []
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:31370
+  temporal:
+    start: '2014-01-01T00:00:00Z'
+    end: '2014-12-31T23:59:59Z'
+links:
+- rel: about
+  href: https://3d.bk.tudelft.nl/opendata/opencities/
+  type: text/html
+  title: TU Delft 3D Open Cities Portal

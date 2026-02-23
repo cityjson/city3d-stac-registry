@@ -1,0 +1,38 @@
+id: luxembourg-3d
+title: Luxembourg 3D Building Models (LoD1+LoD2.3)
+description: "3D building models for Luxembourg at LoD1 and LoD2.3.\nLoD1 is also available as a separate dataset.\nAvailable in CityGML format.\n"
+license: CC-BY-4.0
+keywords:
+- 3d city model
+- buildings
+- LOD1
+- LOD2.3
+- Luxembourg
+- national
+- CityGML
+- multi-LOD
+providers:
+- name: Luxembourg Institute of Science and Technology (LIST)
+  url: https://www.list.lu/
+  roles:
+  - producer
+  - licensor
+  description: Public research institution
+- name: TU Delft 3D Geoinformation
+  url: https://3d.bk.tudelft.nl/
+  roles:
+  - host
+  description: 3D Geoinformation Research Group at TU Delft
+  inputs: []
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:2169
+  temporal:
+    start: '2017-01-01T00:00:00Z'
+    end: '2017-12-31T23:59:59Z'
+links:
+- rel: about
+  href: https://3d.bk.tudelft.nl/opendata/opencities/
+  type: text/html
+  title: TU Delft 3D Open Cities Portal

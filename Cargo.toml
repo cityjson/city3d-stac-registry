@@ -58,6 +58,7 @@ bytes = "1.8"
 tokio-util = { version = "0.7", features = ["io"] }
 futures = "0.3"
 tempfile = "3.10"
+reqwest = { version = "0.12", features = ["rustls-tls"], default-features = false }
 
 # Coordinate projection (CRS transformation to WGS84) - pure Rust
 proj4rs = { version = "0.1", features = ["crs-definitions"] }

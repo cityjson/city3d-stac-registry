@@ -1,0 +1,7 @@
+id: tudelft-3d-opencities
+title: TU Delft 3D Open Cities Portal
+description: "A comprehensive catalog of open 3D city model datasets from around the world.\nCurated by the 3D Geoinformation Research Group at TU Delft.\nThis catalog aggregates CityJSON and CityGML datasets from various cities and regions.\n"
+collections:
+- american-cities-config.yaml
+- netherlands-3d-bag-config.yaml
+- singapore-config.yaml

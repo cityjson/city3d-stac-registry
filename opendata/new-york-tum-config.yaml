@@ -1,0 +1,43 @@
+id: new-york-tum-3d
+title: New York City 3D City Model (LoD1) by TUM
+description: "3D LoD1 city model of New York City created by Technical University of Munich (TUM).\nCreated through photogrammetry combined with existing public 2(.5)D datasets.\nIncludes multiple feature classes: roads, lots, parks, water, and terrain.\nAvailable in CityGML format. See research article for details.\n"
+license: CC-BY-4.0
+keywords:
+- 3d city model
+- buildings
+- LOD1
+- United States
+- New York City
+- CityGML
+- photogrammetry
+- TUM
+- multi-class
+providers:
+- name: Technical University of Munich (TUM)
+  url: https://www.tum.de/
+  roles:
+  - producer
+  - processor
+  description: TUM created this dataset
+- name: TU Delft 3D Geoinformation
+  url: https://3d.bk.tudelft.nl/
+  roles:
+  - host
+  description: 3D Geoinformation Research Group at TU Delft
+  inputs: []
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:2263
+  temporal:
+    start: '2015-01-01T00:00:00Z'
+    end: '2015-12-31T23:59:59Z'
+links:
+- rel: about
+  href: https://3d.bk.tudelft.nl/opendata/opencities/
+  type: text/html
+  title: TU Delft 3D Open Cities Portal
+- rel: cite-as
+  href: https://doi.org/10.3929/ethz-b-000220530
+  type: text/html
+  title: Research Article

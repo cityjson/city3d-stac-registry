@@ -1,0 +1,41 @@
+id: estonia-3d
+title: Estonia 3D Building Models (LoD1+LoD2)
+description: "National 3D building dataset covering Estonia at LoD1 and LoD2.\nUpdated frequently. Available in Geodatabase, CityGML, and OBJ formats.\n"
+license: CC-BY-4.0
+keywords:
+- 3d city model
+- buildings
+- LOD1
+- LOD2
+- Estonia
+- national
+- CityGML
+- frequently updated
+providers:
+- name: Estonian Land Board
+  url: https://www.maaamet.ee/
+  roles:
+  - producer
+  - licensor
+  description: Estonian mapping authority
+- name: TU Delft 3D Geoinformation
+  url: https://3d.bk.tudelft.nl/
+  roles:
+  - host
+  description: 3D Geoinformation Research Group at TU Delft
+  inputs: []
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:3301
+  temporal:
+    start: '2021-01-01T00:00:00Z'
+links:
+- rel: about
+  href: https://3d.bk.tudelft.nl/opendata/opencities/
+  type: text/html
+  title: TU Delft 3D Open Cities Portal
+- rel: source
+  href: https://geoportaal.maaamet.ee/
+  type: text/html
+  title: Estonian Geoportal

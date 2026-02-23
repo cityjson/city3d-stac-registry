@@ -1,0 +1,45 @@
+id: ingolstadt-3d
+title: Ingolstadt 3D City Model (LoD3)
+description: "High-quality 3D LoD3 city model of Ingolstadt, Germany, created by a research project.\nBuildings are manually modeled based on Mobile Laser Scanning (MLS) data.\nMainly focuses on buildings with textures. Includes a LoD3 Modeling Guide.\nAvailable in CityGML format.\n"
+license: CC-BY-4.0
+keywords:
+- 3d city model
+- buildings
+- LOD3
+- Germany
+- Ingolstadt
+- CityGML
+- textured
+- MLS
+- high-detail
+- research
+providers:
+- name: City of Ingolstadt
+  url: https://www.ingolstadt.de/
+  roles:
+  - producer
+  - licensor
+  description: Ingolstadt municipality
+- name: TU Delft 3D Geoinformation
+  url: https://3d.bk.tudelft.nl/
+  roles:
+  - processor
+  - host
+  description: 3D Geoinformation Research Group at TU Delft
+  inputs: []
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:25832
+  temporal:
+    start: '2020-01-01T00:00:00Z'
+    end: '2020-12-31T23:59:59Z'
+links:
+- rel: about
+  href: https://3d.bk.tudelft.nl/opendata/opencities/
+  type: text/html
+  title: TU Delft 3D Open Cities Portal
+- rel: related
+  href: https://github.com/tudelft3d/lod3-modelling-guide
+  type: text/html
+  title: LoD3 Modeling Guide

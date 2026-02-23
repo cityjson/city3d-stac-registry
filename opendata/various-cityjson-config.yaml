@@ -1,0 +1,36 @@
+id: various-cityjson-datasets
+title: Various CityJSON Datasets
+description: "A collection of CityJSON datasets converted from CityGML using citygml4j.\nAvailable cities: The Hague (Netherlands), Montréal (Canada), New York (USA),\nRotterdam (Netherlands), Vienna (Austria), and Zürich (Switzerland).\nAll at LoD2 with some having textures.\n"
+license: various
+keywords:
+- 3d city model
+- buildings
+- LOD2
+- CityJSON
+- multi-city
+- citygml4j
+- converted
+providers:
+- name: TU Delft 3D Geoinformation
+  url: https://3d.bk.tudelft.nl/
+  roles:
+  - processor
+  - host
+  description: 3D Geoinformation Research Group at TU Delft - Converted from CityGML
+  inputs: []
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:4326
+  temporal:
+    start: '2018-01-01T00:00:00Z'
+    end: '2018-12-31T23:59:59Z'
+links:
+- rel: about
+  href: https://3d.bk.tudelft.nl/opendata/opencities/
+  type: text/html
+  title: TU Delft 3D Open Cities Portal
+- rel: related
+  href: https://github.com/tudelft3d/citygml4j
+  type: text/html
+  title: citygml4j Conversion Tool

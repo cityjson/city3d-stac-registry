@@ -1,0 +1,43 @@
+id: helsinki-3d
+title: Helsinki 3D City Model (LoD2)
+description: "3D LoD2 city model of Helsinki, Finland, with textures.\nAvailable in multiple formats: CityGML, 2D Shape, 3D Shape (PolygonZ),\n3D Shape (Multipatch), KMZ, DXF, DWG, 3DS, and ESRI File Geodatabase.\n"
+license: CC-BY-4.0
+keywords:
+- 3d city model
+- buildings
+- LOD2
+- Finland
+- Helsinki
+- CityGML
+- textured
+- capital
+- multi-format
+providers:
+- name: City of Helsinki
+  url: https://www.hel.fi/
+  roles:
+  - producer
+  - licensor
+  description: Helsinki city government
+- name: TU Delft 3D Geoinformation
+  url: https://3d.bk.tudelft.nl/
+  roles:
+  - host
+  description: 3D Geoinformation Research Group at TU Delft
+  inputs: []
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:3067
+  temporal:
+    start: '2016-01-01T00:00:00Z'
+    end: '2016-12-31T23:59:59Z'
+links:
+- rel: about
+  href: https://3d.bk.tudelft.nl/opendata/opencities/
+  type: text/html
+  title: TU Delft 3D Open Cities Portal
+- rel: source
+  href: https://helsinki.fi/en
+  type: text/html
+  title: City of Helsinki

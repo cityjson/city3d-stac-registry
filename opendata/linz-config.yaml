@@ -1,0 +1,36 @@
+id: linz-3d
+title: Linz 3D City Model (LoD2)
+description: "3D LoD2 city model of Linz, Austria.\nAvailable in CityGML format.\n"
+license: CC-BY-4.0
+keywords:
+- 3d city model
+- buildings
+- LOD2
+- Austria
+- Linz
+- CityGML
+providers:
+- name: City of Linz
+  url: https://www.linz.at/
+  roles:
+  - producer
+  - licensor
+  description: Linz municipality
+- name: TU Delft 3D Geoinformation
+  url: https://3d.bk.tudelft.nl/
+  roles:
+  - host
+  description: 3D Geoinformation Research Group at TU Delft
+  inputs: []
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:31254
+  temporal:
+    start: '2011-01-01T00:00:00Z'
+    end: '2011-12-31T23:59:59Z'
+links:
+- rel: about
+  href: https://3d.bk.tudelft.nl/opendata/opencities/
+  type: text/html
+  title: TU Delft 3D Open Cities Portal

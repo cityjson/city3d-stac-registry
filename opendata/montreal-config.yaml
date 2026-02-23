@@ -1,0 +1,44 @@
+id: montreal-3d
+title: Montréal 3D City Model (LoD2)
+description: "3D LoD2 city model of Montréal, Canada.\nCreated through photogrammetry. Includes terrain (TIN) in CityGML format.\nBuildings are textured. A 2009 dataset is also available.\nAvailable in CityGML and 3DM formats.\n"
+license: CC-BY-4.0
+keywords:
+- 3d city model
+- buildings
+- LOD2
+- Canada
+- Montréal
+- CityGML
+- textured
+- photogrammetry
+- terrain
+- TIN
+providers:
+- name: City of Montréal
+  url: https://montreal.ca/
+  roles:
+  - producer
+  - licensor
+  description: Montréal city government
+- name: TU Delft 3D Geoinformation
+  url: https://3d.bk.tudelft.nl/
+  roles:
+  - host
+  description: 3D Geoinformation Research Group at TU Delft
+  inputs: []
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:32188
+  temporal:
+    start: '2013-01-01T00:00:00Z'
+    end: '2013-12-31T23:59:59Z'
+links:
+- rel: about
+  href: https://3d.bk.tudelft.nl/opendata/opencities/
+  type: text/html
+  title: TU Delft 3D Open Cities Portal
+- rel: source
+  href: https://donnees.montreal.ca/
+  type: text/html
+  title: Montréal Open Data Portal

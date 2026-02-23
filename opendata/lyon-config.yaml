@@ -1,0 +1,44 @@
+id: lyon-3d
+title: Lyon 3D City Model (LoD2)
+description: "3D LoD2 city model of Lyon, France, covering multiple years: 2009, 2012, and 2015.\nIncludes terrain and water features. Buildings are textured.\nAvailable in CityGML format.\n"
+license: ETALAB-2.0
+keywords:
+- 3d city model
+- buildings
+- LOD2
+- France
+- Lyon
+- CityGML
+- textured
+- terrain
+- water
+- multi-temporal
+providers:
+- name: Grand Lyon
+  url: https://www.grandlyon.com/
+  roles:
+  - producer
+  - licensor
+  description: Lyon metropolitan area
+- name: TU Delft 3D Geoinformation
+  url: https://3d.bk.tudelft.nl/
+  roles:
+  - host
+  description: 3D Geoinformation Research Group at TU Delft
+  inputs: []
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:3946
+  temporal:
+    start: '2009-01-01T00:00:00Z'
+    end: '2015-12-31T23:59:59Z'
+links:
+- rel: about
+  href: https://3d.bk.tudelft.nl/opendata/opencities/
+  type: text/html
+  title: TU Delft 3D Open Cities Portal
+- rel: source
+  href: https://data.grandlyon.com/
+  type: text/html
+  title: Grand Lyon Open Data Portal
