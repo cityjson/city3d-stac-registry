@@ -370,8 +370,30 @@ async fn handle_item_command(
     collection: Option<String>,
     base_url: Option<String>,
     pretty: bool,
-    _dry_run: bool,
+    dry_run: bool,
 ) -> Result<()> {
+    // Dry-run mode: validate only
+    if dry_run {
+        use crate::validation;
+        use progress::{print_banner, print_error, print_success};
+
+        print_banner();
+
+        println!("\nRunning in dry-run mode...\n");
+
+        let result = validation::validate_item_input(&input).await?;
+
+        println!();
+
+        if result.is_valid() {
+            print_success("Dry run complete: All validations passed");
+            std::process::exit(0);
+        } else {
+            print_error("Dry run failed: Errors found");
+            std::process::exit(result.exit_code());
+        }
+    }
+
     // Parse input as either local file or remote URL
     let spinner = create_spinner(format!("Reading {input}…"));
     let source = InputSource::from_str_input(&input)?;
@@ -475,6 +497,62 @@ struct CatalogConfig {
 async fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
     use crate::config::{CatalogCliArgs, CatalogConfigFile};
     use crate::stac::StacCatalogBuilder;
+
+    // Dry-run mode: validate only
+    if config.dry_run {
+        use progress::{print_banner, print_error, print_success};
+
+        print_banner();
+
+        println!("\nRunning in dry-run mode...\n");
+
+        // Validate config file if provided
+        if let Some(config_path) = &config.config {
+            println!("  → Checking config file: {}", config_path.display());
+            match CatalogConfigFile::from_file(config_path) {
+                Ok(_) => {
+                    println!("  ✓ Config file syntax: valid");
+                }
+                Err(e) => {
+                    println!("  ✗ Config file syntax: {}", e);
+                    println!();
+                    print_error("Dry run failed: Config error");
+                    std::process::exit(1);
+                }
+            }
+        }
+
+        // Validate input directories/collections
+        let mut found = 0;
+        let mut missing = Vec::new();
+
+        for input in &config.inputs {
+            if input.exists() {
+                found += 1;
+            } else {
+                missing.push(input.clone());
+            }
+        }
+
+        if missing.is_empty() {
+            println!("  ✓ Input paths: {}/{} found", found, config.inputs.len());
+        } else {
+            println!("  ⚠ Input paths: {}/{} found", found, config.inputs.len());
+            for path in &missing {
+                println!("    ✗ {}", path.display());
+            }
+        }
+
+        println!();
+
+        if missing.is_empty() {
+            print_success("Dry run complete: All validations passed");
+            std::process::exit(0);
+        } else {
+            print_error("Dry run failed: Missing paths");
+            std::process::exit(2);
+        }
+    }
 
     // Load config file if provided
     let base_config = if let Some(config_path) = &config.config {
@@ -700,6 +778,41 @@ struct CollectionConfig {
 }
 
 async fn handle_collection_command(config: CollectionConfig) -> Result<()> {
+    // Dry-run mode: validate only
+    if config.dry_run {
+        use crate::validation;
+        use progress::{print_banner, print_error, print_success};
+
+        print_banner();
+
+        println!("\nRunning in dry-run mode...\n");
+
+        // Determine final inputs
+        let base_config = if let Some(config_path) = &config.config {
+            // Load config to validate it
+            let _base_config = CollectionConfigFile::from_file(config_path)?;
+            validation::validate_collection_config(
+                &Some(config_path.clone()),
+                &config.inputs,
+                &config.base_url,
+            )
+            .await?
+        } else {
+            validation::validate_collection_config(&None, &config.inputs, &config.base_url).await?
+        };
+
+        println!();
+
+        // Print final status
+        if base_config.is_valid() {
+            print_success("Dry run complete: All validations passed");
+            std::process::exit(0);
+        } else {
+            print_error("Dry run failed: Errors found");
+            std::process::exit(base_config.exit_code());
+        }
+    }
+
     match process_collection_logic(config).await {
         Ok(_) => Ok(()),
         Err(e) => Err(e),
@@ -1024,6 +1137,60 @@ struct UpdateCollectionConfig {
 }
 
 fn handle_update_collection_command(config: UpdateCollectionConfig) -> Result<()> {
+    // Dry-run mode: validate only
+    if config.dry_run {
+        use progress::{print_banner, print_error, print_success};
+
+        print_banner();
+
+        println!("\nRunning in dry-run mode...\n");
+
+        let mut all_valid = true;
+        let mut found = 0;
+
+        for item_path in &config.items {
+            let fname = item_path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("unknown");
+
+            if item_path.exists() {
+                // Try to parse as STAC item
+                match std::fs::read_to_string(item_path) {
+                    Ok(content) => match serde_json::from_str::<crate::stac::StacItem>(&content) {
+                        Ok(_) => {
+                            println!("  ✓ {}", fname);
+                            found += 1;
+                        }
+                        Err(e) => {
+                            println!("  ✗ {}: Invalid STAC item - {}", fname, e);
+                            all_valid = false;
+                        }
+                    },
+                    Err(e) => {
+                        println!("  ✗ {}: Cannot read - {}", fname, e);
+                        all_valid = false;
+                    }
+                }
+            } else {
+                println!("  ✗ {}: File not found", fname);
+                all_valid = false;
+            }
+        }
+
+        println!("\n  STAC items: {}/{} valid", found, config.items.len());
+
+        println!();
+
+        if all_valid {
+            print_success("Dry run complete: All validations passed");
+            std::process::exit(0);
+        } else {
+            print_error("Dry run failed: Errors found");
+            std::process::exit(1);
+        }
+    }
+
     // Load config file if provided
     let base_config = if let Some(config_path) = &config.config {
         CollectionConfigFile::from_file(config_path)?
