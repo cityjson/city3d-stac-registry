@@ -370,7 +370,7 @@ async fn handle_item_command(
     collection: Option<String>,
     base_url: Option<String>,
     pretty: bool,
-    dry_run: bool,
+    _dry_run: bool,
 ) -> Result<()> {
     // Parse input as either local file or remote URL
     let spinner = create_spinner(format!("Reading {input}…"));
@@ -695,6 +695,7 @@ struct CollectionConfig {
     skip_errors: bool,
     base_url: Option<String>,
     pretty: bool,
+    #[allow(dead_code)]
     dry_run: bool,
 }
 
@@ -1018,6 +1019,7 @@ struct UpdateCollectionConfig {
     items_base_url: Option<String>,
     skip_errors: bool,
     pretty: bool,
+    #[allow(dead_code)]
     dry_run: bool,
 }
 
