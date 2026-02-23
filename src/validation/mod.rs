@@ -140,3 +140,48 @@ pub async fn validate_item_input(input: &str) -> Result<ValidationResult> {
 
     Ok(result)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_validation_result_default() {
+        let result = ValidationResult::new();
+        assert!(result.is_valid()); // Empty result is valid
+        assert_eq!(result.exit_code(), 0);
+    }
+
+    #[test]
+    fn test_validation_result_config_error() {
+        let mut result = ValidationResult::new();
+        result.config_valid = false;
+        result.config_error = Some("Parse error".to_string());
+
+        assert!(!result.is_valid());
+        assert_eq!(result.exit_code(), 1);
+    }
+
+    #[test]
+    fn test_validation_result_missing_paths() {
+        let mut result = ValidationResult::new();
+        result.paths_found = 1;
+        result.paths_total = 2;
+        result
+            .missing_paths
+            .push(std::path::PathBuf::from("missing.json"));
+
+        assert!(!result.is_valid());
+        assert_eq!(result.exit_code(), 2);
+    }
+
+    #[test]
+    fn test_validation_result_url_error() {
+        let mut result = ValidationResult::new();
+        result.base_url_valid = false;
+        result.base_url_error = Some("Connection refused".to_string());
+
+        assert!(!result.is_valid());
+        assert_eq!(result.exit_code(), 3);
+    }
+}

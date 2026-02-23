@@ -1,7 +1,7 @@
 //! Validation result types
 
 /// Result of dry-run validation
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct ValidationResult {
     /// Config file is syntactically valid
     pub config_valid: bool,
@@ -37,7 +37,18 @@ pub struct ValidationResult {
 impl ValidationResult {
     /// Create a new empty validation result
     pub fn new() -> Self {
-        Self::default()
+        Self {
+            config_valid: true, // No config to validate means valid
+            config_error: None,
+            paths_found: 0,
+            paths_total: 0,
+            missing_paths: Vec::new(),
+            base_url_valid: true, // No URL to validate means valid
+            base_url_error: None,
+            remote_urls_ok: 0,
+            remote_urls_total: 0,
+            remote_url_errors: Vec::new(),
+        }
     }
 
     /// Check if all validations passed
