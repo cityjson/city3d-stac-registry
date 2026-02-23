@@ -31,7 +31,9 @@ providers:
   roles:
   - processor
   description: Processed and hosts the 3D BAG data
-  inputs: []
+inputs:
+  - https://data.3dbag.nl/v20250903/tiles/9/280/556/9-280-556.city.json
+  - https://data.3dbag.nl/v20250903/tiles/8/264/544/8-264-544.city.json
 extent:
   spatial:
     bbox: []

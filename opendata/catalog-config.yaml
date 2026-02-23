@@ -4,4 +4,28 @@ description: "A comprehensive catalog of open 3D city model datasets from around
 collections:
 - american-cities-config.yaml
 - netherlands-3d-bag-config.yaml
-- singapore-config.yaml
+# - berlin-config.yaml
+# - brussels-config.yaml
+# - catalog-config.yaml
+# - dresden-config.yaml
+# - espoo-config.yaml
+# - estonia-config.yaml
+# - hamburg-config.yaml
+# - helsinki-config.yaml
+# - ingolstadt-config.yaml
+# - japan-plateau-config.yaml
+# - linz-config.yaml
+# - luxembourg-config.yaml
+# - lyon-config.yaml
+# - montreal-config.yaml
+# - namur-config.yaml
+# - new-york-doitt-config.yaml
+# - new-york-tum-config.yaml
+# - north-rhine-westphalia-config.yaml
+# - potsdam-config.yaml
+# - rotterdam-config.yaml
+# - singapore-config.yaml
+# - the-hague-config.yaml
+# - vantaa-config.yaml
+# - various-cityjson-config.yaml
+# - vienna-config.yaml
