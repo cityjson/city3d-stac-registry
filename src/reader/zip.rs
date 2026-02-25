@@ -363,6 +363,96 @@ impl CityModelMetadataReader for ZipReader {
 mod tests {
     use super::*;
     use tempfile::NamedTempFile;
+    use std::io::Write;
+
+    /// Helper function to create a test ZIP file with CityJSON content
+    fn create_test_zip_with_cityjson() -> NamedTempFile {
+        let mut temp_zip = NamedTempFile::new().unwrap();
+        let mut zip = zip::ZipWriter::new(temp_zip.as_file());
+
+        let cityjson = r#"{
+        "type": "CityJSON",
+        "version": "1.1",
+        "transform": {
+            "scale": [0.01, 0.01, 0.01],
+            "translate": [100000, 200000, 0]
+        },
+        "metadata": {
+            "geographicalExtent": [1.0, 2.0, 0.0, 10.0, 20.0, 30.0],
+            "referenceSystem": "https://www.opengis.net/def/crs/EPSG/0/7415"
+        },
+        "CityObjects": {
+            "building1": {
+                "type": "Building",
+                "geometry": [{
+                    "type": "Solid",
+                    "lod": "2",
+                    "boundaries": [[[[0,0,0]]]]
+                }]
+            }
+        },
+        "vertices": [[0,0,0]]
+    }"#;
+
+        let options = zip::write::SimpleFileOptions::default()
+            .compression_method(zip::CompressionMethod::Stored);
+
+        zip.start_file("data.city.json", options).unwrap();
+        zip.write_all(cityjson.as_bytes()).unwrap();
+        zip.finish().unwrap();
+
+        temp_zip
+    }
+
+    #[test]
+    fn test_zip_reader_aggregates_metadata() {
+        let temp_zip = create_test_zip_with_cityjson();
+        let reader = ZipReader::new(temp_zip.path()).unwrap();
+
+        // Should have bbox from inner file
+        let bbox = reader.bbox().unwrap();
+        assert_eq!(bbox.min_x, 1.0);
+        assert_eq!(bbox.max_x, 10.0);
+
+        // Should have city object count
+        let count = reader.city_object_count().unwrap();
+        assert_eq!(count, 1);
+
+        // Should have city object types
+        let types = reader.city_object_types().unwrap();
+        assert!(types.contains(&"Building".to_string()));
+
+        // Should have LODs
+        let lods = reader.lods().unwrap();
+        assert!(lods.contains(&"2".to_string()));
+
+        // Should have version
+        let version = reader.version().unwrap();
+        assert_eq!(version, "1.1");
+
+        // Should have CRS
+        let crs = reader.crs().unwrap();
+        assert_eq!(crs.to_stac_epsg(), Some(7415));
+
+        // Should have CityJSON encoding
+        assert_eq!(reader.encoding(), "CityJSON");
+    }
+
+    #[test]
+    fn test_zip_reader_empty_zip() {
+        let mut temp_zip = NamedTempFile::new().unwrap();
+        let mut zip = zip::ZipWriter::new(temp_zip.as_file());
+        zip.finish().unwrap();
+
+        let result = ZipReader::new(temp_zip.path());
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            CityJsonStacError::InvalidCityJson(msg) => {
+                assert!(msg.contains("No CityJSON/CityGML files found"));
+            }
+            _ => panic!("Expected InvalidCityJson error"),
+        }
+    }
 
     #[test]
     fn test_zip_reader_not_streamable() {
