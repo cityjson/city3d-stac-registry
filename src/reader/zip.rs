@@ -7,7 +7,7 @@ use crate::metadata::AttributeDefinition;
 use crate::reader::{get_reader, CityModelMetadataReader};
 use crate::metadata::BBox3D;
 use crate::metadata::CRS;
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashMap};
 use std::path::{Path, PathBuf};
 use std::sync::RwLock;
 use tempfile::TempDir;
@@ -80,6 +80,13 @@ impl ZipReader {
             let mut file = archive.by_index(i)?;
             let outpath = dest_dir.join(file.name());
 
+            // Validate path doesn't escape dest_dir (ZIP Slip prevention)
+            if !outpath.starts_with(dest_dir) {
+                return Err(CityJsonStacError::InvalidCityJson(
+                    format!("ZIP file contains unsafe path: {}", file.name())
+                ));
+            }
+
             if file.name().ends_with('/') {
                 std::fs::create_dir_all(&outpath)?;
             } else {
@@ -129,7 +136,7 @@ impl ZipReader {
         let mut city_object_count = 0;
         let mut city_object_types = BTreeSet::new();
         let mut lods = BTreeSet::new();
-        let mut attributes = BTreeSet::new();
+        let mut attributes_map: HashMap<String, AttributeDefinition> = HashMap::new();
         let mut has_textures = false;
         let mut has_materials = false;
         let mut has_semantic_surfaces = false;
@@ -166,10 +173,10 @@ impl ZipReader {
                 lods.extend(reader_lods);
             }
 
-            // Collect attributes
+            // Collect attributes (using HashMap for deduplication by name)
             if let Ok(reader_attrs) = reader.attributes() {
                 for attr in reader_attrs {
-                    attributes.insert(attr);
+                    attributes_map.insert(attr.name.clone(), attr);
                 }
             }
 
@@ -214,7 +221,7 @@ impl ZipReader {
             None
         };
 
-        let attributes: Vec<_> = attributes.into_iter().collect();
+        let attributes: Vec<_> = attributes_map.into_values().collect();
 
         Ok(ZipMetadata {
             bbox,
@@ -298,9 +305,13 @@ impl CityModelMetadataReader for ZipReader {
     }
 
     fn encoding(&self) -> &'static str {
-        // Return the internal format (from first file found)
-        // Priority will be determined by the order files are discovered
-        "CityJSON" // Default, will be overridden by primary_encoding in actual impl
+        // Return the internal format from first file found
+        if let Ok(metadata) = self.metadata.read() {
+            if let Some(ref m) = *metadata {
+                return m.primary_encoding;
+            }
+        }
+        "CityJSON" // Fallback
     }
 
     fn version(&self) -> Result<String> {
