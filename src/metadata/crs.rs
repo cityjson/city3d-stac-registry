@@ -65,6 +65,53 @@ impl CRS {
         None
     }
 
+    /// Create a CRS from CityGML srsName format
+    ///
+    /// Supports multiple formats:
+    /// - OGC URN (comma): `urn:ogc:def:crs,crs:EPSG::31256`
+    /// - OGC URN (colon): `urn:ogc:def:crs:EPSG::31256`
+    /// - Simple format: `EPSG:31256`
+    /// - OGC URL: `http://www.opengis.net/def/crs/EPSG/0/31256`
+    pub fn from_citygml_srs_name(srs_name: &str) -> Option<Self> {
+        let srs_name = srs_name.trim();
+
+        // Format 1: OGC URN with comma separator
+        // urn:ogc:def:crs,crs:EPSG::31256
+        if srs_name.starts_with("urn:ogc:def:crs") {
+            // Try to find EPSG:: followed by a number
+            if let Some(epsg_part) = srs_name.split("EPSG::").nth(1) {
+                if let Ok(code) = epsg_part.split(&[',', ':', '/'][..]).next()?.parse::<u32>() {
+                    return Some(Self::from_epsg(code));
+                }
+            }
+            // Also try EPSG: without double colon (some variants)
+            if let Some(epsg_part) = srs_name.split("EPSG:").nth(1) {
+                // Skip if it's already EPSG:: (handled above)
+                if !epsg_part.starts_with(':') {
+                    if let Ok(code) = epsg_part.split(&[',', ':', '/'][..]).next()?.parse::<u32>() {
+                        return Some(Self::from_epsg(code));
+                    }
+                }
+            }
+        }
+
+        // Format 2: Simple EPSG:XXXX format
+        // EPSG:31256
+        if srs_name.starts_with("EPSG:") {
+            if let Ok(code) = srs_name.strip_prefix("EPSG:")?.parse::<u32>() {
+                return Some(Self::from_epsg(code));
+            }
+        }
+
+        // Format 3: OGC HTTP URL
+        // http://www.opengis.net/def/crs/EPSG/0/31256
+        if srs_name.contains("opengis.net/def/crs") || srs_name.contains("opengis.net/gml/srs") {
+            return Self::from_cityjson_url(srs_name);
+        }
+
+        None
+    }
+
     /// Get EPSG code for STAC proj:epsg property
     pub fn to_stac_epsg(&self) -> Option<u32> {
         self.epsg
@@ -156,5 +203,47 @@ mod tests {
     fn test_crs_is_wgs84_false_for_other_epsg() {
         let crs = CRS::from_epsg(28992);
         assert!(!crs.is_wgs84());
+    }
+
+    #[test]
+    fn test_crs_from_citygml_srs_name_urn_comma() {
+        // Vienna CityGML format
+        let srs = "urn:ogc:def:crs,crs:EPSG::31256";
+        let crs = CRS::from_citygml_srs_name(srs).unwrap();
+        assert_eq!(crs.epsg, Some(31256));
+    }
+
+    #[test]
+    fn test_crs_from_citygml_srs_name_urn_colon() {
+        let srs = "urn:ogc:def:crs:EPSG::4326";
+        let crs = CRS::from_citygml_srs_name(srs).unwrap();
+        assert_eq!(crs.epsg, Some(4326));
+    }
+
+    #[test]
+    fn test_crs_from_citygml_srs_name_simple() {
+        let srs = "EPSG:25832";
+        let crs = CRS::from_citygml_srs_name(srs).unwrap();
+        assert_eq!(crs.epsg, Some(25832));
+    }
+
+    #[test]
+    fn test_crs_from_citygml_srs_name_http_url() {
+        let srs = "http://www.opengis.net/def/crs/EPSG/0/7415";
+        let crs = CRS::from_citygml_srs_name(srs).unwrap();
+        assert_eq!(crs.epsg, Some(7415));
+    }
+
+    #[test]
+    fn test_crs_from_citygml_srs_name_with_whitespace() {
+        let srs = "  urn:ogc:def:crs,crs:EPSG::31256  ";
+        let crs = CRS::from_citygml_srs_name(srs).unwrap();
+        assert_eq!(crs.epsg, Some(31256));
+    }
+
+    #[test]
+    fn test_crs_from_citygml_srs_name_invalid() {
+        assert!(CRS::from_citygml_srs_name("INVALID").is_none());
+        assert!(CRS::from_citygml_srs_name("").is_none());
     }
 }

@@ -342,7 +342,7 @@ impl CityGMLReader {
 
         // Parse CRS from srsName
         if let Some(srs_name) = root_srs_name {
-            metadata.crs = CRS::from_cityjson_url(&srs_name);
+            metadata.crs = CRS::from_citygml_srs_name(&srs_name);
         }
 
         // Convert attribute map to sorted vec
