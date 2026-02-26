@@ -111,7 +111,7 @@ pub async fn create_store_from_url(
 pub async fn download_from_url(url: &str) -> Result<bytes::Bytes> {
     // Try to convert S3 HTTPS URLs to s3:// format
     let converted_url = convert_s3_https_url(url);
-    let url_to_use = converted_url.as_ref().map(|s| s.as_str()).unwrap_or(url);
+    let url_to_use = converted_url.as_deref().unwrap_or(url);
 
     let parsed_url = Url::parse(url_to_use).map_err(CityJsonStacError::UrlError)?;
     let (store, path) = object_store::parse_url_opts(&parsed_url, Vec::<(String, String)>::new())

@@ -410,3 +410,125 @@ mod e2e_error_handling_tests {
         assert!(result.is_err());
     }
 }
+
+mod e2e_zip_file_tests {
+    use super::*;
+    use std::io::Write;
+    use tempfile::NamedTempFile;
+    use zip::write::SimpleFileOptions;
+    use zip::ZipWriter;
+
+    /// Helper to create a ZIP file containing the delft.city.json test data
+    fn create_zip_with_cityjson() -> NamedTempFile {
+        // Read the source CityJSON file
+        let source_path = test_data_path("delft.city.json");
+        let cityjson_content =
+            std::fs::read_to_string(&source_path).expect("Failed to read delft.city.json");
+
+        // Create a ZIP file
+        let temp_zip = NamedTempFile::with_suffix(".zip").expect("Failed to create temp ZIP file");
+        let mut zip = ZipWriter::new(temp_zip.as_file());
+
+        let options =
+            SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
+
+        zip.start_file("delft.city.json", options)
+            .expect("Failed to start ZIP entry");
+        zip.write_all(cityjson_content.as_bytes())
+            .expect("Failed to write to ZIP");
+        zip.finish().expect("Failed to finish ZIP");
+
+        temp_zip
+    }
+
+    #[test]
+    fn test_e2e_zip_reader_factory() {
+        // Create a ZIP file with CityJSON content
+        let temp_zip = create_zip_with_cityjson();
+
+        // Test that get_reader() returns a ZipReader for .zip files
+        let reader = get_reader(temp_zip.path()).expect("Failed to get reader for ZIP file");
+
+        // Verify the encoding is CityJSON (from inner file)
+        assert_eq!(reader.encoding(), "CityJSON");
+    }
+
+    #[test]
+    fn test_e2e_zip_metadata_extraction() {
+        let temp_zip = create_zip_with_cityjson();
+        let reader = get_reader(temp_zip.path()).expect("Failed to get reader");
+
+        // Verify metadata is extracted from the inner CityJSON file
+        let version = reader.version().expect("Failed to get version");
+        assert_eq!(version, "2.0");
+
+        let bbox = reader.bbox().expect("Failed to get bbox");
+        assert_eq!(bbox.xmin, 74782.684);
+        assert_eq!(bbox.xmax, 100067.947);
+
+        let crs = reader.crs().expect("Failed to get CRS");
+        assert_eq!(crs.to_stac_epsg(), Some(7415));
+    }
+
+    #[test]
+    fn test_e2e_zip_to_stac_item() {
+        let temp_zip = create_zip_with_cityjson();
+        let reader = get_reader(temp_zip.path()).expect("Failed to get reader");
+
+        // Build STAC item from ZIP file
+        let item = StacItemBuilder::from_file(temp_zip.path(), reader.as_ref(), None)
+            .expect("Failed to create item builder")
+            .build()
+            .expect("Failed to build item");
+
+        // Validate basic STAC structure
+        assert_eq!(item.stac_version, "1.1.0");
+        assert_eq!(item.item_type, "Feature");
+
+        // Validate metadata from inner CityJSON
+        assert_eq!(item.properties["city3d:version"], "2.0");
+        assert_eq!(item.properties["proj:epsg"], 7415);
+
+        // Validate asset has application/zip media type
+        assert!(item.assets.contains_key("data"));
+        let data_asset = &item.assets["data"];
+        assert_eq!(data_asset.media_type, Some("application/zip".to_string()));
+    }
+
+    #[test]
+    fn test_e2e_zip_with_base_url() {
+        let temp_zip = create_zip_with_cityjson();
+        let reader = get_reader(temp_zip.path()).expect("Failed to get reader");
+
+        let item = StacItemBuilder::from_file(
+            temp_zip.path(),
+            reader.as_ref(),
+            Some("https://example.com/data"),
+        )
+        .expect("Failed to create item builder")
+        .build()
+        .expect("Failed to build item");
+
+        // Validate asset href includes base URL
+        assert!(item.assets.contains_key("data"));
+        let data_asset = &item.assets["data"];
+        assert!(data_asset.href.starts_with("https://example.com/data/"));
+        assert!(data_asset.href.ends_with(".zip"));
+    }
+
+    #[test]
+    fn test_e2e_zip_empty_archive_error() {
+        // Create an empty ZIP file
+        let temp_zip = NamedTempFile::with_suffix(".zip").expect("Failed to create temp ZIP");
+        let zip = ZipWriter::new(temp_zip.as_file());
+        zip.finish().expect("Failed to finish ZIP");
+
+        // Should fail with "No CityJSON/CityGML files found"
+        let result = get_reader(temp_zip.path());
+        assert!(result.is_err());
+        if let Err(e) = result {
+            let err = e.to_string();
+            assert!(err.contains("No CityJSON/CityGML files found"));
+        }
+    }
+}

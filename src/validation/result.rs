@@ -34,6 +34,12 @@ pub struct ValidationResult {
     pub remote_url_errors: Vec<(String, String)>,
 }
 
+impl Default for ValidationResult {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ValidationResult {
     /// Create a new empty validation result
     pub fn new() -> Self {

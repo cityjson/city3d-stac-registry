@@ -4,18 +4,20 @@
 
 use crate::error::{CityJsonStacError, Result};
 use crate::metadata::AttributeDefinition;
-use crate::reader::{get_reader, CityModelMetadataReader};
 use crate::metadata::BBox3D;
 use crate::metadata::CRS;
+use crate::reader::{get_reader, CityModelMetadataReader};
 use std::collections::{BTreeSet, HashMap};
 use std::path::{Path, PathBuf};
 use std::sync::RwLock;
-use tempfile::TempDir;
+use tempfile::{TempDir, TempPath};
 
 /// Reader for ZIP archives containing CityJSON/CityGML files
 pub struct ZipReader {
     file_path: PathBuf,
     temp_dir: TempDir,
+    /// Keep temp file alive for remote ZIPs (downloaded files)
+    _temp_file: Option<TempPath>,
     inner_readers: Vec<Box<dyn CityModelMetadataReader>>,
     metadata: RwLock<Option<ZipMetadata>>,
 }
@@ -37,7 +39,7 @@ struct ZipMetadata {
 }
 
 impl ZipReader {
-    /// Create a new ZIP reader
+    /// Create a new ZIP reader from a local file
     pub fn new(file_path: &Path) -> Result<Self> {
         if !file_path.exists() {
             return Err(CityJsonStacError::IoError(std::io::Error::new(
@@ -55,6 +57,38 @@ impl ZipReader {
         let mut reader = Self {
             file_path: file_path.to_path_buf(),
             temp_dir,
+            _temp_file: None,
+            inner_readers: Vec::new(),
+            metadata: RwLock::new(None),
+        };
+
+        // Discover and create inner readers
+        reader.inner_readers = reader.discover_inner_readers()?;
+
+        if reader.inner_readers.is_empty() {
+            return Err(CityJsonStacError::InvalidCityJson(
+                "No CityJSON/CityGML files found in ZIP".to_string(),
+            ));
+        }
+
+        Ok(reader)
+    }
+
+    /// Create a ZIP reader from a temporary file (for remote downloads)
+    ///
+    /// This constructor takes ownership of a TempPath to keep the downloaded
+    /// ZIP file alive for the lifetime of the reader.
+    pub fn from_temp_file(file_path: PathBuf, temp_path: TempPath) -> Result<Self> {
+        // Create temporary directory for extraction
+        let temp_dir = TempDir::new()?;
+
+        // Extract ZIP to temp directory
+        Self::extract_zip(&file_path, temp_dir.path())?;
+
+        let mut reader = Self {
+            file_path,
+            temp_dir,
+            _temp_file: Some(temp_path),
             inner_readers: Vec::new(),
             metadata: RwLock::new(None),
         };
@@ -82,9 +116,10 @@ impl ZipReader {
 
             // Validate path doesn't escape dest_dir (ZIP Slip prevention)
             if !outpath.starts_with(dest_dir) {
-                return Err(CityJsonStacError::InvalidCityJson(
-                    format!("ZIP file contains unsafe path: {}", file.name())
-                ));
+                return Err(CityJsonStacError::InvalidCityJson(format!(
+                    "ZIP file contains unsafe path: {}",
+                    file.name()
+                )));
             }
 
             if file.name().ends_with('/') {
@@ -106,10 +141,7 @@ impl ZipReader {
         let mut readers = Vec::new();
 
         // Walk the extracted directory
-        fn walk_dir(
-            dir: &Path,
-            readers: &mut Vec<Box<dyn CityModelMetadataReader>>,
-        ) -> Result<()> {
+        fn walk_dir(dir: &Path, readers: &mut Vec<Box<dyn CityModelMetadataReader>>) -> Result<()> {
             for entry in std::fs::read_dir(dir)? {
                 let entry = entry?;
                 let path = entry.path();
@@ -150,7 +182,9 @@ impl ZipReader {
         let mut max_z = f64::MIN;
         let mut has_bbox = false;
 
-        let primary_encoding = self.inner_readers.first()
+        let primary_encoding = self
+            .inner_readers
+            .first()
             .map(|r| r.encoding())
             .unwrap_or("CityJSON");
 
@@ -194,12 +228,12 @@ impl ZipReader {
             // Merge bbox
             if let Ok(bbox) = reader.bbox() {
                 has_bbox = true;
-                min_x = min_x.min(bbox.min_x);
-                min_y = min_y.min(bbox.min_y);
-                min_z = min_z.min(bbox.min_z);
-                max_x = max_x.max(bbox.max_x);
-                max_y = max_y.max(bbox.max_y);
-                max_z = max_z.max(bbox.max_z);
+                min_x = min_x.min(bbox.xmin);
+                min_y = min_y.min(bbox.ymin);
+                min_z = min_z.min(bbox.zmin);
+                max_x = max_x.max(bbox.xmax);
+                max_y = max_y.max(bbox.ymax);
+                max_z = max_z.max(bbox.zmax);
             }
 
             // Get version and CRS from first reader
@@ -231,7 +265,7 @@ impl ZipReader {
             attributes,
             primary_encoding,
             version,
-            crs: crs.unwrap_or_default(),
+            crs,
             has_textures,
             has_materials,
             has_semantic_surfaces,
@@ -241,14 +275,18 @@ impl ZipReader {
     /// Lazy load metadata
     fn ensure_loaded(&self) -> Result<()> {
         {
-            let metadata = self.metadata.read()
+            let metadata = self
+                .metadata
+                .read()
                 .map_err(|_| CityJsonStacError::Other("Failed to acquire read lock".to_string()))?;
             if metadata.is_some() {
                 return Ok(());
             }
         }
 
-        let mut metadata = self.metadata.write()
+        let mut metadata = self
+            .metadata
+            .write()
             .map_err(|_| CityJsonStacError::Other("Failed to acquire write lock".to_string()))?;
 
         if metadata.is_none() {
@@ -262,44 +300,63 @@ impl ZipReader {
 impl CityModelMetadataReader for ZipReader {
     fn bbox(&self) -> Result<BBox3D> {
         self.ensure_loaded()?;
-        let metadata = self.metadata.read()
+        let metadata = self
+            .metadata
+            .read()
             .map_err(|_| CityJsonStacError::Other("Failed to acquire read lock".to_string()))?;
-        metadata.as_ref()
+        metadata
+            .as_ref()
             .and_then(|m| m.bbox.clone())
             .ok_or_else(|| CityJsonStacError::MetadataError("BBox not found".to_string()))
     }
 
     fn crs(&self) -> Result<CRS> {
         self.ensure_loaded()?;
-        let metadata = self.metadata.read()
+        let metadata = self
+            .metadata
+            .read()
             .map_err(|_| CityJsonStacError::Other("Failed to acquire read lock".to_string()))?;
-        Ok(metadata.as_ref().unwrap().crs.clone())
+        Ok(metadata.as_ref().unwrap().crs.clone().unwrap_or_default())
     }
 
     fn lods(&self) -> Result<Vec<String>> {
         self.ensure_loaded()?;
-        let metadata = self.metadata.read()
+        let metadata = self
+            .metadata
+            .read()
             .map_err(|_| CityJsonStacError::Other("Failed to acquire read lock".to_string()))?;
         Ok(metadata.as_ref().unwrap().lods.iter().cloned().collect())
     }
 
     fn city_object_types(&self) -> Result<Vec<String>> {
         self.ensure_loaded()?;
-        let metadata = self.metadata.read()
+        let metadata = self
+            .metadata
+            .read()
             .map_err(|_| CityJsonStacError::Other("Failed to acquire read lock".to_string()))?;
-        Ok(metadata.as_ref().unwrap().city_object_types.iter().cloned().collect())
+        Ok(metadata
+            .as_ref()
+            .unwrap()
+            .city_object_types
+            .iter()
+            .cloned()
+            .collect())
     }
 
     fn city_object_count(&self) -> Result<usize> {
         self.ensure_loaded()?;
-        let metadata = self.metadata.read()
+        let metadata = self
+            .metadata
+            .read()
             .map_err(|_| CityJsonStacError::Other("Failed to acquire read lock".to_string()))?;
         Ok(metadata.as_ref().unwrap().city_object_count)
     }
 
     fn attributes(&self) -> Result<Vec<AttributeDefinition>> {
         self.ensure_loaded()?;
-        let metadata = self.metadata.read()
+        let metadata = self
+            .metadata
+            .read()
             .map_err(|_| CityJsonStacError::Other("Failed to acquire read lock".to_string()))?;
         Ok(metadata.as_ref().unwrap().attributes.clone())
     }
@@ -316,7 +373,9 @@ impl CityModelMetadataReader for ZipReader {
 
     fn version(&self) -> Result<String> {
         self.ensure_loaded()?;
-        let metadata = self.metadata.read()
+        let metadata = self
+            .metadata
+            .read()
             .map_err(|_| CityJsonStacError::Other("Failed to acquire read lock".to_string()))?;
         Ok(metadata.as_ref().unwrap().version.clone())
     }
@@ -339,21 +398,27 @@ impl CityModelMetadataReader for ZipReader {
 
     fn semantic_surfaces(&self) -> Result<bool> {
         self.ensure_loaded()?;
-        let metadata = self.metadata.read()
+        let metadata = self
+            .metadata
+            .read()
             .map_err(|_| CityJsonStacError::Other("Failed to acquire read lock".to_string()))?;
         Ok(metadata.as_ref().unwrap().has_semantic_surfaces)
     }
 
     fn textures(&self) -> Result<bool> {
         self.ensure_loaded()?;
-        let metadata = self.metadata.read()
+        let metadata = self
+            .metadata
+            .read()
             .map_err(|_| CityJsonStacError::Other("Failed to acquire read lock".to_string()))?;
         Ok(metadata.as_ref().unwrap().has_textures)
     }
 
     fn materials(&self) -> Result<bool> {
         self.ensure_loaded()?;
-        let metadata = self.metadata.read()
+        let metadata = self
+            .metadata
+            .read()
             .map_err(|_| CityJsonStacError::Other("Failed to acquire read lock".to_string()))?;
         Ok(metadata.as_ref().unwrap().has_materials)
     }
@@ -362,12 +427,12 @@ impl CityModelMetadataReader for ZipReader {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::NamedTempFile;
     use std::io::Write;
+    use tempfile::NamedTempFile;
 
     /// Helper function to create a test ZIP file with CityJSON content
     fn create_test_zip_with_cityjson() -> NamedTempFile {
-        let mut temp_zip = NamedTempFile::new().unwrap();
+        let temp_zip = NamedTempFile::new().unwrap();
         let mut zip = zip::ZipWriter::new(temp_zip.as_file());
 
         let cityjson = r#"{
@@ -411,8 +476,8 @@ mod tests {
 
         // Should have bbox from inner file
         let bbox = reader.bbox().unwrap();
-        assert_eq!(bbox.min_x, 1.0);
-        assert_eq!(bbox.max_x, 10.0);
+        assert_eq!(bbox.xmin, 1.0);
+        assert_eq!(bbox.xmax, 10.0);
 
         // Should have city object count
         let count = reader.city_object_count().unwrap();
@@ -440,14 +505,14 @@ mod tests {
 
     #[test]
     fn test_zip_reader_empty_zip() {
-        let mut temp_zip = NamedTempFile::new().unwrap();
-        let mut zip = zip::ZipWriter::new(temp_zip.as_file());
+        let temp_zip = NamedTempFile::new().unwrap();
+        let zip = zip::ZipWriter::new(temp_zip.as_file());
         zip.finish().unwrap();
 
         let result = ZipReader::new(temp_zip.path());
         assert!(result.is_err());
-        match result.unwrap_err() {
-            CityJsonStacError::InvalidCityJson(msg) => {
+        match result {
+            Err(CityJsonStacError::InvalidCityJson(msg)) => {
                 assert!(msg.contains("No CityJSON/CityGML files found"));
             }
             _ => panic!("Expected InvalidCityJson error"),
@@ -458,7 +523,7 @@ mod tests {
     fn test_zip_reader_not_streamable() {
         // Create a minimal valid ZIP file
         let mut temp_zip = NamedTempFile::new().unwrap();
-        let mut zip = zip::ZipWriter::new(temp_zip.as_file_mut());
+        let zip = zip::ZipWriter::new(temp_zip.as_file_mut());
         zip.finish().unwrap();
 
         // Note: This will fail with "No CityJSON/CityGML files found"

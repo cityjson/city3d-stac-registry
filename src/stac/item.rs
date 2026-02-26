@@ -344,12 +344,22 @@ impl StacItemBuilder {
             builder = builder.file_size(metadata.len());
         }
 
-        // Add data asset
-        let media_type = match reader.encoding() {
-            "CityJSON" => "application/json",
-            "CityJSONSeq" => "application/json-seq",
-            "FlatCityBuf" => "application/octet-stream",
-            _ => "application/octet-stream",
+        // Add data asset - detect ZIP files for proper media type
+        let is_zip = file_path
+            .extension()
+            .and_then(|e| e.to_str())
+            .map(|e| e == "zip")
+            .unwrap_or(false);
+
+        let media_type = if is_zip {
+            "application/zip"
+        } else {
+            match reader.encoding() {
+                "CityJSON" => "application/json",
+                "CityJSONSeq" => "application/json-seq",
+                "FlatCityBuf" => "application/octet-stream",
+                _ => "application/octet-stream",
+            }
         };
 
         // Generate asset href based on base_url
@@ -425,12 +435,22 @@ impl StacItemBuilder {
             builder = builder.file_size(metadata.len());
         }
 
-        // Add data asset
-        let media_type = match reader.encoding() {
-            "CityJSON" => "application/json",
-            "CityJSONSeq" => "application/json-seq",
-            "FlatCityBuf" => "application/octet-stream",
-            _ => "application/octet-stream",
+        // Add data asset - detect ZIP files for proper media type
+        let is_zip = file_path
+            .extension()
+            .and_then(|e| e.to_str())
+            .map(|e| e == "zip")
+            .unwrap_or(false);
+
+        let media_type = if is_zip {
+            "application/zip"
+        } else {
+            match reader.encoding() {
+                "CityJSON" => "application/json",
+                "CityJSONSeq" => "application/json-seq",
+                "FlatCityBuf" => "application/octet-stream",
+                _ => "application/octet-stream",
+            }
         };
 
         // Generate asset href based on base_url

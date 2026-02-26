@@ -8,11 +8,13 @@ pub mod citygml;
 pub mod cityjson;
 pub mod cjseq;
 pub mod fcb;
+pub mod zip;
 
 pub use citygml::{CityGMLReader, CityGMLVersion};
 pub use cityjson::CityJSONReader;
 pub use cjseq::CityJSONSeqReader;
 pub use fcb::FlatCityBufReader;
+pub use zip::ZipReader;
 
 use crate::error::{CityJsonStacError, Result};
 use crate::metadata::{AttributeDefinition, BBox3D, Transform, CRS};
@@ -70,10 +72,10 @@ pub async fn get_reader_from_source(
             // Validate extension before downloading to avoid wasting bandwidth
             let extension = extract_extension_from_url(url)?;
             match extension.as_str() {
-                "json" | "jsonl" | "cjseq" | "gml" | "xml" => {}
+                "json" | "jsonl" | "cjseq" | "gml" | "xml" | "zip" => {}
                 _ => {
                     return Err(CityJsonStacError::InvalidCityJson(format!(
-                        "Unsupported remote file extension: {extension}. Supported: .json, .jsonl, .cjseq, .gml, .xml",
+                        "Unsupported remote file extension: {extension}. Supported: .json, .jsonl, .cjseq, .gml, .xml, .zip",
                     )));
                 }
             }
@@ -114,6 +116,16 @@ pub async fn get_reader_from_source(
                     let path = temp_file.path().to_path_buf();
                     let reader =
                         CityGMLReader::new(&path)?.with_temp_path(temp_file.into_temp_path());
+                    Ok(Box::new(reader))
+                }
+                "zip" => {
+                    log::info!("Downloading remote ZIP file: {}", url);
+                    let bytes = download_from_url(url).await?;
+                    let mut temp_file = tempfile::Builder::new().suffix(".zip").tempfile()?;
+                    use std::io::Write;
+                    temp_file.write_all(&bytes)?;
+                    let path = temp_file.path().to_path_buf();
+                    let reader = ZipReader::from_temp_file(path, temp_file.into_temp_path())?;
                     Ok(Box::new(reader))
                 }
                 _ => unreachable!("extension already validated above"),
@@ -189,6 +201,7 @@ pub fn get_reader(path: &Path) -> Result<Box<dyn CityModelMetadataReader>> {
         .ok_or_else(|| CityJsonStacError::InvalidCityJson("No file extension".to_string()))?;
 
     match extension {
+        "zip" => Ok(Box::new(ZipReader::new(path)?)),
         "json" => Ok(Box::new(CityJSONReader::new(path)?)),
         "jsonl" => Ok(Box::new(CityJSONSeqReader::new(path)?)),
         "fcb" => Ok(Box::new(FlatCityBufReader::new(path)?)),
@@ -305,5 +318,33 @@ mod tests {
 
         let reader = get_reader(temp_file.path()).unwrap();
         assert!(reader.streamable());
+    }
+
+    #[test]
+    fn test_get_reader_zip_file() {
+        use ::zip::write::SimpleFileOptions;
+        use ::zip::CompressionMethod;
+        use ::zip::ZipWriter;
+        use std::io::Write;
+
+        // Create a ZIP file with CityJSON content
+        let temp_zip = tempfile::Builder::new().suffix(".zip").tempfile().unwrap();
+        let mut zip = ZipWriter::new(temp_zip.as_file());
+
+        let cityjson = r#"{
+            "type": "CityJSON",
+            "version": "1.1",
+            "CityObjects": {},
+            "vertices": []
+        }"#;
+
+        let options = SimpleFileOptions::default().compression_method(CompressionMethod::Stored);
+        zip.start_file("test.json", options).unwrap();
+        zip.write_all(cityjson.as_bytes()).unwrap();
+        zip.finish().unwrap();
+
+        let reader = get_reader(temp_zip.path());
+        assert!(reader.is_ok());
+        assert_eq!(reader.unwrap().encoding(), "CityJSON");
     }
 }

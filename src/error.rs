@@ -77,3 +77,9 @@ impl From<&str> for CityJsonStacError {
         CityJsonStacError::Other(s.to_string())
     }
 }
+
+impl From<zip::result::ZipError> for CityJsonStacError {
+    fn from(e: zip::result::ZipError) -> Self {
+        CityJsonStacError::InvalidCityJson(format!("ZIP archive error: {e}"))
+    }
+}

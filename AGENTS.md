@@ -16,6 +16,7 @@ STAC is widely adopted for geospatial data but lacks native support for 3D city 
 | --------------------- | --------- | ----------------------------------------------------------------- | ------ |
 | CityJSON              | `.json`   | `serde_json`                                                      | ✅     |
 | CityJSONTextSequences | `.jsonl`  | `serde_json` (streaming)                                          | ✅     |
+| ZIP Archive           | `.zip`    | `zip` crate (with inner readers)                                  | ✅     |
 | FlatCityBuf           | `.fcb`    | [flatcitybuf](https://github.com/cityjson/flatcitybuf) Rust crate | 🚧     |
 
 ## High-Level Architecture
@@ -32,14 +33,14 @@ STAC is widely adopted for geospatial data but lacks native support for 3D city 
 │        (file extension → reader selection)              │
 └─────────────────┬───────────────────────────────────────┘
                   │
-        ┌─────────┴──────────┬──────────────┐
-        ▼                    ▼              ▼
-┌──────────────┐   ┌──────────────┐   ┌──────────────┐
-│  CityJSON    │   │ CityJSONSeq  │   │ FlatCityBuf  │
-│   Reader     │   │   Reader     │   │   Reader     │
-└──────────────┘   └──────────────┘   └──────────────┘
-        │                    │              │
-        └─────────┬──────────┴──────────────┘
+        ┌─────────┴──────────┬──────────────┬─────────────┐
+        ▼                    ▼              ▼             ▼
+┌──────────────┐   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
+│  CityJSON    │   │ CityJSONSeq  │   │ FlatCityBuf  │   │   ZipReader  │
+│   Reader     │   │   Reader     │   │   Reader     │   │  (aggregator)│
+└──────────────┘   └──────────────┘   └──────────────┘   └──────────────┘
+        │                    │              │                    │
+        └─────────┬──────────┴──────────────┴────────────────────┘
                   │
                   ▼
 ┌─────────────────────────────────────────────────────────┐
@@ -64,6 +65,39 @@ STAC is widely adopted for geospatial data but lacks native support for 3D city 
 │              JSON Output                                │
 │   (item.json / collection.json + items/)                │
 └─────────────────────────────────────────────────────────┘
+```
+
+## ZIP Archive Support
+
+The CLI supports ZIP archives containing CityJSON, CityJSONSeq, or CityGML files.
+
+### Behavior
+
+- **Single Item**: A ZIP file generates one STAC Item (not a Collection)
+- **Asset Href**: Points to the ZIP file URL
+- **Asset Type**: `application/zip`
+- **Metadata**: Aggregated from all supported files inside (bbox union, object count sum, LODs/types union)
+- **city3d:encoding**: Reflects the internal format (CityJSON/CityGML/etc)
+
+### Security
+
+- **ZIP Slip Prevention**: Paths in ZIP archives are validated to not escape the extraction directory
+
+### Format Priority
+
+When the ZIP contains mixed formats, the encoding is determined by discovery order (first file found).
+
+### Example
+
+```bash
+# Local ZIP file
+cityjson-stac item data.zip -o data_item.json
+
+# Remote ZIP file
+cityjson-stac item https://example.com/data.zip -o data_item.json
+
+# With base URL
+cityjson-stac item https://example.com/data.zip --base-url https://cdn.example.com -o data_item.json
 ```
 
 ## Project Structure
