@@ -19,12 +19,10 @@ providers:
   - producer
   - licensor
   description: Rotterdam municipality
-- name: TU Delft 3D Geoinformation
-  url: https://3d.bk.tudelft.nl/
-  roles:
-  - host
-  description: 3D Geoinformation Research Group at TU Delft
-  inputs: []
+inputs:
+  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/3-20-DELFSHAVEN.city.json
+  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/3-20-DELFSHAVEN.xml
+  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/3-20-DELFSHAVEN.zip  # Textures
 extent:
   spatial:
     bbox: []

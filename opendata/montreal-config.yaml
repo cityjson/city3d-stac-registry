@@ -14,31 +14,36 @@ keywords:
 - terrain
 - TIN
 providers:
-- name: City of Montréal
-  url: https://montreal.ca/
+- name: Ville de Montréal
+  url: https://donnees.montreal.ca/
   roles:
   - producer
   - licensor
-  description: Montréal city government
-- name: TU Delft 3D Geoinformation
-  url: https://3d.bk.tudelft.nl/
-  roles:
-  - host
-  description: 3D Geoinformation Research Group at TU Delft
-  inputs: []
+  description: City of Montréal open data portal
+inputs:
+  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/VM05_2009.city.json
+  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/VM05_2009.gml
 extent:
   spatial:
     bbox: []
     crs: EPSG:32188
   temporal:
-    start: '2013-01-01T00:00:00Z'
-    end: '2013-12-31T23:59:59Z'
+    start: '2009-01-01T00:00:00Z'
+    end: '2009-12-31T23:59:59Z'
 links:
 - rel: about
   href: https://3d.bk.tudelft.nl/opendata/opencities/
   type: text/html
   title: TU Delft 3D Open Cities Portal
 - rel: source
-  href: https://donnees.montreal.ca/
+  href: https://donnees.montreal.ca/dataset/maquette-numerique-plateau-mont-royal-batiments-lod2-avec-textures
   type: text/html
-  title: Montréal Open Data Portal
+  title: Montréal 3D Building Models (LoD2 with Textures)
+- rel: source
+  href: https://donnees.montreal.ca/dataset/maquette-numerique-batiments-citygml-lod2-avec-textures
+  type: text/html
+  title: Montréal 2009 CityGML Dataset
+- rel: license
+  href: https://donnees.montreal.ca/licence-d-utilisation
+  type: text/html
+  title: CC-BY-4.0 License

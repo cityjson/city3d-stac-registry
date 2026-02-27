@@ -1,0 +1,53 @@
+id: zurich-3d
+title: Zürich 3D City Model (LoD2)
+description: |
+  3D LoD2 city model of Zürich, Switzerland.
+  Full city dataset with building models converted from CityGML to CityJSON.
+
+  This is the only CityJSON version of Zürich's 3D building data available.
+  Original data from the City of Zürich open data portal.
+license: CC0-1.0
+keywords:
+- 3d city model
+- buildings
+- LOD2
+- Switzerland
+- Zürich
+- CityJSON
+- citygml4j
+- converted
+providers:
+- name: City of Zürich
+  url: https://www.stadt-zuerich.ch/
+  roles:
+  - producer
+  - licensor
+  description: Original data producer for Zürich (CC0 / Open Use)
+- name: TU Delft 3D Geoinformation
+  url: https://3d.bk.tudelft.nl/
+  roles:
+  - processor
+  - host
+  description: 3D Geoinformation Research Group at TU Delft - Converted from CityGML to CityJSON
+inputs:
+- https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/Zurich_Building_LoD2_V10.city.json
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:4326
+  temporal:
+    start: '2018-01-01T00:00:00Z'
+    end: '2018-12-31T23:59:59Z'
+links:
+- rel: about
+  href: https://3d.bk.tudelft.nl/opendata/opencities/
+  type: text/html
+  title: TU Delft 3D Open Cities Portal
+- rel: related
+  href: https://github.com/tudelft3d/citygml4j
+  type: text/html
+  title: citygml4j Conversion Tool
+- rel: source
+  href: https://data.stadt-zuerich.ch/
+  type: text/html
+  title: Zürich Open Data Portal

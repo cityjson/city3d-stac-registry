@@ -1,7 +1,7 @@
 id: american-cities-3d
 title: American Cities 3D Buildings
-description: "125 million buildings across the United States at LoD1.\nSeparated by state. Available in both CityJSON and CityGML formats.\n"
-license: CC-BY-4.0
+description: "125 million buildings across the United States at LoD1.\nGenerated from Microsoft USBuildingFootprints, OpenStreetMap, and other open sources.\nSeparated by state. Available in both CityJSON and CityGML formats.\n"
+license: ODbL-1.0
 keywords:
 - 3d city model
 - buildings
@@ -12,20 +12,51 @@ keywords:
 - CityGML
 - 125M buildings
 providers:
-- name: TU Delft 3D Geoinformation
-  url: https://3d.bk.tudelft.nl/
+- name: BuildZero.Org
+  url: https://buildzero.org/
   roles:
-  - processor
-  - host
-  description: 3D Geoinformation Research Group at TU Delft
+  - producer
+  - licensor
+  description: Non-profit organization that created the OpenCityModel data pipeline combining Microsoft USBuildingFootprints, OpenStreetMap, and other open datasets
+- name: Microsoft
+  url: https://github.com/microsoft/USBuildingFootprints
+  roles:
+  - producer
+  description: Original source of ~125M building footprints via Microsoft USBuildingFootprints (derived from Bing Maps imagery using deep learning)
+- name: OpenStreetMap Contributors
+  url: https://www.openstreetmap.org/
+  roles:
+  - producer
+  description: Additional building footprints and height data sourced from OpenStreetMap
 
 # Input Data
 # ------------------------------------------------------------------
+# 5,229 files across 51 US states (125M buildings total)
+# All URLs are stored in: opendata/data/american-cities-urls.txt
+#
+# The data is organized by state and FIPS code:
+# s3://opencitymodel/2019-jun/json/{State}/{FIPS}/{state}-{fips}-{index}.json
+#
+# Sample URLs (first 5 files):
+#   - Alabama/01001/Alabama-01001-000.json
+#   - Alabama/01003/Alabama-01003-000.json
+#   - Alabama/01003/Alabama-01003-001.json
+#   - Alabama/01003/Alabama-01003-002.json
+#   - Alabama/01005/Alabama-01005-000.json
+#
+# States with most files:
+#   - Texas: 424 files
+#   - California: 342 files
+#   - Florida: 215 files
+#   - Georgia: 206 files
+#   - New York: 170 files
+#   - North Carolina: 170 files
+#   - Ohio: 178 files
+#
+# To process: Load all URLs from opendata/data/american-cities-urls.txt
+# or construct URLs programmatically using the S3 pattern above.
 inputs:
-  - https://s3.dualstack.us-east-1.amazonaws.com/opencitymodel/2019-jun/json/Alabama/01001/Alabama-01001-000.json
-  - https://s3.dualstack.us-east-1.amazonaws.com/opencitymodel/2019-jun/json/Alabama/01003/Alabama-01003-000.json
-  - https://s3.dualstack.us-east-1.amazonaws.com/opencitymodel/2019-jun/json/Alabama/01003/Alabama-01003-001.json
-  # rest will come here
+  from_file: opendata/data/american-cities-urls.txt
 extent:
   spatial:
     bbox: []
@@ -38,7 +69,15 @@ links:
   href: https://3d.bk.tudelft.nl/opendata/opencities/
   type: text/html
   title: TU Delft 3D Open Cities Portal
-- rel: cite-as
-  href: https://doi.org/10.5281/zenodo.XXXXXX
+- rel: source
+  href: https://github.com/opencitymodel/opencitymodel
   type: text/html
-  title: Dataset DOI
+  title: OpenCityModel GitHub Repository
+- rel: source
+  href: https://github.com/microsoft/USBuildingFootprints
+  type: text/html
+  title: Microsoft USBuildingFootprints (primary building footprint source)
+- rel: license
+  href: https://opendatacommons.org/licenses/odbl/1-0/
+  type: text/html
+  title: Open Data Commons Open Database License (ODbL) v1.0

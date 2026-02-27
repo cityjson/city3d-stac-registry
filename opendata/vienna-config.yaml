@@ -19,12 +19,9 @@ providers:
   - producer
   - licensor
   description: Vienna city government
-- name: TU Delft 3D Geoinformation
-  url: https://3d.bk.tudelft.nl/
-  roles:
-  - host
-  description: 3D Geoinformation Research Group at TU Delft
-  inputs: []
+inputs:
+  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/Vienna_102081.city.json
+  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/Vienna_102081.gml
 extent:
   spatial:
     bbox: []

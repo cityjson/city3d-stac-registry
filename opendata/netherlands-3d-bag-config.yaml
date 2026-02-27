@@ -1,6 +1,6 @@
 id: netherlands-3d-bag
-title: Netherlands 3D BAG
-description: "All 10 million+ buildings in the Netherlands with LoD1 and LoD2 representations.\nDerived from the Dutch BAG (Basisregistratie Adressen en Gebouwen) registry.\nAvailable in CityJSON, GeoPackage, OBJ, and PostgreSQL dump formats.\n"
+title: Netherlands 3D BAG (v20250903)
+description: "All 10 million+ buildings in the Netherlands with LoD1 and LoD2 representations.\nDerived from the Dutch BAG (Basisregistratie Adressen en Gebouwen) registry.\nTiled dataset with 8,941 tiles in quadtree structure (zoom levels 8-14).\nAvailable in CityJSON (.gz), GeoPackage (.gz), OBJ (.zip), and IFC (.zip) formats.\n"
 license: CC-BY-4.0
 keywords:
 - 3d city model
@@ -13,27 +13,27 @@ keywords:
 - BAG
 - 10M buildings
 - Kadaster
+- tiled
 providers:
 - name: Kadaster
   url: https://www.kadaster.nl/
   roles:
   - producer
   - licensor
-  description: Dutch Land Registry Office
-- name: TU Delft 3D Geoinformation
+  description: Dutch Land Registry Office - maintains the BAG registry (Basisregistratie Adressen en Gebouwen)
+- name: 3D Geoinformation Group (TU Delft)
   url: https://3d.bk.tudelft.nl/
   roles:
   - processor
   - host
-  description: 3D Geoinformation Research Group at TU Delft
-- name: 3D Geoinformation Group
-  url: https://www.3d.bk.tudelft.nl/
+  description: 3D Geoinformation Research Group at TU Delft - creates and hosts the 3D BAG dataset
+- name: 3DBAG.nl
+  url: https://www.3dbag.nl/
   roles:
-  - processor
-  description: Processed and hosts the 3D BAG data
+  - host
+  description: Official 3D BAG distribution platform (data.3dbag.nl)
 inputs:
-  - https://data.3dbag.nl/v20250903/tiles/9/280/556/9-280-556.city.json
-  - https://data.3dbag.nl/v20250903/tiles/8/264/544/8-264-544.city.json
+  from_file: plan/3dbag_urls.txt
 extent:
   spatial:
     bbox: []
@@ -42,14 +42,18 @@ extent:
     start: '2021-01-01T00:00:00Z'
 links:
 - rel: about
-  href: https://3d.bk.tudelft.nl/opendata/opencities/
+  href: https://www.3dbag.nl/
   type: text/html
-  title: TU Delft 3D Open Cities Portal
+  title: 3D BAG Official Website
+- rel: about
+  href: https://3d.bk.tudelft.nl/projects/3d-bag
+  type: text/html
+  title: 3D BAG Project at TU Delft
 - rel: cite-as
   href: https://doi.org/10.5281/zenodo.3568506
   type: text/html
-  title: Dataset DOI
-- rel: related
-  href: https://www.3dbag.nl/
+  title: Dataset DOI (Zenodo)
+- rel: license
+  href: https://creativecommons.org/licenses/by/4.0/
   type: text/html
-  title: 3D BAG Website
+  title: Creative Commons Attribution 4.0 International

@@ -1,6 +1,28 @@
+# Espoo 3D City Model - Data available via WFS service through Espoo download portal
+# Note: Data access may require registration or have usage restrictions
 id: espoo-3d
 title: Espoo 3D City Model (LoD1-LoD3)
-description: "3D city model of Espoo, Finland, at multiple Levels of Detail (LoD1 to LoD3).\nIncludes many CityGML classes: water body, terrain, land use, and more.\nBuildings are textured. Available in CityGML format.\n"
+description: |
+  3D city model of Espoo, Finland, at multiple Levels of Detail (LoD1 to LoD3).
+  The city information model covers all object types defined in the CityGML standard,
+  except for engineering structures (bridges and tunnels).
+
+  CityGML Classes Included:
+  - Buildings (textured)
+  - Water bodies
+  - Terrain/Relief
+  - Land use
+  - Vegetation
+  - Transportation
+
+  Data Access:
+  - WFS Service: Available through Espoo city download portal
+  - CityGML: Available through Espoo city download portal
+  - Note: Data access may require registration with the city
+
+  Technical Details:
+  - Format: CityGML 2.0
+  - CRS: EPSG:3067 (ETRS-TM35FIN)
 license: CC-BY-4.0
 keywords:
 - 3d city model
@@ -13,19 +35,20 @@ keywords:
 - CityGML
 - textured
 - multi-class
+- WFS
 providers:
 - name: City of Espoo
   url: https://www.espoo.fi/
   roles:
   - producer
   - licensor
-  description: Espoo municipality
-- name: TU Delft 3D Geoinformation
-  url: https://3d.bk.tudelft.nl/
+  description: City of Espoo - Geographic Information Services
+- name: Helsinki Region Infoshare
+  url: https://hri.fi/
   roles:
   - host
-  description: 3D Geoinformation Research Group at TU Delft
-  inputs: []
+  description: Helsinki metropolitan area open data portal
+inputs: []
 extent:
   spatial:
     bbox: []
@@ -34,6 +57,14 @@ extent:
     start: '2019-01-01T00:00:00Z'
     end: '2019-12-31T23:59:59Z'
 links:
+- rel: about
+  href: https://www.espoo.fi/
+  type: text/html
+  title: City of Espoo Official Website
+- rel: about
+  href: https://hri.fi/
+  type: text/html
+  title: Helsinki Region Infoshare Portal
 - rel: about
   href: https://3d.bk.tudelft.nl/opendata/opencities/
   type: text/html

@@ -1,7 +1,7 @@
 id: new-york-doitt-3d
 title: New York City 3D Building Models (LoD2) by DoITT
 description: "3D LoD2 building models of New York City by the Department of Information Technology & Telecommunications (DoITT).\nCreated from cadastre footprints combined with LiDAR data.\nBuildings are modeled with thematic surfaces in LoD2, though for most buildings the geometric shape is LoD1.\nAvailable in CityGML, ESRI Multipatch, and DGN formats.\n"
-license: CC-BY-4.0
+license: OTHER
 keywords:
 - 3d city model
 - buildings
@@ -12,31 +12,36 @@ keywords:
 - LiDAR
 - DoITT
 providers:
-- name: NYC DoITT
-  url: https://www1.nyc.gov/site/doitt/index.page
+- name: NYC Department of Information Technology & Telecommunications (DoITT)
+  url: https://www.nyc.gov/site/doitt/index.page
   roles:
   - producer
   - licensor
   description: NYC Department of Information Technology & Telecommunications
-- name: TU Delft 3D Geoinformation
-  url: https://3d.bk.tudelft.nl/
-  roles:
-  - host
-  description: 3D Geoinformation Research Group at TU Delft
-  inputs: []
+inputs:
+  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/DA13_3D_Buildings_Merged.city.json
+  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/DA13_3D_Buildings_Merged.gml
 extent:
   spatial:
     bbox: []
     crs: EPSG:2263
   temporal:
-    start: '2016-01-01T00:00:00Z'
-    end: '2016-12-31T23:59:59Z'
+    start: '2014-01-01T00:00:00Z'
+    end: '2014-12-31T23:59:59Z'
 links:
 - rel: about
   href: https://3d.bk.tudelft.nl/opendata/opencities/
   type: text/html
   title: TU Delft 3D Open Cities Portal
 - rel: source
-  href: https://www1.nyc.gov/site/doitt/initiatives/3d-building.page
+  href: https://www.nyc.gov/site/doitt/initiatives/3d-building.page
   type: text/html
-  title: NYC 3D Building Models Official Page
+  title: NYC 3D Building Models Official Page (DoITT)
+- rel: source
+  href: https://www.nyc.gov/site/planning/data-maps/open-data/dwn-nyc-3d-model-download.page
+  type: text/html
+  title: NYC 3D Model by Community District (DCP)
+- rel: license
+  href: https://www.nyc.gov/home/terms-of-use.page
+  type: text/html
+  title: NYC.gov Terms of Use

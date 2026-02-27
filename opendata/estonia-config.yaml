@@ -1,6 +1,9 @@
 id: estonia-3d
 title: Estonia 3D Building Models (LoD1+LoD2)
-description: "National 3D building dataset covering Estonia at LoD1 and LoD2.\nUpdated frequently. Available in Geodatabase, CityGML, and OBJ formats.\n"
+description: "National 3D building dataset covering all of Estonia at LoD1 and LoD2.
+  Data is produced from cadastral footprints and LiDAR. Available in Geodatabase,
+  CityGML, and OBJ formats. Updated frequently with new municipalities added regularly.
+  Free for commercial and non-commercial use with attribution.\n"
 license: CC-BY-4.0
 keywords:
 - 3d city model
@@ -11,19 +14,65 @@ keywords:
 - national
 - CityGML
 - frequently updated
+- LiDAR
 providers:
-- name: Estonian Land Board
+- name: Estonian Land and Spatial Development Board
   url: https://www.maaamet.ee/
   roles:
   - producer
   - licensor
-  description: Estonian mapping authority
-- name: TU Delft 3D Geoinformation
-  url: https://3d.bk.tudelft.nl/
-  roles:
   - host
-  description: 3D Geoinformation Research Group at TU Delft
-  inputs: []
+  description: Estonian national mapping and land cadastre authority (Maa- ja Ruumiamet)
+inputs:
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Anija_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Harku_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-J%C3%B5el%C3%A4htme_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Keila_linn-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Kiili_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Kose_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Kuusalu_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Loksa_linn-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-L%C3%A4%C3%A4ne-Harju_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Maardu_linn-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Raasiku_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Rae_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Saku_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Saue_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Tallinn-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Viimsi_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Hiiumaa_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Alutaguse_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-J%C3%B5hvi_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Kohtla-J%C3%A4rve_linn-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-L%C3%BCganuse_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Narva_linn-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Narva-J%C3%B5esuu_linn-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Sillam%C3%A4e_linn-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-J%C3%B5geva_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Mustvee_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-P%C3%B5ltsamaa_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-J%C3%A4rva_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Paide_linn-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-T%C3%BCri_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Haapsalu_linn-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-L%C3%A4%C3%A4ne-Nigula_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Vormsi_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Haljala_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Kadrina_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Rakvere_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Rakvere_linn-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Tapa_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Vinni_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Viru-Nigula_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-V%C3%A4ike-Maarja_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Kanepi_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-P%C3%B5lva_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-R%C3%A4pina_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-P%C3%A4rnu_linn-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-H%C3%A4%C3%A4demeeste_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-Kihnu_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-L%C3%A4%C3%A4neranna_vald-citygml.zip&page_id=837
+  - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=hooned_lod2&dl=1&f=hooned_lod2-P%C3%B5hja-P%C3%A4rnumaa_vald-citygml.zip&page_id=837
 extent:
   spatial:
     bbox: []
@@ -32,10 +81,14 @@ extent:
     start: '2021-01-01T00:00:00Z'
 links:
 - rel: about
-  href: https://3d.bk.tudelft.nl/opendata/opencities/
+  href: https://geoportaal.maaamet.ee/eng/spatial-data/geo3d/download-3d-data-p837.html
   type: text/html
-  title: TU Delft 3D Open Cities Portal
+  title: Estonian Land Board 3D Data Download Page
 - rel: source
   href: https://geoportaal.maaamet.ee/
   type: text/html
   title: Estonian Geoportal
+- rel: license
+  href: https://geoportaal.maaamet.ee/eng/spatial-data/geo3d/download-3d-data-p837.html
+  type: text/html
+  title: Terms of Use - Free use with attribution

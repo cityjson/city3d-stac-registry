@@ -1,7 +1,7 @@
 id: hamburg-3d
 title: Hamburg 3D City Model (LoD1 and LoD2)
-description: "3D city model of Hamburg, Germany, available at both LoD1 and LoD2.\nCreated from cadastre footprints combined with LiDAR data.\nAvailable in CityGML format.\n"
-license: CC-BY-3.0-DE
+description: "3D city model of Hamburg, Germany, available at both LoD1 and LoD2.\nCreated from cadastre footprints combined with LiDAR data.\nCovers the entire city area (~750 km²) with approximately 500,000 buildings.\nAvailable in CityGML format from the Hamburg Transparency Portal.\n"
+license: dl-de/by-2-0
 keywords:
 - 3d city model
 - buildings
@@ -19,12 +19,13 @@ providers:
   - producer
   - licensor
   description: Hamburg city government
-- name: TU Delft 3D Geoinformation
-  url: https://3d.bk.tudelft.nl/
+- name: Hamburg Transparency Portal
+  url: https://suche.transparenz.hamburg.de/
   roles:
   - host
-  description: 3D Geoinformation Research Group at TU Delft
-  inputs: []
+  description: Official open data portal of Hamburg
+inputs:
+  - http://archiv.transparenz.hamburg.de/hmbtgarchive/HMDK/lod2-de_hh_2016-11-22_21283_snap_1.GML
 extent:
   spatial:
     bbox: []
@@ -33,7 +34,15 @@ extent:
     start: '2017-01-01T00:00:00Z'
     end: '2017-12-31T23:59:59Z'
 links:
-- rel: about
+- rel: source
+  href: https://suche.transparenz.hamburg.de/dataset/3d-stadtmodell-lod2-de-hamburg2
+  type: text/html
+  title: Hamburg Transparency Portal Dataset Page
+- rel: alternate
   href: https://3d.bk.tudelft.nl/opendata/opencities/
   type: text/html
-  title: TU Delft 3D Open Cities Portal
+  title: TU Delft 3D Open Cities Portal (host)
+- rel: license
+  href: https://www.govdata.de/dl-de/by-2-0
+  type: text/html
+  title: Datenlizenz Deutschland - Namensnennung - Version 2.0
