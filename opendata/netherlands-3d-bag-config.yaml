@@ -33,7 +33,7 @@ providers:
   - host
   description: Official 3D BAG distribution platform (data.3dbag.nl)
 inputs:
-  from_file: plan/3dbag_urls.txt
+  from_file: data/3dbag_urls.txt
 extent:
   spatial:
     bbox: []

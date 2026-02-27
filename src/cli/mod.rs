@@ -13,7 +13,7 @@ use progress::{
     create_progress_bar, create_spinner, finish_spinner_err, finish_spinner_ok, print_banner,
     print_error, print_info, print_success, print_warning, Summary,
 };
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Parser)]
 #[command(name = "citystac")]
@@ -954,7 +954,14 @@ async fn process_collection_logic(
         config.inputs.clone()
     } else if let Some(config_inputs) = merged_config.inputs {
         // No CLI inputs, but config file has inputs
-        config_inputs
+        // Resolve the inputs (may need to read from file if using from_file)
+        let config_dir = config
+            .config
+            .as_ref()
+            .and_then(|p| p.parent())
+            .unwrap_or(Path::new("."));
+        let resolved_inputs = config_inputs.resolve(config_dir)?;
+        resolved_inputs
             .iter()
             .map(|s| PathBuf::from(s.as_str()))
             .collect()

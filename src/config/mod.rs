@@ -4,7 +4,79 @@ use crate::error::{CityJsonStacError, Result};
 use crate::stac::Provider;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+
+/// Input configuration that supports both inline lists and file references
+///
+/// Supports two formats:
+/// 1. Inline list: `inputs: [url1, url2, ...]`
+/// 2. File reference: `inputs: {from_file: path/to/urls.txt}`
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+pub enum InputsConfig {
+    /// Direct list of input paths/URLs
+    Inline(Vec<String>),
+    /// Reference to a file containing input paths/URLs (one per line)
+    FromFile { from_file: String },
+}
+
+impl InputsConfig {
+    /// Resolve inputs to a list of strings
+    ///
+    /// For `FromFile` variant, reads the file and returns its lines.
+    /// Relative paths in the file are resolved relative to the config file's directory.
+    pub fn resolve(&self, config_dir: &Path) -> Result<Vec<String>> {
+        match self {
+            InputsConfig::Inline(urls) => Ok(urls.clone()),
+            InputsConfig::FromFile { from_file } => {
+                let file_path = if Path::new(from_file).is_absolute() {
+                    PathBuf::from(from_file)
+                } else {
+                    config_dir.join(from_file)
+                };
+
+                let content = std::fs::read_to_string(&file_path).map_err(|e| {
+                    CityJsonStacError::Other(format!(
+                        "Failed to read inputs file '{}': {}",
+                        file_path.display(),
+                        e
+                    ))
+                })?;
+
+                let urls: Vec<String> = content
+                    .lines()
+                    .filter(|line| !line.trim().is_empty() && !line.trim().starts_with('#'))
+                    .map(|s| s.trim().to_string())
+                    .collect();
+
+                log::info!(
+                    "Loaded {} input URLs from {}",
+                    urls.len(),
+                    file_path.display()
+                );
+
+                Ok(urls)
+            }
+        }
+    }
+}
+
+impl Serialize for InputsConfig {
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self {
+            InputsConfig::Inline(urls) => urls.serialize(serializer),
+            InputsConfig::FromFile { from_file } => {
+                use serde::ser::SerializeMap;
+                let mut map = serializer.serialize_map(Some(1))?;
+                map.serialize_entry("from_file", from_file)?;
+                map.end()
+            }
+        }
+    }
+}
 
 /// Collection configuration from YAML file
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
@@ -46,8 +118,9 @@ pub struct CollectionConfigFile {
     pub links: Option<Vec<LinkConfig>>,
 
     /// Input paths (files, directories, or glob patterns)
+    /// Can be either an inline list or a reference to a file containing URLs
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub inputs: Option<Vec<String>>,
+    pub inputs: Option<InputsConfig>,
 
     /// Base URL for asset hrefs (e.g., "https://example.com/data/")
     /// If provided, asset hrefs will be absolute URLs
@@ -312,5 +385,68 @@ mod tests {
             merged.keywords,
             Some(vec!["tag1".to_string(), "tag2".to_string()])
         );
+    }
+
+    #[test]
+    fn test_inputs_config_inline() {
+        let inputs = InputsConfig::Inline(vec!["file1.json".to_string(), "file2.json".to_string()]);
+
+        let resolved = inputs.resolve(Path::new(".")).unwrap();
+        assert_eq!(resolved.len(), 2);
+        assert_eq!(resolved[0], "file1.json");
+        assert_eq!(resolved[1], "file2.json");
+    }
+
+    #[test]
+    fn test_inputs_config_from_file() {
+        use std::io::Write;
+
+        // Create a temp file with URLs
+        let mut temp_file = tempfile::NamedTempFile::new().unwrap();
+        writeln!(temp_file, "url1.json").unwrap();
+        writeln!(temp_file, "url2.json").unwrap();
+        writeln!(temp_file, "# comment").unwrap();
+        writeln!(temp_file, "").unwrap(); // empty line
+        writeln!(temp_file, "url3.json").unwrap();
+        temp_file.flush().unwrap();
+
+        let inputs = InputsConfig::FromFile {
+            from_file: temp_file.path().display().to_string(),
+        };
+
+        let resolved = inputs.resolve(Path::new(".")).unwrap();
+        assert_eq!(resolved.len(), 3);
+        assert_eq!(resolved[0], "url1.json");
+        assert_eq!(resolved[1], "url2.json");
+        assert_eq!(resolved[2], "url3.json");
+    }
+
+    #[test]
+    fn test_inputs_config_deserialize_inline() {
+        let yaml = r#"
+- file1.json
+- file2.json
+"#;
+        let inputs: InputsConfig = serde_yaml::from_str(yaml).unwrap();
+        match inputs {
+            InputsConfig::Inline(urls) => {
+                assert_eq!(urls.len(), 2);
+            }
+            InputsConfig::FromFile { .. } => panic!("Expected Inline"),
+        }
+    }
+
+    #[test]
+    fn test_inputs_config_deserialize_from_file() {
+        let yaml = r#"
+from_file: /path/to/urls.txt
+"#;
+        let inputs: InputsConfig = serde_yaml::from_str(yaml).unwrap();
+        match inputs {
+            InputsConfig::Inline(_) => panic!("Expected FromFile"),
+            InputsConfig::FromFile { from_file } => {
+                assert_eq!(from_file, "/path/to/urls.txt");
+            }
+        }
     }
 }

@@ -288,6 +288,8 @@ summaries:
 /// Test config with inputs field
 #[test]
 fn test_config_with_inputs() {
+    use city3d_stac::config::InputsConfig;
+
     let yaml_content = r#"
 id: test-with-inputs
 inputs:
@@ -306,9 +308,78 @@ inputs:
 
     assert!(config.inputs.is_some());
     let inputs = config.inputs.unwrap();
-    assert_eq!(inputs.len(), 4);
-    assert_eq!(inputs[0], "file1.json");
-    assert_eq!(inputs[1], "file2.json");
-    assert_eq!(inputs[2], "data/*.city.json");
-    assert_eq!(inputs[3], "/absolute/path/to/file.jsonl");
+    match inputs {
+        InputsConfig::Inline(urls) => {
+            assert_eq!(urls.len(), 4);
+            assert_eq!(urls[0], "file1.json");
+            assert_eq!(urls[1], "file2.json");
+            assert_eq!(urls[2], "data/*.city.json");
+            assert_eq!(urls[3], "/absolute/path/to/file.jsonl");
+        }
+        InputsConfig::FromFile { from_file } => {
+            panic!("Expected Inline inputs, got FromFile: {}", from_file);
+        }
+    }
+}
+
+/// Test config with from_file inputs
+#[test]
+fn test_config_with_inputs_from_file() {
+    use city3d_stac::config::InputsConfig;
+    use std::io::Write;
+
+    // Create a temp file with URLs
+    let mut urls_file = NamedTempFile::new().unwrap();
+    writeln!(urls_file, "https://example.com/file1.json").unwrap();
+    writeln!(urls_file, "https://example.com/file2.json").unwrap();
+    writeln!(urls_file, "# This is a comment").unwrap();
+    writeln!(urls_file, "").unwrap(); // Empty line
+    writeln!(urls_file, "https://example.com/file3.json").unwrap();
+    urls_file.flush().unwrap();
+
+    let urls_path = urls_file.path();
+
+    // Create config file that references the URLs file
+    let yaml_content = format!(
+        r#"
+id: test-from-file
+inputs:
+  from_file: {}
+"#,
+        urls_path.display()
+    );
+
+    let mut config_file = NamedTempFile::new().unwrap();
+    writeln!(config_file, "{}", yaml_content).unwrap();
+    config_file.flush().unwrap();
+
+    let config = city3d_stac::config::CollectionConfigFile::from_file(config_file.path())
+        .expect("Failed to parse config file");
+
+    assert!(config.inputs.is_some());
+    let inputs = config.inputs.unwrap();
+
+    match inputs {
+        InputsConfig::Inline(urls) => {
+            panic!(
+                "Expected FromFile inputs, got Inline with {} URLs",
+                urls.len()
+            );
+        }
+        InputsConfig::FromFile { ref from_file } => {
+            assert_eq!(from_file, &urls_path.display().to_string());
+        }
+    }
+
+    // Test resolve() method
+    let config_dir = config_file.path().parent().unwrap();
+    let resolved = inputs
+        .resolve(config_dir)
+        .expect("Failed to resolve inputs");
+
+    // Should have 3 URLs (comment and empty line filtered out)
+    assert_eq!(resolved.len(), 3);
+    assert_eq!(resolved[0], "https://example.com/file1.json");
+    assert_eq!(resolved[1], "https://example.com/file2.json");
+    assert_eq!(resolved[2], "https://example.com/file3.json");
 }
