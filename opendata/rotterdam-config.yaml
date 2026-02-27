@@ -1,0 +1,41 @@
+id: rotterdam-3d
+title: Rotterdam 3D City Model (LoD2)
+description: "3D LoD2 city model of Rotterdam, Netherlands, with textures.\nCreated from cadastre footprints combined with LiDAR data.\nAvailable in CityGML format.\n"
+license: CC-BY-4.0
+keywords:
+- 3d city model
+- buildings
+- LOD2
+- Netherlands
+- Rotterdam
+- CityGML
+- textured
+- LiDAR
+- port city
+providers:
+- name: City of Rotterdam
+  url: https://www.rotterdam.nl/
+  roles:
+  - producer
+  - licensor
+  description: Rotterdam municipality
+inputs:
+  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/3-20-DELFSHAVEN.city.json
+  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/3-20-DELFSHAVEN.xml
+  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/3-20-DELFSHAVEN.zip  # Textures
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:28992
+  temporal:
+    start: '2010-01-01T00:00:00Z'
+    end: '2010-12-31T23:59:59Z'
+links:
+- rel: about
+  href: https://3d.bk.tudelft.nl/opendata/opencities/
+  type: text/html
+  title: TU Delft 3D Open Cities Portal
+- rel: source
+  href: https://data.rotterdam.nl/
+  type: text/html
+  title: Rotterdam Open Data Portal

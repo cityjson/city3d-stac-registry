@@ -1,0 +1,74 @@
+# Helsinki 3D City Model - Data available via WFS API and direct download
+# WFS endpoint: https://kartta.hel.fi/3d/citydb-wfs/wfs
+# CityGML downloads: http://3d.hel.ninja/data/citygml/
+id: helsinki-3d
+title: Helsinki 3D City Model (LoD2)
+description: |
+  3D LoD2 city model of Helsinki, Finland, with textures.
+  Available in multiple formats: CityGML, 2D Shape, 3D Shape (PolygonZ),
+  3D Shape (Multipatch), KMZ, DXF, DWG, 3DS, and ESRI File Geodatabase.
+
+  Data Access:
+  - WFS API: https://kartta.hel.fi/3d/citydb-wfs/wfs (OGC WFS 2.0.0)
+  - CityGML Downloads: http://3d.hel.ninja/data/citygml/
+  - Interactive Viewer: https://kartta.hel.fi/3d/
+
+  Technical Details:
+  - Data Model: CityGML 2.0 with 3DCityDB schema
+  - CRS: ETRS-GK25 (EPSG:3879) plane coordinates, N2000 height system
+  - Database: PostgreSQL/PostGIS with 3DCityDB
+license: CC-BY-4.0
+keywords:
+- 3d city model
+- buildings
+- LOD2
+- Finland
+- Helsinki
+- CityGML
+- textured
+- capital
+- multi-format
+- WFS
+- 3DCityDB
+providers:
+- name: City of Helsinki
+  url: https://www.hel.fi/
+  roles:
+  - producer
+  - licensor
+  description: Helsinki city government - Urban Environment Division
+- name: Helsinki Region Infoshare
+  url: https://hri.fi/
+  roles:
+  - host
+  description: Helsinki metropolitan area open data portal
+inputs: []
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:3067
+  temporal:
+    start: '2016-01-01T00:00:00Z'
+    end: '2016-12-31T23:59:59Z'
+links:
+- rel: about
+  href: https://hri.fi/data/en_GB/dataset/helsingin-3d-kaupunkimalli
+  type: text/html
+  title: Helsinki 3D City Model on HRI Portal
+- rel: about
+  href: https://www.hel.fi/fi/paatoksenteko-ja-hallinto/tietoa-helsingista/kartat-ja-paikkatieto/helsinki-3d
+  type: text/html
+  title: City of Helsinki 3D City Model Information
+- rel: service
+  href: https://kartta.hel.fi/3d/citydb-wfs/wfs
+  type: application/xml
+  title: WFS API Endpoint
+  wfs:version: '2.0.0'
+- rel: enclosure
+  href: http://3d.hel.ninja/data/citygml/
+  type: text/html
+  title: CityGML Download Directory
+- rel: about
+  href: https://3d.bk.tudelft.nl/opendata/opencities/
+  type: text/html
+  title: TU Delft 3D Open Cities Portal

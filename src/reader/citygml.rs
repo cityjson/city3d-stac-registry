@@ -40,7 +40,10 @@ struct CityGMLMetadata {
 /// Uses streaming XML parser for memory efficiency with large files.
 /// Supports both CityGML 2.0 and 3.0 specifications.
 pub struct CityGMLReader {
+    /// Virtual path for display (e.g., original filename from URL)
     file_path: PathBuf,
+    /// Real path for reading (may be a temp file for remote downloads)
+    real_path: PathBuf,
     metadata: RwLock<Option<CityGMLMetadata>>,
     _temp_path: Option<tempfile::TempPath>,
 }
@@ -57,15 +60,46 @@ impl CityGMLReader {
 
         Ok(Self {
             file_path: file_path.to_path_buf(),
+            real_path: file_path.to_path_buf(),
             metadata: RwLock::new(None),
             _temp_path: None,
         })
     }
 
     /// Keep a temporary file alive for the lifetime of the reader
+    #[allow(dead_code)]
     pub fn with_temp_path(mut self, temp_path: tempfile::TempPath) -> Self {
         self._temp_path = Some(temp_path);
         self
+    }
+
+    /// Create a CityGML reader from a temporary file with a virtual path
+    ///
+    /// This is used for remote files where we want to display the original
+    /// filename (virtual_path) but read from a downloaded temp file (real_path).
+    ///
+    /// # Arguments
+    /// * `virtual_path` - The display path (e.g., original filename from URL)
+    /// * `real_path` - The actual file path to read from (temp file)
+    /// * `temp_path` - The TempPath to keep alive for the lifetime of the reader
+    pub fn from_temp_file(
+        virtual_path: &Path,
+        real_path: &Path,
+        temp_path: tempfile::TempPath,
+    ) -> Result<Self> {
+        if !real_path.exists() {
+            return Err(CityJsonStacError::IoError(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                format!("File not found: {}", real_path.display()),
+            )));
+        }
+
+        Ok(Self {
+            file_path: virtual_path.to_path_buf(),
+            real_path: real_path.to_path_buf(),
+            metadata: RwLock::new(None),
+            _temp_path: Some(temp_path),
+        })
     }
 
     /// Lazy load and cache metadata using interior mutability
@@ -96,7 +130,7 @@ impl CityGMLReader {
 
     /// Parse CityGML metadata using streaming XML parser
     fn parse_metadata(&self) -> Result<CityGMLMetadata> {
-        let file = File::open(&self.file_path)?;
+        let file = File::open(&self.real_path)?;
         let reader = BufReader::new(file);
 
         let mut parser = quick_xml::Reader::from_reader(reader);
@@ -342,7 +376,7 @@ impl CityGMLReader {
 
         // Parse CRS from srsName
         if let Some(srs_name) = root_srs_name {
-            metadata.crs = CRS::from_cityjson_url(&srs_name);
+            metadata.crs = CRS::from_citygml_srs_name(&srs_name);
         }
 
         // Convert attribute map to sorted vec

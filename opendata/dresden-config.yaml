@@ -1,0 +1,42 @@
+id: dresden-3d
+title: Dresden 3D City Model (LoD1/LoD2/LoD3)
+description: "3D city model of Dresden, Germany, available at multiple Levels of Detail: LoD1, LoD2, and LoD3.\nBuildings have partially textured models.\nAvailable in CityGML format.\n"
+license: dl-de/by-2-0
+keywords:
+- 3d city model
+- buildings
+- LOD1
+- LOD2
+- LOD3
+- Germany
+- Dresden
+- CityGML
+- multi-LOD
+providers:
+- name: Landeshauptstadt Dresden
+  url: https://www.dresden.de/
+  roles:
+  - producer
+  - licensor
+  description: Dresden municipality - Official city government
+inputs: []
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:25833
+  temporal:
+    start: '2009-01-01T00:00:00Z'
+    end: '2009-12-31T23:59:59Z'
+links:
+- rel: source
+  href: https://opendata.dresden.de/
+  type: text/html
+  title: Dresden Open Data Portal
+- rel: alternate
+  href: https://3d.bk.tudelft.nl/opendata/opencities/
+  type: text/html
+  title: TU Delft 3D Open Cities Portal (host)
+- rel: license
+  href: https://www.govdata.de/dl-de/by-2-0
+  type: text/html
+  title: Datenlizenz Deutschland - Namensnennung - Version 2.0

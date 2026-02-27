@@ -25,6 +25,10 @@ struct Cli {
     /// Verbose output
     #[arg(short, long, global = true)]
     verbose: bool,
+
+    /// Dry run: validate config and inputs without generating output
+    #[arg(long, global = true)]
+    dry_run: bool,
 }
 
 #[derive(Subcommand)]
@@ -253,6 +257,7 @@ pub async fn run() -> Result<()> {
                 collection,
                 base_url,
                 pretty,
+                cli.dry_run,
             )
             .await
         }
@@ -297,6 +302,7 @@ pub async fn run() -> Result<()> {
                 skip_errors,
                 base_url,
                 pretty,
+                dry_run: cli.dry_run,
             })
             .await
         }
@@ -323,6 +329,7 @@ pub async fn run() -> Result<()> {
             items_base_url,
             skip_errors,
             pretty,
+            dry_run: cli.dry_run,
         }),
 
         Commands::Catalog {
@@ -346,6 +353,7 @@ pub async fn run() -> Result<()> {
                 license,
                 base_url,
                 pretty,
+                dry_run: cli.dry_run,
             })
             .await
         }
@@ -362,7 +370,30 @@ async fn handle_item_command(
     collection: Option<String>,
     base_url: Option<String>,
     pretty: bool,
+    dry_run: bool,
 ) -> Result<()> {
+    // Dry-run mode: validate only
+    if dry_run {
+        use crate::validation;
+        use progress::{print_banner, print_error, print_success};
+
+        print_banner();
+
+        println!("\nRunning in dry-run mode...\n");
+
+        let result = validation::validate_item_input(&input).await?;
+
+        println!();
+
+        if result.is_valid() {
+            print_success("Dry run complete: All validations passed");
+            std::process::exit(0);
+        } else {
+            print_error("Dry run failed: Errors found");
+            std::process::exit(result.exit_code());
+        }
+    }
+
     // Parse input as either local file or remote URL
     let spinner = create_spinner(format!("Reading {input}…"));
     let source = InputSource::from_str_input(&input)?;
@@ -460,11 +491,138 @@ struct CatalogConfig {
     license: String,
     base_url: Option<String>,
     pretty: bool,
+    dry_run: bool,
+}
+
+/// Sanitize a string for use as a folder name by replacing invalid characters with underscores
+fn sanitize_folder_name(name: &str) -> String {
+    name.chars()
+        .map(|c| {
+            if c.is_alphanumeric() || c == '-' || c == '_' || c == '.' {
+                c
+            } else {
+                '_'
+            }
+        })
+        .collect()
+}
+
+/// Extract a folder name from a path string (filename stem)
+fn fallback_folder_name(path_str: &str) -> String {
+    std::path::Path::new(path_str)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("collection")
+        .to_string()
 }
 
 async fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
     use crate::config::{CatalogCliArgs, CatalogConfigFile};
     use crate::stac::StacCatalogBuilder;
+
+    // Dry-run mode: validate only
+    if config.dry_run {
+        use progress::{print_banner, print_error, print_success};
+
+        print_banner();
+
+        println!("\nRunning in dry-run mode...\n");
+
+        // Validate config file if provided
+        if let Some(config_path) = &config.config {
+            println!("  → Checking config file: {}", config_path.display());
+            match CatalogConfigFile::from_file(config_path) {
+                Ok(catalog_config) => {
+                    println!("  ✓ Config file syntax: valid");
+
+                    // Validate semantic content
+                    let mut semantic_errors = Vec::new();
+
+                    if catalog_config.id.is_none()
+                        || catalog_config
+                            .id
+                            .as_ref()
+                            .map(|s| s.trim())
+                            .unwrap_or_default()
+                            .is_empty()
+                    {
+                        semantic_errors.push("Missing required field: 'id'".to_string());
+                    }
+
+                    if catalog_config.title.is_none()
+                        || catalog_config
+                            .title
+                            .as_ref()
+                            .map(|s| s.trim())
+                            .unwrap_or_default()
+                            .is_empty()
+                    {
+                        semantic_errors.push("Missing recommended field: 'title'".to_string());
+                    }
+
+                    if catalog_config.description.is_none()
+                        || catalog_config
+                            .description
+                            .as_ref()
+                            .map(|s| s.trim())
+                            .unwrap_or_default()
+                            .is_empty()
+                    {
+                        semantic_errors
+                            .push("Missing recommended field: 'description'".to_string());
+                    }
+
+                    if !semantic_errors.is_empty() {
+                        for error in &semantic_errors {
+                            println!("  ✗ {}", error);
+                        }
+                        println!();
+                        print_error("Dry run failed: Config semantic errors");
+                        std::process::exit(1);
+                    }
+
+                    println!("  ✓ Config file content: valid");
+                }
+                Err(e) => {
+                    println!("  ✗ Config file syntax: {}", e);
+                    println!();
+                    print_error("Dry run failed: Config error");
+                    std::process::exit(1);
+                }
+            }
+        }
+
+        // Validate input directories/collections
+        let mut found = 0;
+        let mut missing = Vec::new();
+
+        for input in &config.inputs {
+            if input.exists() {
+                found += 1;
+            } else {
+                missing.push(input.clone());
+            }
+        }
+
+        if missing.is_empty() {
+            println!("  ✓ Input paths: {}/{} found", found, config.inputs.len());
+        } else {
+            println!("  ⚠ Input paths: {}/{} found", found, config.inputs.len());
+            for path in &missing {
+                println!("    ✗ {}", path.display());
+            }
+        }
+
+        println!();
+
+        if missing.is_empty() {
+            print_success("Dry run complete: All validations passed");
+            std::process::exit(0);
+        } else {
+            print_error("Dry run failed: Missing paths");
+            std::process::exit(2);
+        }
+    }
 
     // Load config file if provided
     let base_config = if let Some(config_path) = &config.config {
@@ -478,6 +636,7 @@ async fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
         id: config.id.clone(),
         title: config.title.clone(),
         description: config.description.clone(),
+        base_url: config.base_url.clone(),
     });
 
     // Create output directory
@@ -507,11 +666,37 @@ async fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
 
         for coll_path_str in config_collections {
             let path = base_dir.join(&coll_path_str);
-            let id_hint = std::path::Path::new(&coll_path_str)
-                .file_name()
-                .and_then(|n| n.to_str())
-                .unwrap_or("collection")
-                .to_string();
+
+            // Try to read the id from the config file for the folder name
+            let id_hint = if path.is_file() {
+                if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                    if matches!(ext, "toml" | "yaml" | "yml") {
+                        // Try to parse the config file to get its id
+                        match CollectionConfigFile::from_file(&path) {
+                            Ok(cfg) => {
+                                if let Some(id) = cfg.id {
+                                    // Sanitize the id for use as a folder name
+                                    sanitize_folder_name(&id)
+                                } else {
+                                    // No id in config, fall back to filename
+                                    fallback_folder_name(&coll_path_str)
+                                }
+                            }
+                            Err(_) => {
+                                // Failed to parse, fall back to filename
+                                fallback_folder_name(&coll_path_str)
+                            }
+                        }
+                    } else {
+                        fallback_folder_name(&coll_path_str)
+                    }
+                } else {
+                    fallback_folder_name(&coll_path_str)
+                }
+            } else {
+                // Directory: use directory name
+                fallback_folder_name(&coll_path_str)
+            };
             collection_targets.push((path, id_hint));
         }
     }
@@ -559,8 +744,9 @@ async fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
             recursive: true,
             max_depth: None,
             skip_errors: true,
-            base_url: config.base_url.clone().map(|u| format!("{u}{id_hint}/")),
+            base_url: None, // Will be set below based on input type
             pretty: config.pretty,
+            dry_run: config.dry_run,
         };
 
         // Check if input is a config file
@@ -573,15 +759,24 @@ async fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
                         input_dir.display()
                     ));
                     collection_config.config = Some(input_dir.clone());
+                    // Don't set base_url here - let the config file's base_url take precedence
+                    // via merge_with_cli in process_collection_logic
                 } else {
                     collection_config.inputs = vec![input_dir.clone()];
+                    // For non-config files, use catalog's base_url if available
+                    collection_config.base_url =
+                        config.base_url.clone().map(|u| format!("{u}{id_hint}/"));
                 }
             } else {
                 collection_config.inputs = vec![input_dir.clone()];
+                collection_config.base_url =
+                    config.base_url.clone().map(|u| format!("{u}{id_hint}/"));
             }
         } else {
             // Directory
             collection_config.inputs = vec![input_dir.clone()];
+            // For directories, use catalog's base_url if available
+            collection_config.base_url = config.base_url.clone().map(|u| format!("{u}{id_hint}/"));
         }
 
         catalog_pb.set_message(format!("Processing: {id_hint}"));
@@ -684,9 +879,46 @@ struct CollectionConfig {
     skip_errors: bool,
     base_url: Option<String>,
     pretty: bool,
+    #[allow(dead_code)]
+    dry_run: bool,
 }
 
 async fn handle_collection_command(config: CollectionConfig) -> Result<()> {
+    // Dry-run mode: validate only
+    if config.dry_run {
+        use crate::validation;
+        use progress::{print_banner, print_error, print_success};
+
+        print_banner();
+
+        println!("\nRunning in dry-run mode...\n");
+
+        // Determine final inputs
+        let base_config = if let Some(config_path) = &config.config {
+            // Load config to validate it
+            let _base_config = CollectionConfigFile::from_file(config_path)?;
+            validation::validate_collection_config(
+                &Some(config_path.clone()),
+                &config.inputs,
+                &config.base_url,
+            )
+            .await?
+        } else {
+            validation::validate_collection_config(&None, &config.inputs, &config.base_url).await?
+        };
+
+        println!();
+
+        // Print final status
+        if base_config.is_valid() {
+            print_success("Dry run complete: All validations passed");
+            std::process::exit(0);
+        } else {
+            print_error("Dry run failed: Errors found");
+            std::process::exit(base_config.exit_code());
+        }
+    }
+
     match process_collection_logic(config).await {
         Ok(_) => Ok(()),
         Err(e) => Err(e),
@@ -713,6 +945,7 @@ async fn process_collection_logic(
         } else {
             None
         },
+        base_url: config.base_url.clone(),
     });
 
     // Determine final inputs: CLI inputs take precedence, fall back to config inputs
@@ -1006,9 +1239,65 @@ struct UpdateCollectionConfig {
     items_base_url: Option<String>,
     skip_errors: bool,
     pretty: bool,
+    #[allow(dead_code)]
+    dry_run: bool,
 }
 
 fn handle_update_collection_command(config: UpdateCollectionConfig) -> Result<()> {
+    // Dry-run mode: validate only
+    if config.dry_run {
+        use progress::{print_banner, print_error, print_success};
+
+        print_banner();
+
+        println!("\nRunning in dry-run mode...\n");
+
+        let mut all_valid = true;
+        let mut found = 0;
+
+        for item_path in &config.items {
+            let fname = item_path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("unknown");
+
+            if item_path.exists() {
+                // Try to parse as STAC item
+                match std::fs::read_to_string(item_path) {
+                    Ok(content) => match serde_json::from_str::<crate::stac::StacItem>(&content) {
+                        Ok(_) => {
+                            println!("  ✓ {}", fname);
+                            found += 1;
+                        }
+                        Err(e) => {
+                            println!("  ✗ {}: Invalid STAC item - {}", fname, e);
+                            all_valid = false;
+                        }
+                    },
+                    Err(e) => {
+                        println!("  ✗ {}: Cannot read - {}", fname, e);
+                        all_valid = false;
+                    }
+                }
+            } else {
+                println!("  ✗ {}: File not found", fname);
+                all_valid = false;
+            }
+        }
+
+        println!("\n  STAC items: {}/{} valid", found, config.items.len());
+
+        println!();
+
+        if all_valid {
+            print_success("Dry run complete: All validations passed");
+            std::process::exit(0);
+        } else {
+            print_error("Dry run failed: Errors found");
+            std::process::exit(1);
+        }
+    }
+
     // Load config file if provided
     let base_config = if let Some(config_path) = &config.config {
         CollectionConfigFile::from_file(config_path)?
@@ -1026,6 +1315,7 @@ fn handle_update_collection_command(config: UpdateCollectionConfig) -> Result<()
         } else {
             None
         },
+        base_url: None, // update-collection uses items_base_url for item links, not asset hrefs
     });
 
     log::info!(
@@ -1196,4 +1486,71 @@ fn handle_update_collection_command(config: UpdateCollectionConfig) -> Result<()
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_sanitize_folder_name_basic() {
+        // Valid characters should pass through
+        assert_eq!(sanitize_folder_name("my-collection"), "my-collection");
+        assert_eq!(sanitize_folder_name("my_collection"), "my_collection");
+        assert_eq!(sanitize_folder_name("my.collection"), "my.collection");
+        assert_eq!(sanitize_folder_name("collection123"), "collection123");
+    }
+
+    #[test]
+    fn test_sanitize_folder_name_spaces() {
+        // Spaces should be replaced with underscores
+        assert_eq!(sanitize_folder_name("my collection"), "my_collection");
+        assert_eq!(sanitize_folder_name("my  collection"), "my__collection");
+    }
+
+    #[test]
+    fn test_sanitize_folder_name_special_chars() {
+        // Special characters should be replaced with underscores
+        assert_eq!(sanitize_folder_name("my@collection"), "my_collection");
+        assert_eq!(sanitize_folder_name("my/collection"), "my_collection");
+        assert_eq!(sanitize_folder_name("my\\collection"), "my_collection");
+        assert_eq!(sanitize_folder_name("my:collection"), "my_collection");
+        assert_eq!(sanitize_folder_name("my*collection"), "my_collection");
+        assert_eq!(sanitize_folder_name("my?collection"), "my_collection");
+        assert_eq!(sanitize_folder_name("my<collection"), "my_collection");
+        assert_eq!(sanitize_folder_name("my>collection"), "my_collection");
+        assert_eq!(sanitize_folder_name("my|collection"), "my_collection");
+    }
+
+    #[test]
+    fn test_sanitize_folder_name_unicode() {
+        // Unicode letters are alphanumeric and pass through (good for internationalization)
+        assert_eq!(sanitize_folder_name("münchen"), "münchen");
+        assert_eq!(sanitize_folder_name("東京"), "東京");
+        // But special unicode symbols are replaced
+        assert_eq!(sanitize_folder_name("hello★world"), "hello_world");
+    }
+
+    #[test]
+    fn test_sanitize_folder_name_mixed() {
+        // Mixed valid and invalid characters
+        assert_eq!(
+            sanitize_folder_name("my awesome collection!"),
+            "my_awesome_collection_"
+        );
+        assert_eq!(
+            sanitize_folder_name("collection (v1.0)"),
+            "collection__v1.0_"
+        );
+    }
+
+    #[test]
+    fn test_fallback_folder_name() {
+        assert_eq!(fallback_folder_name("path/to/config.yaml"), "config.yaml");
+        assert_eq!(
+            fallback_folder_name("./opendata/vienna-config.yaml"),
+            "vienna-config.yaml"
+        );
+        assert_eq!(fallback_folder_name("config"), "config");
+    }
 }

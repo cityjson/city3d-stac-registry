@@ -1,0 +1,53 @@
+id: lod3-railway-demo
+title: LoD3 Railway Demo (CityGML Demo Dataset)
+description: |
+  CityGML demonstration dataset featuring multiple city object types in LoD3.
+  Includes buildings, railway infrastructure, terrain, vegetation (with Geometry Templates),
+  water bodies, and tunnels. This dataset showcases advanced CityGML features including
+  Geometry Templates for repeated vegetation objects.
+
+  Originally created as a CityGML demo, converted to CityJSON v2.0 by TU Delft.
+license: CC-BY-4.0
+keywords:
+- 3d city model
+- CityGML demo
+- LOD3
+- railway
+- tunnels
+- vegetation
+- terrain
+- water
+- geometry templates
+- multi-feature
+providers:
+- name: TU Delft 3D Geoinformation
+  url: https://3d.bk.tudelft.nl/
+  roles:
+  - producer
+  - processor
+  - host
+  description: 3D Geoinformation Research Group at TU Delft - Created demo dataset and CityJSON conversion
+inputs:
+  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/LoD3_Railway.city.json
+  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/LoD3_Railway.gml
+  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/LoD3_Railway.zip  # Textures
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:28992
+  temporal:
+    start: '2018-01-01T00:00:00Z'
+    end: '2018-12-31T23:59:59Z'
+links:
+- rel: about
+  href: https://www.cityjson.org/datasets/
+  type: text/html
+  title: CityJSON Datasets Page
+- rel: about
+  href: https://3d.bk.tudelft.nl/opendata/opencities/
+  type: text/html
+  title: TU Delft 3D Open Cities Portal
+- rel: related
+  href: https://www.cityjson.org/specs/#geometry-templates
+  type: text/html
+  title: CityJSON Geometry Templates Documentation

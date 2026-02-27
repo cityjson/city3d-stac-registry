@@ -1,0 +1,40 @@
+id: vienna-3d
+title: Vienna 3D City Model (LoD2)
+description: "3D LoD2 city model of Vienna, Austria.\nCreated from building footprints of the area multipurpose map combined with\na surface model to semi-automatically derive prototypical roof forms.\nAvailable in CityGML format.\n"
+license: CC-BY-3.0-AT
+keywords:
+- 3d city model
+- buildings
+- LOD2
+- Austria
+- Vienna
+- Wien
+- CityGML
+- capital
+- automated generation
+providers:
+- name: City of Vienna
+  url: https://www.wien.gv.at/
+  roles:
+  - producer
+  - licensor
+  description: Vienna city government
+inputs:
+  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/Vienna_102081.city.json
+  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/Vienna_102081.gml
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:31255
+  temporal:
+    start: '2018-01-01T00:00:00Z'
+    end: '2018-12-31T23:59:59Z'
+links:
+- rel: about
+  href: https://3d.bk.tudelft.nl/opendata/opencities/
+  type: text/html
+  title: TU Delft 3D Open Cities Portal
+- rel: source
+  href: https://data.wien.gv.at/
+  type: text/html
+  title: Vienna Open Data Portal

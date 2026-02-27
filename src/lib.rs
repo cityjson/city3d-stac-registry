@@ -34,5 +34,6 @@ pub mod reader;
 pub mod remote;
 pub mod stac;
 pub mod traversal;
+pub mod validation;
 
 pub use error::{CityJsonStacError, Result};

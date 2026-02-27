@@ -1,0 +1,52 @@
+id: luxembourg-3d
+title: Luxembourg 3D Building Models (LoD2.3 Pilot)
+description: |
+  3D LoD2.3 building models from Luxembourg pilot project (2017).
+  Buildings are modeled based on photogrammetric exploitation of 2017 aerial images.
+  LoD2.3 includes detailed roof shapes (without dormers, chimneys, antennas, solar panels)
+  with vertical projection to ground.
+
+  Coverage: 3 km² total (2 km² in Diekirch, 1 km² in Bastendorf).
+  This is a pilot project - not nationwide coverage.
+  Available in CityGML format.
+license: CC0-1.0
+keywords:
+- 3d city model
+- buildings
+- LOD2.3
+- Luxembourg
+- CityGML
+- pilot project
+- Diekirch
+- Bastendorf
+- photogrammetric
+providers:
+- name: Administration du Cadastre et de la Topographie (ACT)
+  url: https://act.public.lu/
+  roles:
+  - producer
+  - licensor
+  - host
+  description: Luxembourg Cadastre and Topography Administration, the official government body responsible for cadastral and geospatial data
+inputs:
+  - https://download.data.public.lu/resources/batiments-3d-lod-2-3-level-of-detail-2-3/20190603-110058/lod2-batiments-diekirch-bastendorf.gml
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:2169
+  temporal:
+    start: '2017-01-01T00:00:00Z'
+    end: '2017-12-31T23:59:59Z'
+links:
+- rel: about
+  href: https://data.public.lu/en/datasets/batiments-3d-2017-lod-2-3-level-of-detail-2-3/
+  type: text/html
+  title: Luxembourg Open Data - Bâtiments 3D 2017 (LoD2.3)
+- rel: source
+  href: https://data.public.lu/
+  type: text/html
+  title: Luxembourg Open Data Portal
+- rel: source
+  href: https://geoportail.lu/
+  type: text/html
+  title: Luxembourg Geoportal

@@ -1,0 +1,50 @@
+# NOTE: Data requires interactive portal access - JavaScript-heavy frontend
+# Portal: https://data.grandlyon.com/jeux-de-donnees/maquettes-3d-texturees-a-commune-arrondissement-2009-2012-2015-metropole-lyon/info
+id: lyon-3d
+title: Lyon 3D City Model (LoD2)
+description: "3D LoD2 city model of Lyon, France, covering multiple years: 2009, 2012, and 2015.\nIncludes terrain (TIN) and water features with textures. Buildings are textured.\nEach commune/arrondissement has data for one or more years.\nAvailable in CityGML format with custom Lyon profile.\n"
+license: ETALAB-2.0
+keywords:
+- 3d city model
+- buildings
+- LOD2
+- France
+- Lyon
+- CityGML
+- textured
+- terrain
+- water
+- multi-temporal
+- Grand Lyon
+providers:
+- name: Métropole de Lyon
+  url: https://www.grandlyon.com/
+  roles:
+  - producer
+  - licensor
+  description: Lyon metropolitan government (Grand Lyon), the public authority responsible for the 3D city model production and licensing
+inputs: []
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:3946
+  temporal:
+    start: '2009-01-01T00:00:00Z'
+    end: '2015-12-31T23:59:59Z'
+links:
+- rel: source
+  href: https://data.grandlyon.com/jeux-de-donnees/maquettes-3d-texturees-a-commune-arrondissement-2009-2012-2015-metropole-lyon/info
+  type: text/html
+  title: Grand Lyon 3D Textured Models (2009-2012-2015)
+- rel: about
+  href: https://data.grandlyon.com/
+  type: text/html
+  title: Grand Lyon Open Data Portal
+- rel: license
+  href: https://www.etalab.gouv.fr/licence-ouverte-open-licence/
+  type: text/html
+  title: ETALAB Open Licence 2.0 (Licence Ouverte)
+- rel: citation
+  href: https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0242010
+  type: text/html
+  title: PLOS One - Learning from urban form to predict building heights (2020)

@@ -48,6 +48,11 @@ pub struct CollectionConfigFile {
     /// Input paths (files, directories, or glob patterns)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub inputs: Option<Vec<String>>,
+
+    /// Base URL for asset hrefs (e.g., "https://example.com/data/")
+    /// If provided, asset hrefs will be absolute URLs
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub base_url: Option<String>,
 }
 
 /// Provider configuration from YAML
@@ -167,6 +172,7 @@ impl CollectionConfigFile {
             summaries: self.summaries,
             links: self.links,
             inputs: self.inputs,
+            base_url: cli_args.base_url.clone().or(self.base_url),
         }
     }
 }
@@ -189,6 +195,10 @@ pub struct CatalogConfigFile {
     /// Collections to include in the catalog
     #[serde(skip_serializing_if = "Option::is_none")]
     pub collections: Option<Vec<String>>,
+
+    /// Base URL for catalog child links (applied to all collections)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub base_url: Option<String>,
 }
 
 impl CatalogConfigFile {
@@ -213,6 +223,7 @@ impl CatalogConfigFile {
             title: cli_args.title.clone().or(self.title),
             description: cli_args.description.clone().or(self.description),
             collections: self.collections,
+            base_url: cli_args.base_url.clone().or(self.base_url),
         }
     }
 }
@@ -224,6 +235,7 @@ pub struct CollectionCliArgs {
     pub title: Option<String>,
     pub description: Option<String>,
     pub license: Option<String>,
+    pub base_url: Option<String>,
 }
 
 /// CLI arguments that can override catalog config
@@ -232,6 +244,7 @@ pub struct CatalogCliArgs {
     pub id: Option<String>,
     pub title: Option<String>,
     pub description: Option<String>,
+    pub base_url: Option<String>,
 }
 
 #[cfg(test)]
@@ -271,6 +284,7 @@ mod tests {
             summaries: None,
             links: None,
             inputs: None,
+            base_url: Some("https://file.example.com/".to_string()),
         };
 
         let cli_args = CollectionCliArgs {
@@ -278,14 +292,19 @@ mod tests {
             title: Some("CLI Title".to_string()),
             description: None,
             license: Some("MIT".to_string()),
+            base_url: Some("https://cli.example.com/".to_string()),
         };
 
         let merged = file_config.merge_with_cli(&cli_args);
 
-        // CLI args should override for id, title, license
+        // CLI args should override for id, title, license, base_url
         assert_eq!(merged.id, Some("from-cli".to_string()));
         assert_eq!(merged.title, Some("CLI Title".to_string()));
         assert_eq!(merged.license, Some("MIT".to_string()));
+        assert_eq!(
+            merged.base_url,
+            Some("https://cli.example.com/".to_string())
+        );
 
         // File config should be preserved for description, keywords
         assert_eq!(merged.description, Some("File Description".to_string()));
