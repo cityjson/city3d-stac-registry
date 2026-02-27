@@ -23,3 +23,4 @@ test_output/
 
 stac_catalog/
 venv/
+.venv/

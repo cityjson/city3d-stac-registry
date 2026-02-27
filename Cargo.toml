@@ -30,6 +30,7 @@ walkdir = "2.4"
 glob = "0.3"
 regex = "1"
 zip = "2"  # ZIP archive support for bundled CityJSON/CityGML files
+flate2 = "1.0"  # GZIP decompression support
 
 # Date/time handling
 chrono = { version = "0.4", features = ["serde"] }

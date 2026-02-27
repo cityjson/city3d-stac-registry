@@ -14,6 +14,7 @@ use tempfile::{TempDir, TempPath};
 
 /// Reader for ZIP archives containing CityJSON/CityGML files
 pub struct ZipReader {
+    /// Virtual path for display (e.g., original filename from URL)
     file_path: PathBuf,
     temp_dir: TempDir,
     /// Keep temp file alive for remote ZIPs (downloaded files)
@@ -78,15 +79,24 @@ impl ZipReader {
     ///
     /// This constructor takes ownership of a TempPath to keep the downloaded
     /// ZIP file alive for the lifetime of the reader.
-    pub fn from_temp_file(file_path: PathBuf, temp_path: TempPath) -> Result<Self> {
+    ///
+    /// # Arguments
+    /// * `virtual_path` - The display path (e.g., original filename from URL)
+    /// * `real_path` - The actual file path to read from (temp file)
+    /// * `temp_path` - The TempPath to keep alive for the lifetime of the reader
+    pub fn from_temp_file(
+        virtual_path: &Path,
+        real_path: &Path,
+        temp_path: TempPath,
+    ) -> Result<Self> {
         // Create temporary directory for extraction
         let temp_dir = TempDir::new()?;
 
         // Extract ZIP to temp directory
-        Self::extract_zip(&file_path, temp_dir.path())?;
+        Self::extract_zip(real_path, temp_dir.path())?;
 
         let mut reader = Self {
-            file_path,
+            file_path: virtual_path.to_path_buf(),
             temp_dir,
             _temp_file: Some(temp_path),
             inner_readers: Vec::new(),

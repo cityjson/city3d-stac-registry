@@ -113,6 +113,7 @@ keywords:
         title: Some("CLI Title".to_string()),
         description: None, // Keep from file
         license: Some("MIT".to_string()),
+        base_url: None,
     };
 
     let merged = file_config.merge_with_cli(&cli_args);

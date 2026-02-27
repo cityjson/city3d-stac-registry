@@ -494,6 +494,28 @@ struct CatalogConfig {
     dry_run: bool,
 }
 
+/// Sanitize a string for use as a folder name by replacing invalid characters with underscores
+fn sanitize_folder_name(name: &str) -> String {
+    name.chars()
+        .map(|c| {
+            if c.is_alphanumeric() || c == '-' || c == '_' || c == '.' {
+                c
+            } else {
+                '_'
+            }
+        })
+        .collect()
+}
+
+/// Extract a folder name from a path string (filename stem)
+fn fallback_folder_name(path_str: &str) -> String {
+    std::path::Path::new(path_str)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("collection")
+        .to_string()
+}
+
 async fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
     use crate::config::{CatalogCliArgs, CatalogConfigFile};
     use crate::stac::StacCatalogBuilder;
@@ -614,6 +636,7 @@ async fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
         id: config.id.clone(),
         title: config.title.clone(),
         description: config.description.clone(),
+        base_url: config.base_url.clone(),
     });
 
     // Create output directory
@@ -643,11 +666,37 @@ async fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
 
         for coll_path_str in config_collections {
             let path = base_dir.join(&coll_path_str);
-            let id_hint = std::path::Path::new(&coll_path_str)
-                .file_name()
-                .and_then(|n| n.to_str())
-                .unwrap_or("collection")
-                .to_string();
+
+            // Try to read the id from the config file for the folder name
+            let id_hint = if path.is_file() {
+                if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                    if matches!(ext, "toml" | "yaml" | "yml") {
+                        // Try to parse the config file to get its id
+                        match CollectionConfigFile::from_file(&path) {
+                            Ok(cfg) => {
+                                if let Some(id) = cfg.id {
+                                    // Sanitize the id for use as a folder name
+                                    sanitize_folder_name(&id)
+                                } else {
+                                    // No id in config, fall back to filename
+                                    fallback_folder_name(&coll_path_str)
+                                }
+                            }
+                            Err(_) => {
+                                // Failed to parse, fall back to filename
+                                fallback_folder_name(&coll_path_str)
+                            }
+                        }
+                    } else {
+                        fallback_folder_name(&coll_path_str)
+                    }
+                } else {
+                    fallback_folder_name(&coll_path_str)
+                }
+            } else {
+                // Directory: use directory name
+                fallback_folder_name(&coll_path_str)
+            };
             collection_targets.push((path, id_hint));
         }
     }
@@ -695,7 +744,7 @@ async fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
             recursive: true,
             max_depth: None,
             skip_errors: true,
-            base_url: config.base_url.clone().map(|u| format!("{u}{id_hint}/")),
+            base_url: None, // Will be set below based on input type
             pretty: config.pretty,
             dry_run: config.dry_run,
         };
@@ -710,15 +759,24 @@ async fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
                         input_dir.display()
                     ));
                     collection_config.config = Some(input_dir.clone());
+                    // Don't set base_url here - let the config file's base_url take precedence
+                    // via merge_with_cli in process_collection_logic
                 } else {
                     collection_config.inputs = vec![input_dir.clone()];
+                    // For non-config files, use catalog's base_url if available
+                    collection_config.base_url =
+                        config.base_url.clone().map(|u| format!("{u}{id_hint}/"));
                 }
             } else {
                 collection_config.inputs = vec![input_dir.clone()];
+                collection_config.base_url =
+                    config.base_url.clone().map(|u| format!("{u}{id_hint}/"));
             }
         } else {
             // Directory
             collection_config.inputs = vec![input_dir.clone()];
+            // For directories, use catalog's base_url if available
+            collection_config.base_url = config.base_url.clone().map(|u| format!("{u}{id_hint}/"));
         }
 
         catalog_pb.set_message(format!("Processing: {id_hint}"));
@@ -887,6 +945,7 @@ async fn process_collection_logic(
         } else {
             None
         },
+        base_url: config.base_url.clone(),
     });
 
     // Determine final inputs: CLI inputs take precedence, fall back to config inputs
@@ -1256,6 +1315,7 @@ fn handle_update_collection_command(config: UpdateCollectionConfig) -> Result<()
         } else {
             None
         },
+        base_url: None, // update-collection uses items_base_url for item links, not asset hrefs
     });
 
     log::info!(
@@ -1426,4 +1486,71 @@ fn handle_update_collection_command(config: UpdateCollectionConfig) -> Result<()
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_sanitize_folder_name_basic() {
+        // Valid characters should pass through
+        assert_eq!(sanitize_folder_name("my-collection"), "my-collection");
+        assert_eq!(sanitize_folder_name("my_collection"), "my_collection");
+        assert_eq!(sanitize_folder_name("my.collection"), "my.collection");
+        assert_eq!(sanitize_folder_name("collection123"), "collection123");
+    }
+
+    #[test]
+    fn test_sanitize_folder_name_spaces() {
+        // Spaces should be replaced with underscores
+        assert_eq!(sanitize_folder_name("my collection"), "my_collection");
+        assert_eq!(sanitize_folder_name("my  collection"), "my__collection");
+    }
+
+    #[test]
+    fn test_sanitize_folder_name_special_chars() {
+        // Special characters should be replaced with underscores
+        assert_eq!(sanitize_folder_name("my@collection"), "my_collection");
+        assert_eq!(sanitize_folder_name("my/collection"), "my_collection");
+        assert_eq!(sanitize_folder_name("my\\collection"), "my_collection");
+        assert_eq!(sanitize_folder_name("my:collection"), "my_collection");
+        assert_eq!(sanitize_folder_name("my*collection"), "my_collection");
+        assert_eq!(sanitize_folder_name("my?collection"), "my_collection");
+        assert_eq!(sanitize_folder_name("my<collection"), "my_collection");
+        assert_eq!(sanitize_folder_name("my>collection"), "my_collection");
+        assert_eq!(sanitize_folder_name("my|collection"), "my_collection");
+    }
+
+    #[test]
+    fn test_sanitize_folder_name_unicode() {
+        // Unicode letters are alphanumeric and pass through (good for internationalization)
+        assert_eq!(sanitize_folder_name("münchen"), "münchen");
+        assert_eq!(sanitize_folder_name("東京"), "東京");
+        // But special unicode symbols are replaced
+        assert_eq!(sanitize_folder_name("hello★world"), "hello_world");
+    }
+
+    #[test]
+    fn test_sanitize_folder_name_mixed() {
+        // Mixed valid and invalid characters
+        assert_eq!(
+            sanitize_folder_name("my awesome collection!"),
+            "my_awesome_collection_"
+        );
+        assert_eq!(
+            sanitize_folder_name("collection (v1.0)"),
+            "collection__v1.0_"
+        );
+    }
+
+    #[test]
+    fn test_fallback_folder_name() {
+        assert_eq!(fallback_folder_name("path/to/config.yaml"), "config.yaml");
+        assert_eq!(
+            fallback_folder_name("./opendata/vienna-config.yaml"),
+            "vienna-config.yaml"
+        );
+        assert_eq!(fallback_folder_name("config"), "config");
+    }
 }
