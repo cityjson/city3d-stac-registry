@@ -31,7 +31,7 @@ providers:
   - processor
   description: Official PLATEAU API for 3D city model data access and discovery
 inputs:
-  from_file: opendata/data/japan-plateau-urls.txt
+  from_file: data/japan-plateau-urls.txt
 extent:
   spatial:
     bbox: []

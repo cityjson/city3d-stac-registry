@@ -56,7 +56,7 @@ providers:
 # To process: Load all URLs from opendata/data/american-cities-urls.txt
 # or construct URLs programmatically using the S3 pattern above.
 inputs:
-  from_file: opendata/data/american-cities-urls.txt
+  from_file: data/american-cities-urls.txt
 extent:
   spatial:
     bbox: []
