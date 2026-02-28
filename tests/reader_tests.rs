@@ -38,13 +38,13 @@ mod cityjson_reader_tests {
 
         let bbox = reader.bbox().expect("Failed to get bbox");
 
-        // Check the geographicalExtent from delft.city.json
-        assert!((bbox.xmin - 74782.684).abs() < 0.001);
-        assert!((bbox.ymin - 419982.871).abs() < 0.001);
-        assert!((bbox.zmin - (-14.93)).abs() < 0.001);
-        assert!((bbox.xmax - 100067.947).abs() < 0.001);
-        assert!((bbox.ymax - 450171.531).abs() < 0.001);
-        assert!((bbox.zmax - 207.042).abs() < 0.001);
+        // Check the geographicalExtent from delft.city.json metadata
+        assert!((bbox.xmin - 84927.558).abs() < 0.001);
+        assert!((bbox.ymin - 446572.456).abs() < 0.001);
+        assert!((bbox.zmin - (-3.704)).abs() < 0.001);
+        assert!((bbox.xmax - 85527.591).abs() < 0.001);
+        assert!((bbox.ymax - 447122.446).abs() < 0.001);
+        assert!((bbox.zmax - 52.147).abs() < 0.001);
     }
 
     #[test]
@@ -64,8 +64,8 @@ mod cityjson_reader_tests {
         let count = reader
             .city_object_count()
             .expect("Failed to get city object count");
-        // delft.city.json has empty CityObjects
-        assert_eq!(count, 0);
+        // delft.city.json has 319 CityObjects
+        assert_eq!(count, 319);
     }
 
     #[test]
@@ -98,8 +98,12 @@ mod cityjson_reader_tests {
         let reader = CityJSONReader::new(&path).expect("Failed to create reader");
 
         let lods = reader.lods().expect("Failed to get LODs");
-        // delft.city.json has no geometry, so no LODs
-        assert!(lods.is_empty());
+        // delft.city.json has LODs: 0, 1.2, 1.3, 2.2
+        assert!(!lods.is_empty());
+        assert!(lods.contains(&"0".to_string()));
+        assert!(lods.contains(&"1.2".to_string()));
+        assert!(lods.contains(&"1.3".to_string()));
+        assert!(lods.contains(&"2.2".to_string()));
     }
 
     #[test]
@@ -108,8 +112,10 @@ mod cityjson_reader_tests {
         let reader = CityJSONReader::new(&path).expect("Failed to create reader");
 
         let types = reader.city_object_types().expect("Failed to get types");
-        // delft.city.json has no CityObjects
-        assert!(types.is_empty());
+        // delft.city.json has Building and BuildingPart types
+        assert!(!types.is_empty());
+        assert!(types.contains(&"Building".to_string()));
+        assert!(types.contains(&"BuildingPart".to_string()));
     }
 
     #[test]
@@ -118,8 +124,8 @@ mod cityjson_reader_tests {
         let reader = CityJSONReader::new(&path).expect("Failed to create reader");
 
         let attrs = reader.attributes().expect("Failed to get attributes");
-        // delft.city.json has no attributes
-        assert!(attrs.is_empty());
+        // delft.city.json has many attributes
+        assert!(!attrs.is_empty());
     }
 
     #[test]

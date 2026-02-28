@@ -271,6 +271,176 @@ impl StacCollectionBuilder {
         Ok(self)
     }
 
+    /// Aggregate 3D City Models metadata from ItemMetadata
+    ///
+    /// This is the streaming-friendly version that accepts pre-extracted ItemMetadata
+    /// instead of full StacItem objects, reducing memory usage during collection generation.
+    ///
+    /// Uses the STAC 3D City Models Extension (city3d: prefix)
+    /// https://cityjson.github.io/stac-city3d/v0.1.0/schema.json
+    pub fn aggregate_from_metadata(
+        mut self,
+        items_metadata: &[crate::stac::ItemMetadata],
+    ) -> Result<Self> {
+        use crate::stac::CityObjectsCount;
+
+        // Collect all versions
+        let versions: HashSet<String> = items_metadata
+            .iter()
+            .filter_map(|m| m.city3d_version.clone())
+            .collect();
+        if !versions.is_empty() {
+            let version_vec: Vec<String> = versions.into_iter().collect();
+            self.summaries.insert(
+                "city3d:version".to_string(),
+                serde_json::to_value(version_vec)?,
+            );
+        }
+
+        // Aggregate LODs (preserve as Values to handle both string and numeric)
+        let mut unique_lods: HashSet<String> = HashSet::new();
+        let mut lod_values: Vec<Value> = Vec::new();
+
+        for metadata in items_metadata {
+            if let Some(lods) = &metadata.city3d_lods {
+                for lod in lods {
+                    if !unique_lods.contains(lod) {
+                        unique_lods.insert(lod.clone());
+                        // Try to parse as number, fall back to string
+                        if let Ok(num) = lod.parse::<f64>() {
+                            if let Some(n) = serde_json::Number::from_f64(num) {
+                                lod_values.push(Value::Number(n));
+                            } else {
+                                lod_values.push(Value::String(lod.clone()));
+                            }
+                        } else {
+                            lod_values.push(Value::String(lod.clone()));
+                        }
+                    }
+                }
+            }
+        }
+
+        if !lod_values.is_empty() {
+            self.summaries
+                .insert("city3d:lods".to_string(), Value::Array(lod_values));
+        }
+
+        // Aggregate city object types
+        let all_types: HashSet<String> = items_metadata
+            .iter()
+            .filter_map(|m| m.city3d_co_types.clone())
+            .flatten()
+            .collect();
+        if !all_types.is_empty() {
+            let mut types: Vec<String> = all_types.into_iter().collect();
+            types.sort();
+            self.summaries
+                .insert("city3d:co_types".to_string(), serde_json::to_value(types)?);
+        }
+
+        // City object count statistics
+        let counts: Vec<u64> = items_metadata
+            .iter()
+            .filter_map(|m| match &m.city3d_city_objects {
+                Some(CityObjectsCount::Integer(n)) => Some(*n),
+                Some(CityObjectsCount::Statistics { total, .. }) => Some(*total),
+                None => None,
+            })
+            .collect();
+
+        if !counts.is_empty() {
+            let min = *counts.iter().min().unwrap();
+            let max = *counts.iter().max().unwrap();
+            let total: u64 = counts.iter().sum();
+
+            let stats = serde_json::json!({
+                "min": min,
+                "max": max,
+                "total": total
+            });
+
+            self.summaries
+                .insert("city3d:city_objects".to_string(), stats);
+        }
+
+        // Aggregate semantic surfaces presence
+        let has_semantic_surfaces = items_metadata
+            .iter()
+            .any(|m| m.city3d_semantic_surfaces == Some(true));
+        if has_semantic_surfaces {
+            self.summaries.insert(
+                "city3d:semantic_surfaces".to_string(),
+                serde_json::to_value(true)?,
+            );
+        }
+
+        // Aggregate textures presence
+        let has_textures = items_metadata
+            .iter()
+            .any(|m| m.city3d_textures == Some(true));
+        if has_textures {
+            self.summaries
+                .insert("city3d:textures".to_string(), serde_json::to_value(true)?);
+        }
+
+        // Aggregate materials presence
+        let has_materials = items_metadata
+            .iter()
+            .any(|m| m.city3d_materials == Some(true));
+        if has_materials {
+            self.summaries
+                .insert("city3d:materials".to_string(), serde_json::to_value(true)?);
+        }
+
+        // Merge spatial extents from item bboxes
+        let bboxes: Vec<&Vec<f64>> = items_metadata
+            .iter()
+            .filter_map(|m| m.bbox.as_ref())
+            .collect();
+
+        if !bboxes.is_empty() {
+            // Parse bbox into BBox3D (handle both 4-element and 6-element bboxes)
+            let parsed_bboxes: Vec<BBox3D> = bboxes
+                .iter()
+                .filter_map(|bbox| {
+                    if bbox.len() == 6 {
+                        Some(BBox3D::new(
+                            (*bbox)[0],
+                            (*bbox)[1],
+                            (*bbox)[2],
+                            (*bbox)[3],
+                            (*bbox)[4],
+                            (*bbox)[5],
+                        ))
+                    } else if bbox.len() >= 4 {
+                        // 2D bbox - use 0.0 for z values
+                        Some(BBox3D::new(
+                            (*bbox)[0],
+                            (*bbox)[1],
+                            0.0,
+                            (*bbox)[2],
+                            (*bbox)[3],
+                            0.0,
+                        ))
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+
+            if !parsed_bboxes.is_empty() {
+                let mut merged = parsed_bboxes[0].clone();
+                for bbox in &parsed_bboxes[1..] {
+                    merged = merged.merge(bbox);
+                }
+                self = self.spatial_extent(merged);
+            }
+        }
+
+        Ok(self)
+    }
+
     /// Aggregate 3D City Models metadata from pre-parsed STAC items
     ///
     /// This method is useful when STAC items were generated separately (e.g., for assets

@@ -463,8 +463,9 @@ mod e2e_zip_file_tests {
         assert_eq!(version, "2.0");
 
         let bbox = reader.bbox().expect("Failed to get bbox");
-        assert_eq!(bbox.xmin, 74782.684);
-        assert_eq!(bbox.xmax, 100067.947);
+        // These values match the metadata.geographicalExtent in delft.city.json
+        assert_eq!(bbox.xmin, 84927.558);
+        assert_eq!(bbox.xmax, 85527.591);
 
         let crs = reader.crs().expect("Failed to get CRS");
         assert_eq!(crs.to_stac_epsg(), Some(7415));

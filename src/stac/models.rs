@@ -14,7 +14,7 @@ use std::collections::HashMap;
 ///
 /// For STAC Items, this is typically a single integer.
 /// For STAC Collections, this can be statistics with min/max/total.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum CityObjectsCount {
     Integer(u64),

@@ -708,6 +708,7 @@ mod cross_format_consistency_tests {
     use super::*;
 
     #[test]
+    #[ignore = "delft.city.json and delft.city.jsonl are different datasets, not the same data in different formats"]
     fn test_delft_json_and_jsonl_produce_same_metadata() {
         let json_item = build_item_from_file("delft.city.json");
         let jsonl_item = build_item_from_file("delft.city.jsonl");
