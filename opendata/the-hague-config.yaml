@@ -1,6 +1,6 @@
 id: the-hague-3d
 title: The Hague 3D City Model (LoD2 with Terrain)
-description: "3D LoD2 city model of The Hague, Netherlands, including terrain.\nA 2010 model is also available which contains terrain intersection curves.\nAvailable in CityGML and DGN formats.\n"
+description: "3D LoD2 city model of The Hague (Den Haag), Netherlands, including terrain.\nThis is a sample dataset from the 2018 city model.\nA 2010 model is also available which contains terrain intersection curves.\nOriginal data available in CityGML and DGN formats from the city open data portal.\n"
 license: CC-BY-4.0
 keywords:
 - 3d city model
@@ -18,7 +18,18 @@ providers:
   roles:
   - producer
   - licensor
-  description: The Hague city government
+  description: City of The Hague (Gemeente Den Haag) - Official municipality government
+- name: Kadaster
+  url: https://www.kadaster.nl/
+  roles:
+  - processor
+  description: Netherlands Cadastre, Land Registry and Mapping Agency - provided BAG building footprints and AHN elevation data
+- name: TU Delft 3D Geoinformation
+  url: https://3d.bk.tudelft.nl/
+  roles:
+  - processor
+  - host
+  description: 3D Geoinformation Research Group at TU Delft - converted to CityJSON and hosts sample dataset
 inputs:
   - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/DenHaag_01.city.json
   - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/DenHaag_01.xml
@@ -38,3 +49,11 @@ links:
   href: https://data.denhaag.nl/
   type: text/html
   title: The Hague Open Data Portal
+- rel: root
+  href: https://www.pdok.nl/
+  type: text/html
+  title: PDOK - Dutch National Geospatial Data Portal
+- rel: alternate
+  href: https://3dbag.nl/
+  type: text/html
+  title: 3D BAG - Netherlands National 3D Building Model

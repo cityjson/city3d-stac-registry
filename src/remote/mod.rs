@@ -114,8 +114,17 @@ pub async fn download_from_url(url: &str) -> Result<bytes::Bytes> {
     let url_to_use = converted_url.as_deref().unwrap_or(url);
 
     let parsed_url = Url::parse(url_to_use).map_err(CityJsonStacError::UrlError)?;
-    let (store, path) = object_store::parse_url_opts(&parsed_url, Vec::<(String, String)>::new())
-        .map_err(|e| {
+
+    // If the URL was converted from HTTPS to s3://, the bucket is being accessed
+    // publicly via HTTPS, so we skip AWS credential signing to avoid timeouts
+    // when no credentials are available (e.g., EC2 IMDS requests on local machines).
+    let options: Vec<(String, String)> = if converted_url.is_some() {
+        vec![("aws_skip_signature".to_string(), "true".to_string())]
+    } else {
+        Vec::new()
+    };
+
+    let (store, path) = object_store::parse_url_opts(&parsed_url, options).map_err(|e| {
         CityJsonStacError::StorageError(format!("Failed to create object store: {e}"))
     })?;
 
