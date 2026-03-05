@@ -47,8 +47,8 @@ impl CityJSONReader {
     /// This is used for remote files that have been downloaded as strings.
     /// The `virtual_path` is used for display purposes (e.g., the original filename).
     pub fn from_content(content: &str, virtual_path: PathBuf) -> Result<Self> {
-        let cj = cjseq::CityJSON::from_str(content)
-            .map_err(|e| CityJsonStacError::Other(format!("Failed to parse CityJSON: {e}")))?;
+        let cj = super::parse_cityjson(content)
+            .map_err(CityJsonStacError::Other)?;
         Ok(Self {
             file_path: virtual_path,
             data: RwLock::new(Some(cj)),
@@ -77,8 +77,8 @@ impl CityJSONReader {
         // Double-check after acquiring write lock
         if data.is_none() {
             let content = fs::read_to_string(&self.file_path)?;
-            let cj = cjseq::CityJSON::from_str(&content)
-                .map_err(|e| CityJsonStacError::Other(format!("Failed to parse CityJSON: {e}")))?;
+            let cj = super::parse_cityjson(&content)
+                .map_err(CityJsonStacError::Other)?;
             *data = Some(cj);
         }
         Ok(())
@@ -771,6 +771,24 @@ mod tests {
     fn test_cityjson_from_content_invalid() {
         let result = CityJSONReader::from_content("not valid json", PathBuf::from("bad.json"));
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_cityjson_integer_version_normalized() {
+        // Some real-world CityJSON files have "version": 1 (integer) instead of "1.0" (string)
+        let content = r#"{
+            "type": "CityJSON",
+            "version": 1,
+            "transform": {
+                "scale": [0.01, 0.01, 0.01],
+                "translate": [100000, 200000, 0]
+            },
+            "CityObjects": {},
+            "vertices": []
+        }"#;
+        let reader = CityJSONReader::from_content(content, PathBuf::from("test.json")).unwrap();
+        let version = reader.version().unwrap();
+        assert_eq!(version, "1.0");
     }
 
     #[test]

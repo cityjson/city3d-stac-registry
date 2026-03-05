@@ -24,6 +24,7 @@ use crate::remote::{download_from_url, extract_extension_from_url, is_remote_url
 use serde_json::Value;
 use std::path::{Path, PathBuf};
 
+
 /// Input source for CityJSON data
 ///
 /// Can be either a local file path or a remote URL
@@ -234,6 +235,68 @@ pub fn get_reader(path: &Path) -> Result<Box<dyn CityModelMetadataReader>> {
         _ => Err(CityJsonStacError::InvalidCityJson(format!(
             "Unsupported file extension: {extension}",
         ))),
+    }
+}
+
+
+/// Parse a CityJSON string, normalizing non-conforming fields.
+///
+/// Some older CityJSON files have fields with incorrect types:
+/// - `"version"` as integer (e.g. `1`) instead of string (`"1.0"`)
+/// - `"lod"` in geometry objects as integer (e.g. `1`) instead of string (`"1"`)
+///
+/// This function normalizes such fields before passing to the strict `cjseq` parser.
+pub(crate) fn parse_cityjson(content: &str) -> std::result::Result<::cjseq::CityJSON, String> {
+    // First try direct parsing (fast path for conforming files)
+    if let Ok(cj) = ::cjseq::CityJSON::from_str(content) {
+        return Ok(cj);
+    }
+
+    // If that fails, try to fix known issues
+    let mut value: Value =
+        serde_json::from_str(content).map_err(|e| format!("Failed to parse JSON: {e}"))?;
+
+    if let Some(obj) = value.as_object_mut() {
+        // Normalize version: integer -> string (e.g. 1 -> "1.0", 2 -> "2.0")
+        if let Some(version) = obj.get_mut("version") {
+            if let Some(n) = version.as_i64() {
+                *version = Value::String(format!("{n}.0"));
+            } else if let Some(n) = version.as_f64() {
+                *version = Value::String(format!("{n}"));
+            }
+        }
+
+        // Normalize lod fields in geometry objects: integer -> string
+        if let Some(city_objects) = obj.get_mut("CityObjects") {
+            normalize_lod_fields(city_objects);
+        }
+    }
+
+    let fixed_content =
+        serde_json::to_string(&value).map_err(|e| format!("Failed to serialize JSON: {e}"))?;
+    ::cjseq::CityJSON::from_str(&fixed_content)
+        .map_err(|e| format!("Failed to parse CityJSON after normalization: {e}"))
+}
+
+/// Recursively normalize `"lod"` fields from integer/float to string
+/// within CityObjects geometry arrays.
+fn normalize_lod_fields(city_objects: &mut Value) {
+    if let Some(objects) = city_objects.as_object_mut() {
+        for co in objects.values_mut() {
+            if let Some(geometry) = co.get_mut("geometry") {
+                if let Some(geom_array) = geometry.as_array_mut() {
+                    for geom in geom_array {
+                        if let Some(lod) = geom.get_mut("lod") {
+                            if let Some(n) = lod.as_i64() {
+                                *lod = Value::String(n.to_string());
+                            } else if let Some(n) = lod.as_f64() {
+                                *lod = Value::String(format!("{n}"));
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
