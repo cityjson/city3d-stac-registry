@@ -47,8 +47,7 @@ impl CityJSONReader {
     /// This is used for remote files that have been downloaded as strings.
     /// The `virtual_path` is used for display purposes (e.g., the original filename).
     pub fn from_content(content: &str, virtual_path: PathBuf) -> Result<Self> {
-        let cj = super::parse_cityjson(content)
-            .map_err(CityJsonStacError::Other)?;
+        let cj = super::parse_cityjson(content).map_err(CityJsonStacError::Other)?;
         Ok(Self {
             file_path: virtual_path,
             data: RwLock::new(Some(cj)),
@@ -77,8 +76,7 @@ impl CityJSONReader {
         // Double-check after acquiring write lock
         if data.is_none() {
             let content = fs::read_to_string(&self.file_path)?;
-            let cj = super::parse_cityjson(&content)
-                .map_err(CityJsonStacError::Other)?;
+            let cj = super::parse_cityjson(&content).map_err(CityJsonStacError::Other)?;
             *data = Some(cj);
         }
         Ok(())

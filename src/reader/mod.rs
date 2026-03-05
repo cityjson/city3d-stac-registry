@@ -24,7 +24,6 @@ use crate::remote::{download_from_url, extract_extension_from_url, is_remote_url
 use serde_json::Value;
 use std::path::{Path, PathBuf};
 
-
 /// Input source for CityJSON data
 ///
 /// Can be either a local file path or a remote URL
@@ -237,7 +236,6 @@ pub fn get_reader(path: &Path) -> Result<Box<dyn CityModelMetadataReader>> {
         ))),
     }
 }
-
 
 /// Parse a CityJSON string, normalizing non-conforming fields.
 ///

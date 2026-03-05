@@ -71,8 +71,8 @@ impl CityJSONSeqReader {
             .next()
             .ok_or_else(|| CityJsonStacError::Other("Empty CityJSONSeq file".to_string()))??;
 
-        let metadata_header = super::parse_cityjson(&first_line)
-            .map_err(CityJsonStacError::Other)?;
+        let metadata_header =
+            super::parse_cityjson(&first_line).map_err(CityJsonStacError::Other)?;
 
         // Stream through remaining lines to aggregate statistics
         let mut aggregated = AggregatedMetadata {
@@ -117,8 +117,8 @@ impl CityJSONSeqReader {
             .next()
             .ok_or_else(|| CityJsonStacError::Other("Empty CityJSONSeq content".to_string()))?;
 
-        let metadata_header = super::parse_cityjson(first_line)
-            .map_err(CityJsonStacError::Other)?;
+        let metadata_header =
+            super::parse_cityjson(first_line).map_err(CityJsonStacError::Other)?;
 
         // Stream through remaining lines to aggregate statistics
         let mut aggregated = AggregatedMetadata {
@@ -185,8 +185,8 @@ impl CityJSONSeqReader {
             .map_err(|e| CityJsonStacError::Other(format!("Failed to read stream: {e}")))?
             .ok_or_else(|| CityJsonStacError::Other("Empty CityJSONSeq stream".to_string()))?;
 
-        let metadata_header = super::parse_cityjson(&first_line)
-            .map_err(CityJsonStacError::Other)?;
+        let metadata_header =
+            super::parse_cityjson(&first_line).map_err(CityJsonStacError::Other)?;
 
         // Stream through remaining lines to aggregate statistics
         let mut aggregated = AggregatedMetadata {
