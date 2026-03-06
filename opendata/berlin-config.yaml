@@ -19,7 +19,7 @@ providers:
   - licensor
   description: Berlin Senate department responsible for 3D city model
 inputs:
-- https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/w6.7z?ts=1752674586
+	- https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/w6.7z?ts=1752674586
 - https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/w5.7z?ts=1752674586
 - https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/w4.7z?ts=1752674586
 - https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/w3.7z?ts=1752674586
