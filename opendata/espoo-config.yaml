@@ -48,7 +48,8 @@ providers:
   roles:
   - host
   description: Helsinki metropolitan area open data portal
-inputs: []
+inputs:
+  - https://kartat.espoo.fi/teklaogcweb/wfs.ashx?BBOX=25489800,6674500,25490000,6674620&version=1.1.0&request=Getfeature&typename=bldg:building_lod2&maxfeatures=10 # NOTE: URL is for a Web Feature Service (WFS) API
 extent:
   spatial:
     bbox: []
