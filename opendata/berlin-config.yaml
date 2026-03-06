@@ -20,17 +20,17 @@ providers:
   description: Berlin Senate department responsible for 3D city model
 inputs:
 	- https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/w6.7z?ts=1752674586
-- https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/w5.7z?ts=1752674586
-- https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/w4.7z?ts=1752674586
-- https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/w3.7z?ts=1752674586
-- https://datenbox.stadt-berlin.de/filr/public-link/file-download/8a8ae3ac86896e4501872ca432fe47ea/24255/-1313951178633272689/w2.7z
-- https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/w1.7z?ts=1752674586
-- https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/o1.7z?ts=1752674586
-- https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/o2.7z?ts=1752674586
-- https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/o3.7z?ts=1752674586
-- https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/o4.7z?ts=1752674586
-- https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/o5.7z?ts=1752674586
-- https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/o6.7z?ts=1752674586
+	- https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/w5.7z?ts=1752674586
+	- https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/w4.7z?ts=1752674586
+	- https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/w3.7z?ts=1752674586
+	- https://datenbox.stadt-berlin.de/filr/public-link/file-download/8a8ae3ac86896e4501872ca432fe47ea/24255/-1313951178633272689/w2.7z
+	- https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/w1.7z?ts=1752674586
+	- https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/o1.7z?ts=1752674586
+	- https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/o2.7z?ts=1752674586
+	- https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/o3.7z?ts=1752674586
+	- https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/o4.7z?ts=1752674586
+	- https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/o5.7z?ts=1752674586
+	- https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/digitale-innenstadt/3d-modell/o6.7z?ts=1752674586
 extent:
   spatial:
     bbox: []
