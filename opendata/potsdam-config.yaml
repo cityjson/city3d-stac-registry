@@ -10,6 +10,7 @@ keywords:
 - Germany
 - Potsdam
 - CityGML
+- GeoJSON
 providers:
 - name: Landeshauptstadt Potsdam
   url: https://www.potsdam.de/
@@ -17,7 +18,8 @@ providers:
   - producer
   - licensor
   description: Potsdam municipality - Official city government
-inputs: []
+inputs:
+  - https://opendata.potsdam.de/api/explore/v2.1/catalog/datasets/3d-gebaudemodell-lod2-citygml/exports/geojson?lang=en&timezone=Europe%2FBerlin&epsg=25833
 extent:
   spatial:
     bbox: []
@@ -26,6 +28,10 @@ extent:
     start: '2018-01-01T00:00:00Z'
     end: '2018-12-31T23:59:59Z'
 links:
+- rel: source 
+  href: https://opendata.potsdam.de/pages/home/
+  type: text/html
+  title: Open Data Portal of the state capital Potsdam
 - rel: source
   href: https://geoportal.brandenburg.de/
   type: text/html
