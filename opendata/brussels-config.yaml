@@ -24,19 +24,24 @@ providers:
   roles:
   - licensor
   description: Brussels-Capital Region government, the public authority for the region
-inputs: []
+inputs:
+  - https://datastore.brussels/web/data/dataset/e9ec2aa4-cffd-11ee-bccc-00090ffe0001#access
 extent:
   spatial:
     bbox: []
     crs: EPSG:31370
   temporal:
-    start: '2014-01-01T00:00:00Z'
-    end: '2014-12-31T23:59:59Z'
+    start: '2024-02-01T00:00:00Z'
+    end: '2025-12-06T23:59:59Z'
 links:
 - rel: about
   href: https://3d.bk.tudelft.nl/opendata/opencities/
   type: text/html
   title: TU Delft 3D Open Cities Portal
+- rel: source
+  href: https://datastore.brussels/web/
+  type: text/html
+  title: Brussels Open Data Portal
 - rel: source
   href: https://data.bruxelles.be/
   type: text/html
