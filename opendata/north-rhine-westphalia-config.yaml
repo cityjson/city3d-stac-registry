@@ -34,8 +34,12 @@ extent:
     crs: EPSG:25832
   temporal:
     start: '2016-01-01T00:00:00Z'
-    end: '2016-12-31T23:59:59Z'
+    end: '2019-12-31T23:59:59Z'
 links:
+- rel: alternate # update
+  href: https://www.gis.nrw.de/geobasis/LOD2/SceneServer
+  type: application/json
+  title: 3D Scene Server API for web visualization
 - rel: source
   href: https://open.nrw/
   type: text/html
