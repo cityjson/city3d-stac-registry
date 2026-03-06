@@ -42,7 +42,8 @@ providers:
   roles:
   - host
   description: Helsinki metropolitan area open data portal
-inputs: []
+inputs:
+  - https://kartta.hel.fi/3d/citydb-wfs/wfs # NOTE: URL is for a Web Feature Service (WFS) API
 extent:
   spatial:
     bbox: []
@@ -55,6 +56,10 @@ links:
   href: https://hri.fi/data/en_GB/dataset/helsingin-3d-kaupunkimalli
   type: text/html
   title: Helsinki 3D City Model on HRI Portal
+- rel: alternate # update
+  href: https://kartta.hel.fi/3d/
+  type: text/html
+  title: Helsinki 3D Web Viewer and Download Portal
 - rel: about
   href: https://www.hel.fi/fi/paatoksenteko-ja-hallinto/tietoa-helsingista/kartat-ja-paikkatieto/helsinki-3d
   type: text/html
