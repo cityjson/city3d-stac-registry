@@ -19,7 +19,8 @@ providers:
   - producer
   - licensor
   description: Dresden municipality - Official city government
-inputs: []
+inputs:
+  - https://opendata.dresden.de/informationsportal/?open=1&result=835C43A573DB420FAB87D2C448B1368D#app/mainpage
 extent:
   spatial:
     bbox: []
