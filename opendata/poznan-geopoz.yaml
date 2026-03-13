@@ -1,0 +1,38 @@
+id: geopoz-poznan
+title: 3D City Model of Poznań
+description: |
+  Digital 3D model for the city of Poznań, Poland. The dataset includes 3D buildings,
+  a dedicated layer for bridges, viaducts, and overpasses, as well as digital terrain
+  models and additional descriptive attributes. The data is continually updated and
+  accessible via an interactive web interface supporting Polish, English, and German.
+license: proprietary # NOTE: Specific open data license not explicitly stated in snippet
+keywords:
+  - 3d city model
+  - poland
+  - poznan
+  - buildings
+  - bridges
+  - terrain
+  - citygml
+  - cityjson
+providers:
+  - name: Zarząd Geodezji i Katastru Miejskiego GEOPOZ
+    url: https://sipgeoportal.geopoz.poznan.pl/
+    roles:
+      - producer
+      - host
+    description: Surveying and Cadastral Board of the City of Poznań
+    # NOTE: Contact via michal.michalowski@geopoz.poznan.pl
+inputs:
+  - https://sip.poznan.pl/model3d/ # NOTE: Area-based downloads.
+extent:
+  spatial:
+    bbox: [] # NOTE: Bounding box to be auto-detected or configured manually according to the user-defined area-of-interest
+    crs: EPSG:2177
+links:
+  - rel: source
+    href: https://sipgeoportal.geopoz.poznan.pl/
+    type: text/html
+    title: SIP Geoportal Poznań
+# Additional Notes:
+# - Access: The GeoData Portal allows users to interactively select the area to download via the web interface. There is no specific file to download.

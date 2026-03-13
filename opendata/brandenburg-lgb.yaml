@@ -1,0 +1,51 @@
+id: lgb-brandenburg
+title: 3D Building Model Brandenburg
+description: |
+  Three-dimensional building models (LoD2) for the state of Brandenburg, Germany.
+  Building footprints correspond exactly to the real estate cadastre. Heights
+  and roof shapes are derived from automatic stereo aerial image analysis,
+  LIDAR data, or manual modeling. The building ground height is set to the
+  lowest point of the Digital Terrain Model (DTM) within the footprint.
+license: dl-de/by-2-0
+keywords:
+  - 3d city model
+  - germany
+  - brandenburg
+  - buildings
+  - citygml
+  - lod2
+providers:
+  - name: Landesvermessung und Geobasisinformation Brandenburg (LGB)
+    url: https://geobasis-bb.de
+    roles:
+      - producer
+      - licensor
+    description: State operation for surveying and basic geographic information
+    # NOTE: Contact via kundenservice@geobasis-bb.de
+inputs:
+  - https://data.geobasis-bb.de/geobasis/daten/3d_gebaeude/lod2_gml/ # NOTE: Direct HTTP directory listing.
+extent:
+  spatial:
+    bbox: [11.23, 51.36, 14.81, 53.56] # [west, south, east, north]
+    crs: EPSG:25833
+links:
+  - rel: about
+    href: https://geobasis-bb.de/lgb/de/geodaten/3d-produkte/3d-gebaeudemodelle/#
+    type: text/html
+    title: LGB Brandenburg - 3D Building Models Product Page
+  - rel: source
+    href: https://geobroker.geobasis-bb.de/gbss.php?MODE=GetProductInformation&PRODUCTID=0414a37a-a749-4ee6-9f59-a41226919c58
+    type: text/html
+    title: GEOBROKER Brandenburg - Product Information and Download
+  - rel: about
+    href: https://geoportal.brandenburg.de/detailansichtdienst/render?view=gdibb&url=https%3A%2F%2Fgeoportal.brandenburg.de%2Fgs-json%2Fxml%3Ffileid%3D0414a37a-a749-4ee6-9f59-a41226919c58
+    type: text/html
+    title: Geoportal Brandenburg - Metadata View
+  - rel: alternate
+    href: https://bb-viewer.geobasis-bb.de/?projection=EPSG:25833&center=449940,5736609&zoom=6&bglayer=1&layers=38
+    type: text/html
+    title: Brandenburg Web Viewer (BB-Viewer)
+  - rel: alternate
+    href: https://data.geobasis-bb.de/geobasis/daten/3d_gebaeude/lod1_gml/
+    type: text/html
+    title: LGB Brandenburg - LoD1 CityGML Data Directory (Alternative Level of Detail)

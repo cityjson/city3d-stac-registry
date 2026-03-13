@@ -1,0 +1,51 @@
+id: lgl-baden-wurttemberg-2024
+title: 3D Building model (LoD2) Baden-Württemberg
+description: |
+  Digital 3D building models (LoD2) for the state of Baden-Württemberg, Germany.
+  The models are automatically generated in CityGML format by deriving roof shapes
+  from a combination of foundational datasets: ALKIS building floor plans, Digital
+  Terrain Models (DGM), 3D point clouds from Airborne Laser Scanning (ALS) acquired
+  between 2000 and 2018, and 3D point clouds derived from high-resolution (10 cm)
+  digital stereoscopic aerial images collected since 2011.
+license: dl-de/by-2-0
+keywords:
+  - 3d city model
+  - germany
+  - baden-württemberg
+  - buildings
+  - citygml
+  - lod2
+providers:
+  - name: Landesamt für Geoinformation und Landentwicklung Baden-Württemberg (LGL)
+    url: https://www.lgl-bw.de
+    roles:
+      - producer
+      - licensor
+    description: State Office for Geoinformation and Land Development
+    # NOTE: Contact via geodaten@lgl.bwl.de (+49 711 95980-200)
+inputs:
+  - https://opengeodata.lgl-bw.de/#/(sidenav:product/lod2) # NOTE: Manual download via map interface is required (max 10 tiles at a time).
+extent:
+  spatial:
+    bbox: [7.20, 47.40, 10.70, 50.00]
+    crs: EPSG:25832
+  temporal:
+    start: "2000-01-01T00:00:00Z"
+    end: "2018-12-31T00:00:00Z" # NOTE: Extracted from the ALS data acquisition period (between 2000 and 2018).
+links:
+  - rel: about
+    href: https://www.lgl-bw.de/Produkte/3D-Produkte/3D-Gebaeudemodelle/LoD2/
+    type: text/html
+    title: LGL Baden-Württemberg - LoD2 Product Page
+  - rel: about
+    href: https://metadaten.geoportal-bw.de/geonetwork/srv/ger/catalog.search#/metadata/3c42c386-5ba2-43e3-8e6d-2146fa99cdeb
+    type: text/html
+    title: Geoportal-BW Metadata (ISO 19115)
+  - rel: source
+    href: https://www.lgl-bw.de/Produkte/Open-Data/
+    type: text/html
+    title: LGL Baden-Württemberg - Open Data Portal
+# Additional Notes:
+# - Format: CityGML 1.0 (as specified in metadata)
+# - Original CRS: EPSG:25832
+# - Mandatory Attribution: "Datengrundlage: LGL, www.lgl-bw.de"
