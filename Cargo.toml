@@ -65,6 +65,11 @@ reqwest = { version = "0.12", features = ["rustls-tls"], default-features = fals
 # Coordinate projection (CRS transformation to WGS84) - pure Rust
 proj4rs = { version = "0.1", features = ["crs-definitions"] }
 
+# GeoParquet output
+arrow = { version = "54", default-features = false, features = ["prettyprint"] }
+parquet = { version = "54", features = ["arrow"] }
+geozero = { version = "0.15", default-features = false, features = ["with-geojson", "with-wkb"] }
+
 # Optional: for parallel processing
 rayon = { version = "1.10", optional = true }
 

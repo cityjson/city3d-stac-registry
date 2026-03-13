@@ -1376,7 +1376,7 @@ async fn process_collection_logic(
                     .or_insert_with(|| {
                         crate::stac::Asset::new("./items.parquet")
                             .with_type("application/vnd.apache.parquet")
-                            .with_roles(vec!["stac-items".to_string()])
+                            .with_roles(vec!["collection-mirror".to_string()])
                     });
 
                 // Write updated collection back
@@ -1510,7 +1510,7 @@ async fn process_collection_logic(
             "items-geoparquet",
             crate::stac::Asset::new("./items.parquet")
                 .with_type("application/vnd.apache.parquet")
-                .with_roles(vec!["stac-items".to_string()]),
+                .with_roles(vec!["collection-mirror".to_string()]),
         );
     }
 
@@ -1790,7 +1790,7 @@ fn handle_update_collection_command(config: UpdateCollectionConfig) -> Result<()
             "items-geoparquet",
             crate::stac::Asset::new("./items.parquet")
                 .with_type("application/vnd.apache.parquet")
-                .with_roles(vec!["stac-items".to_string()]),
+                .with_roles(vec!["collection-mirror".to_string()]),
         );
     }
 
