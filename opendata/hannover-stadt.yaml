@@ -30,9 +30,7 @@ extent:
     bbox: []
     crs: EPSG:25832
   temporal:
-    interval:
-      start: ""
-      end: "2024-12-05T00:00:00Z" # NOTE: Based on last modification date (2nd link in 'Links')
+    end: "2024-12-05T00:00:00Z" # NOTE: Based on last modification date (2nd link in 'Links')
 links:
   - rel: related
     href: https://www.hannover.de/content/download/641519/file/Testdaten_3D_Stadtmodell.zip
