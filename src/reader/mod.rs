@@ -268,6 +268,17 @@ pub(crate) fn parse_cityjson(content: &str) -> std::result::Result<::cjseq::City
         if let Some(city_objects) = obj.get_mut("CityObjects") {
             normalize_lod_fields(city_objects);
         }
+
+        // Normalize float vertices to i64, adjusting the transform accordingly.
+        // Some non-conforming CityJSON files store vertices as floats (e.g. geographic
+        // coordinates in degrees) rather than the required integers. We pick a scale
+        // factor that preserves the precision present in the data, convert the floats
+        // to integers, and write back an updated "transform" block.
+        if let Some(vertices) = obj.get("vertices") {
+            if vertices_have_floats(vertices) {
+                normalize_float_vertices(obj);
+            }
+        }
     }
 
     let fixed_content =
@@ -296,6 +307,117 @@ fn normalize_lod_fields(city_objects: &mut Value) {
             }
         }
     }
+}
+
+/// Check whether any vertex coordinate in the vertices array is a float (f64)
+/// rather than an integer. CityJSON requires `vertices` to be `Vec<Vec<i64>>`.
+fn vertices_have_floats(vertices: &Value) -> bool {
+    if let Some(arr) = vertices.as_array() {
+        for vertex in arr {
+            if let Some(coords) = vertex.as_array() {
+                for coord in coords {
+                    // serde_json represents a JSON number as f64 if it has a
+                    // decimal point. as_i64() returns None for such numbers.
+                    if coord.is_f64() && coord.as_i64().is_none() {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    false
+}
+
+/// Normalize float vertices to i64 by deriving a scale factor from the
+/// maximum number of decimal digits found across all vertex coordinates.
+///
+/// The transform is adjusted so that real-world positions are preserved:
+///   real = vertex_int * scale + translate
+///
+/// If the file already has a transform, its translate is kept and the scale
+/// is updated to match the new integer encoding. If no transform is present,
+/// translate is set to `[0.0, 0.0, 0.0]`.
+fn normalize_float_vertices(obj: &mut serde_json::Map<String, Value>) {
+    let vertices = match obj.get("vertices").and_then(|v| v.as_array()) {
+        Some(v) => v.clone(),
+        None => return,
+    };
+
+    // Determine the maximum number of decimal places across all float coordinates
+    // so we can choose a scale that does not lose precision.
+    let mut max_decimals: u32 = 0;
+    for vertex in &vertices {
+        if let Some(coords) = vertex.as_array() {
+            for coord in coords {
+                if let Some(f) = coord.as_f64() {
+                    // Count decimal digits by formatting the float and splitting on '.'.
+                    let s = format!("{f}");
+                    if let Some(dot_pos) = s.find('.') {
+                        let decimals = (s.len() - dot_pos - 1) as u32;
+                        if decimals > max_decimals {
+                            max_decimals = decimals;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Scale factor: 10^(-max_decimals)
+    let scale = 10f64.powi(-(max_decimals as i32));
+
+    // Retrieve existing translate, or default to [0, 0, 0].
+    let translate = obj
+        .get("transform")
+        .and_then(|t| t.get("translate"))
+        .and_then(|t| t.as_array())
+        .and_then(|arr| {
+            if arr.len() == 3 {
+                let x = arr[0].as_f64()?;
+                let y = arr[1].as_f64()?;
+                let z = arr[2].as_f64()?;
+                Some([x, y, z])
+            } else {
+                None
+            }
+        })
+        .unwrap_or([0.0, 0.0, 0.0]);
+
+    // Convert each float vertex to i64 using the chosen scale.
+    // vertex_real = vertex_int * scale + translate
+    // => vertex_int = round((vertex_real - translate) / scale)
+    let multiplier = 10f64.powi(max_decimals as i32); // 1 / scale
+    let new_vertices: Vec<Value> = vertices
+        .iter()
+        .map(|vertex| {
+            let coords: Vec<Value> = vertex
+                .as_array()
+                .map(|arr| {
+                    arr.iter()
+                        .enumerate()
+                        .map(|(i, coord)| {
+                            let f = coord.as_f64().unwrap_or(0.0);
+                            let tr = if i < 3 { translate[i] } else { 0.0 };
+                            let int_val = ((f - tr) * multiplier).round() as i64;
+                            Value::Number(int_val.into())
+                        })
+                        .collect()
+                })
+                .unwrap_or_default();
+            Value::Array(coords)
+        })
+        .collect();
+
+    obj.insert("vertices".to_string(), Value::Array(new_vertices));
+
+    // Write the adjusted transform block.
+    obj.insert(
+        "transform".to_string(),
+        serde_json::json!({
+            "scale": [scale, scale, scale],
+            "translate": translate
+        }),
+    );
 }
 
 /// Quick check if file is CityGML by looking for namespace in first few KB
@@ -450,5 +572,40 @@ mod tests {
         let reader = get_reader(temp_gz.path());
         assert!(reader.is_ok());
         assert_eq!(reader.unwrap().encoding(), "CityJSON");
+    }
+
+    /// Regression test: CityJSON files with float vertices (e.g. geographic
+    /// coordinates stored directly in degrees) must be normalised to i64.
+    /// This mirrors the Indiana-*.json error:
+    ///   "invalid type: floating point `-85.44525`, expected i64"
+    #[test]
+    fn test_parse_cityjson_float_vertices_normalized() {
+        let cityjson = r#"{
+            "type": "CityJSON",
+            "version": "2.0",
+            "transform": {"scale": [1.0, 1.0, 1.0], "translate": [0, 0, 0]},
+            "CityObjects": {},
+            "vertices": [[-85.44525, 39.76838, 210.5], [-85.44600, 39.76900, 211.0]]
+        }"#;
+
+        let result = parse_cityjson(cityjson);
+        assert!(
+            result.is_ok(),
+            "Expected float vertices to be normalized, got: {:?}",
+            result.err()
+        );
+
+        let cj = result.unwrap();
+        // Vertices must now be integers (i64).
+        assert_eq!(cj.vertices.len(), 2);
+        for v in &cj.vertices {
+            assert_eq!(v.len(), 3, "Each vertex must have 3 coordinates");
+        }
+
+        // The chosen scale must reflect at least 5 decimal places (max seen: 85.44525 → 5 dec.).
+        // We just verify the transform exists (scale ≠ 1.0) and vertices are non-trivial.
+        // The exact values depend on implementation rounding, so we only sanity-check.
+        let scale = &cj.transform.scale;
+        assert!(scale[0] <= 0.00001, "Scale should be ≤ 1e-5, got {scale:?}");
     }
 }

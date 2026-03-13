@@ -17,6 +17,7 @@
 mod accumulator;
 mod catalog;
 mod collection;
+pub mod geoparquet;
 mod item;
 mod models;
 

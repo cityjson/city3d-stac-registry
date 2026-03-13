@@ -94,11 +94,13 @@ pub async fn create_store_from_url(
 
 /// Download content from a remote URL as bytes
 ///
-/// Uses `object_store` to support multiple backends:
-/// - HTTP/HTTPS URLs
-/// - Amazon S3 (`s3://`)
-/// - Azure Blob Storage (`az://`, `azure://`)
-/// - Google Cloud Storage (`gs://`)
+/// For HTTP/HTTPS URLs, uses `reqwest` directly for maximum compatibility
+/// with diverse web servers (some servers omit standard headers like
+/// `Content-Length` during transparent decompression, which `object_store`
+/// requires but `reqwest` does not).
+///
+/// For cloud storage URLs (s3://, gs://, az://), uses `object_store` for
+/// native protocol support and credential handling.
 ///
 /// # Arguments
 /// * `url` - Remote URL string
@@ -115,22 +117,48 @@ pub async fn download_from_url(url: &str) -> Result<bytes::Bytes> {
 
     let parsed_url = Url::parse(url_to_use).map_err(CityJsonStacError::UrlError)?;
 
-    // If the URL was converted from HTTPS to s3://, the bucket is being accessed
-    // publicly via HTTPS, so we skip AWS credential signing to avoid timeouts
-    // when no credentials are available (e.g., EC2 IMDS requests on local machines).
-    let options: Vec<(String, String)> = if converted_url.is_some() {
-        vec![("aws_skip_signature".to_string(), "true".to_string())]
-    } else {
-        Vec::new()
-    };
+    match parsed_url.scheme() {
+        // For cloud storage schemes, use object_store with native protocol support
+        "s3" | "gs" | "az" | "azure" => {
+            let options: Vec<(String, String)> = if converted_url.is_some() {
+                vec![("aws_skip_signature".to_string(), "true".to_string())]
+            } else {
+                Vec::new()
+            };
 
-    let (store, path) = object_store::parse_url_opts(&parsed_url, options).map_err(|e| {
-        CityJsonStacError::StorageError(format!("Failed to create object store: {e}"))
-    })?;
+            let (store, path) =
+                object_store::parse_url_opts(&parsed_url, options).map_err(|e| {
+                    CityJsonStacError::StorageError(format!("Failed to create object store: {e}"))
+                })?;
 
-    let result = store.get(&path).await?;
-    let bytes = result.bytes().await?;
-    Ok(bytes)
+            let result = store.get(&path).await?;
+            let bytes = result.bytes().await?;
+            Ok(bytes)
+        }
+        // For HTTP/HTTPS, use reqwest directly to avoid object_store's strict
+        // header requirements (e.g. Content-Length) that some servers don't provide
+        "http" | "https" => {
+            let response = reqwest::get(url_to_use).await.map_err(|e| {
+                CityJsonStacError::StorageError(format!("HTTP request failed: {e}"))
+            })?;
+
+            if !response.status().is_success() {
+                return Err(CityJsonStacError::StorageError(format!(
+                    "HTTP {} for {}",
+                    response.status(),
+                    url
+                )));
+            }
+
+            let bytes = response.bytes().await.map_err(|e| {
+                CityJsonStacError::StorageError(format!("Failed to read response body: {e}"))
+            })?;
+            Ok(bytes)
+        }
+        scheme => Err(CityJsonStacError::StorageError(format!(
+            "Unsupported URL scheme: {scheme}"
+        ))),
+    }
 }
 
 /// Extract file extension from URL or path

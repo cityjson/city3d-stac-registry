@@ -152,8 +152,9 @@ impl CityJSONSeqReader {
     /// Create a CityJSONSeq reader by streaming from a remote URL
     ///
     /// Instead of downloading the entire file into memory, this streams the
-    /// data line-by-line using `object_store`. The first line (header) is parsed
-    /// to get metadata, then features are processed incrementally.
+    /// data line-by-line. For HTTP/HTTPS URLs, uses `reqwest` directly for
+    /// broader server compatibility. For cloud storage URLs (s3://, gs://, az://),
+    /// uses `object_store` for native protocol support.
     ///
     /// This is more memory-efficient for large remote `.jsonl` files since
     /// only one line is held in memory at a time.
@@ -162,19 +163,51 @@ impl CityJSONSeqReader {
         use tokio::io::AsyncBufReadExt;
         use tokio_util::io::StreamReader;
 
-        let parsed_url = url::Url::parse(url).map_err(CityJsonStacError::UrlError)?;
-        let (store, path) =
-            object_store::parse_url_opts(&parsed_url, Vec::<(String, String)>::new()).map_err(
-                |e| CityJsonStacError::StorageError(format!("Failed to create object store: {e}")),
-            )?;
-
         log::info!("Streaming CityJSONSeq from: {}", url);
 
-        let result = store.get(&path).await?;
-        let stream = result.into_stream();
+        let parsed_url = url::Url::parse(url).map_err(CityJsonStacError::UrlError)?;
 
-        // Convert object_store byte stream to an async line reader
-        let async_reader = StreamReader::new(stream.map_err(std::io::Error::other));
+        // Choose streaming backend based on URL scheme
+        let stream: Box<
+            dyn futures::Stream<Item = std::result::Result<bytes::Bytes, std::io::Error>>
+                + Send
+                + Unpin,
+        > = match parsed_url.scheme() {
+            "s3" | "gs" | "az" | "azure" => {
+                let (store, path) =
+                    object_store::parse_url_opts(&parsed_url, Vec::<(String, String)>::new())
+                        .map_err(|e| {
+                            CityJsonStacError::StorageError(format!(
+                                "Failed to create object store: {e}"
+                            ))
+                        })?;
+
+                let result = store.get(&path).await?;
+                Box::new(result.into_stream().map_err(std::io::Error::other))
+            }
+            "http" | "https" => {
+                let response = reqwest::get(url).await.map_err(|e| {
+                    CityJsonStacError::StorageError(format!("HTTP request failed: {e}"))
+                })?;
+
+                if !response.status().is_success() {
+                    return Err(CityJsonStacError::StorageError(format!(
+                        "HTTP {} for {}",
+                        response.status(),
+                        url
+                    )));
+                }
+
+                Box::new(response.bytes_stream().map_err(std::io::Error::other))
+            }
+            scheme => {
+                return Err(CityJsonStacError::StorageError(format!(
+                    "Unsupported URL scheme: {scheme}"
+                )));
+            }
+        };
+
+        let async_reader = StreamReader::new(stream);
         let buf_reader = tokio::io::BufReader::new(async_reader);
         let mut lines = buf_reader.lines();
 

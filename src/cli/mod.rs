@@ -140,6 +140,10 @@ enum Commands {
         /// Overwrite all (items and collection)
         #[arg(long)]
         overwrite: bool,
+
+        /// Generate STAC GeoParquet file (items.parquet) alongside JSON output
+        #[arg(long)]
+        geoparquet: bool,
     },
 
     /// Generate STAC Collection from a list of existing STAC item files
@@ -189,6 +193,10 @@ enum Commands {
         /// Pretty-print JSON
         #[arg(long, default_value_t = true)]
         pretty: bool,
+
+        /// Generate STAC GeoParquet file (items.parquet) alongside JSON output
+        #[arg(long)]
+        geoparquet: bool,
     },
 
     /// Generate STAC Catalog from multiple directories/collections
@@ -241,6 +249,10 @@ enum Commands {
         /// Overwrite all (items, collections, and catalog)
         #[arg(long)]
         overwrite: bool,
+
+        /// Generate STAC GeoParquet file (items.parquet) alongside JSON output
+        #[arg(long)]
+        geoparquet: bool,
     },
 }
 
@@ -304,6 +316,7 @@ pub async fn run() -> Result<()> {
             overwrite_items,
             overwrite_collection,
             overwrite,
+            geoparquet,
         } => {
             // Check if no inputs provided via CLI and no config file
             if inputs.is_empty() && config.is_none() {
@@ -332,6 +345,7 @@ pub async fn run() -> Result<()> {
                 dry_run: cli.dry_run,
                 overwrite_items: overwrite_items || overwrite,
                 overwrite_collection: overwrite_collection || overwrite,
+                geoparquet,
             })
             .await
         }
@@ -347,6 +361,7 @@ pub async fn run() -> Result<()> {
             items_base_url,
             skip_errors,
             pretty,
+            geoparquet,
         } => handle_update_collection_command(UpdateCollectionConfig {
             items,
             output,
@@ -359,6 +374,7 @@ pub async fn run() -> Result<()> {
             skip_errors,
             pretty,
             dry_run: cli.dry_run,
+            geoparquet,
         }),
 
         Commands::Catalog {
@@ -374,6 +390,7 @@ pub async fn run() -> Result<()> {
             overwrite_items,
             overwrite_collections,
             overwrite,
+            geoparquet,
         } => {
             handle_catalog_command(CatalogConfig {
                 inputs,
@@ -388,6 +405,7 @@ pub async fn run() -> Result<()> {
                 dry_run: cli.dry_run,
                 overwrite_items: overwrite_items || overwrite,
                 overwrite_collections: overwrite_collections || overwrite,
+                geoparquet,
             })
             .await
         }
@@ -528,6 +546,7 @@ struct CatalogConfig {
     dry_run: bool,
     overwrite_items: bool,
     overwrite_collections: bool,
+    geoparquet: bool,
 }
 
 /// Sanitize a string for use as a folder name by replacing invalid characters with underscores
@@ -785,6 +804,7 @@ async fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
             dry_run: config.dry_run,
             overwrite_items: config.overwrite_items,
             overwrite_collection: config.overwrite_collections,
+            geoparquet: config.geoparquet,
         };
 
         // Check if input is a config file
@@ -921,6 +941,7 @@ struct CollectionConfig {
     dry_run: bool,
     overwrite_items: bool,
     overwrite_collection: bool,
+    geoparquet: bool,
 }
 
 async fn handle_collection_command(config: CollectionConfig) -> Result<()> {
@@ -1085,6 +1106,9 @@ async fn process_collection_logic(
     // Accumulator for streaming processing
     let mut accumulator = CollectionAccumulator::new();
 
+    // Buffer items for GeoParquet output
+    let mut geoparquet_items: Vec<crate::stac::StacItem> = Vec::new();
+
     // Process each file - write items immediately, accumulate metadata
     let pb = create_progress_bar(sources.len() as u64, "Processing files…");
     for source in &sources {
@@ -1154,6 +1178,17 @@ async fn process_collection_logic(
 
             match ItemMetadata::from_file(&item_path) {
                 Ok(metadata) => {
+                    // Buffer existing item for GeoParquet if enabled
+                    if config.geoparquet {
+                        if let Ok(content) = std::fs::read_to_string(&item_path) {
+                            if let Ok(existing_item) =
+                                serde_json::from_str::<crate::stac::StacItem>(&content)
+                            {
+                                geoparquet_items.push(existing_item);
+                            }
+                        }
+                    }
+
                     let item_href = format!("./items/{item_filename}");
                     let title = file_path
                         .file_name()
@@ -1197,6 +1232,11 @@ async fn process_collection_logic(
         match builder_result {
             Ok(builder) => match builder.build() {
                 Ok(item) => {
+                    // Buffer item for GeoParquet if enabled
+                    if config.geoparquet {
+                        geoparquet_items.push(item.clone());
+                    }
+
                     // Extract metadata before writing
                     let metadata = ItemMetadata::from_item(&item);
                     let item_id = item.id.clone();
@@ -1303,6 +1343,69 @@ async fn process_collection_logic(
             "Collection file already exists, skipping (use --overwrite-collection to regenerate)",
         );
 
+        // Still generate GeoParquet if requested
+        if config.geoparquet {
+            let mut items_for_parquet: Vec<crate::stac::StacItem> = Vec::new();
+            let spinner = create_spinner("Reading existing items for GeoParquet…");
+            for entry in std::fs::read_dir(&items_dir)? {
+                let entry = entry?;
+                let path = entry.path();
+                if path.extension().and_then(|e| e.to_str()) == Some("json") {
+                    if let Ok(content) = std::fs::read_to_string(&path) {
+                        if let Ok(item) = serde_json::from_str::<crate::stac::StacItem>(&content) {
+                            items_for_parquet.push(item);
+                        }
+                    }
+                }
+            }
+            finish_spinner_ok(
+                spinner,
+                format!("Read {} item(s) from disk", items_for_parquet.len()),
+            );
+
+            if !items_for_parquet.is_empty() {
+                // Read existing collection, add geoparquet asset, write back
+                let collection_content = std::fs::read_to_string(&collection_path)?;
+                let mut collection: crate::stac::StacCollection =
+                    serde_json::from_str(&collection_content)?;
+
+                // Add items-geoparquet asset if not already present
+                let assets = collection.assets.get_or_insert_with(Default::default);
+                assets
+                    .entry("items-geoparquet".to_string())
+                    .or_insert_with(|| {
+                        crate::stac::Asset::new("./items.parquet")
+                            .with_type("application/vnd.apache.parquet")
+                            .with_roles(vec!["stac-items".to_string()])
+                    });
+
+                // Write updated collection back
+                let updated_json = if config.pretty {
+                    serde_json::to_string_pretty(&collection)?
+                } else {
+                    serde_json::to_string(&collection)?
+                };
+                std::fs::write(&collection_path, &updated_json)?;
+
+                // Write parquet file
+                let parquet_path = config.output.join("items.parquet");
+                let spinner = create_spinner("Writing GeoParquet…");
+                crate::stac::geoparquet::write_geoparquet(
+                    &items_for_parquet,
+                    &collection,
+                    &parquet_path,
+                )?;
+                finish_spinner_ok(
+                    spinner,
+                    format!(
+                        "GeoParquet written: {} ({} items)",
+                        parquet_path.display(),
+                        items_for_parquet.len()
+                    ),
+                );
+            }
+        }
+
         // Return info about existing collection
         let collection_id = merged_config.id.unwrap_or_else(|| {
             final_inputs
@@ -1381,6 +1484,36 @@ async fn process_collection_logic(
     // Add self link
     collection_builder = collection_builder.self_link("./collection.json");
 
+    // GeoParquet: if buffer is empty (e.g. all items skipped), read items from disk
+    if config.geoparquet && geoparquet_items.is_empty() {
+        let spinner = create_spinner("Reading existing items for GeoParquet…");
+        for entry in std::fs::read_dir(&items_dir)? {
+            let entry = entry?;
+            let path = entry.path();
+            if path.extension().and_then(|e| e.to_str()) == Some("json") {
+                if let Ok(content) = std::fs::read_to_string(&path) {
+                    if let Ok(item) = serde_json::from_str::<crate::stac::StacItem>(&content) {
+                        geoparquet_items.push(item);
+                    }
+                }
+            }
+        }
+        finish_spinner_ok(
+            spinner,
+            format!("Read {} item(s) from disk", geoparquet_items.len()),
+        );
+    }
+
+    // Add GeoParquet asset if enabled
+    if config.geoparquet && !geoparquet_items.is_empty() {
+        collection_builder = collection_builder.asset(
+            "items-geoparquet",
+            crate::stac::Asset::new("./items.parquet")
+                .with_type("application/vnd.apache.parquet")
+                .with_roles(vec!["stac-items".to_string()]),
+        );
+    }
+
     // Build and write collection
     let collection = collection_builder.build()?;
     let collection_json = if config.pretty {
@@ -1389,16 +1522,37 @@ async fn process_collection_logic(
         serde_json::to_string(&collection)?
     };
 
-    std::fs::write(&collection_path, collection_json)?;
+    std::fs::write(&collection_path, &collection_json)?;
+
+    // Write GeoParquet file if enabled
+    if config.geoparquet && !geoparquet_items.is_empty() {
+        let parquet_path = config.output.join("items.parquet");
+        let spinner = create_spinner("Writing GeoParquet…");
+        crate::stac::geoparquet::write_geoparquet(&geoparquet_items, &collection, &parquet_path)?;
+        finish_spinner_ok(
+            spinner,
+            format!(
+                "GeoParquet written: {} ({} items)",
+                parquet_path.display(),
+                geoparquet_items.len()
+            ),
+        );
+    }
 
     // Print summary
-    let summary = Summary::new()
+    let mut summary = Summary::new()
         .add("Collection", collection_path.display().to_string())
         .add("Items dir", items_dir.display().to_string())
         .add(
             "Items generated",
             format!("{}", accumulator.successful_count()),
         );
+    if config.geoparquet && !geoparquet_items.is_empty() {
+        summary = summary.add(
+            "GeoParquet",
+            config.output.join("items.parquet").display().to_string(),
+        );
+    }
     summary.print();
 
     print_success("Collection generated successfully");
@@ -1420,6 +1574,7 @@ struct UpdateCollectionConfig {
     pretty: bool,
     #[allow(dead_code)]
     dry_run: bool,
+    geoparquet: bool,
 }
 
 fn handle_update_collection_command(config: UpdateCollectionConfig) -> Result<()> {
@@ -1629,6 +1784,16 @@ fn handle_update_collection_command(config: UpdateCollectionConfig) -> Result<()
     // Add self link
     collection_builder = collection_builder.self_link("./collection.json");
 
+    // Add GeoParquet asset if enabled
+    if config.geoparquet && !parsed_items.is_empty() {
+        collection_builder = collection_builder.asset(
+            "items-geoparquet",
+            crate::stac::Asset::new("./items.parquet")
+                .with_type("application/vnd.apache.parquet")
+                .with_roles(vec!["stac-items".to_string()]),
+        );
+    }
+
     // Build and write collection
     let collection = collection_builder.build()?;
     let collection_json = if config.pretty {
@@ -1644,7 +1809,26 @@ fn handle_update_collection_command(config: UpdateCollectionConfig) -> Result<()
         }
     }
 
-    std::fs::write(&config.output, collection_json)?;
+    std::fs::write(&config.output, &collection_json)?;
+
+    // Write GeoParquet file if enabled
+    if config.geoparquet && !parsed_items.is_empty() {
+        let parquet_path = config
+            .output
+            .parent()
+            .unwrap_or_else(|| Path::new("."))
+            .join("items.parquet");
+        let spinner = create_spinner("Writing GeoParquet…");
+        crate::stac::geoparquet::write_geoparquet(&parsed_items, &collection, &parquet_path)?;
+        finish_spinner_ok(
+            spinner,
+            format!(
+                "GeoParquet written: {} ({} items)",
+                parquet_path.display(),
+                parsed_items.len()
+            ),
+        );
+    }
 
     // Print summary
     let mut summary = Summary::new()
@@ -1652,6 +1836,14 @@ fn handle_update_collection_command(config: UpdateCollectionConfig) -> Result<()
         .add("Items aggregated", format!("{}", parsed_items.len()));
     if !errors.is_empty() {
         summary = summary.add("Skipped", format!("{} item(s)", errors.len()));
+    }
+    if config.geoparquet && !parsed_items.is_empty() {
+        let parquet_path = config
+            .output
+            .parent()
+            .unwrap_or_else(|| Path::new("."))
+            .join("items.parquet");
+        summary = summary.add("GeoParquet", parquet_path.display().to_string());
     }
     summary.print();
 
