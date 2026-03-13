@@ -1,0 +1,52 @@
+id: stadt-hannover-2024
+title: Digital 3D building Model (LoD2 Hannover)
+description: |
+  Digital 3D building model (LoD2) for the state capital Hannover, Germany.
+  The dataset is based on a laser scanning flight from 2010 and contains
+  approximately 135,800 buildings generated through an automated process.
+  Buildings with a footprint smaller than 15m² and allotment garden areas
+  are excluded. The LoD2 models feature standardized roof shapes aligned
+  with the actual ridge course, offering a height accuracy of approx. +/- 1m.
+license: CC-BY-4.0-DE
+keywords:
+  - 3d city model
+  - germany
+  - hannover
+  - buildings
+  - citygml
+  - lod2
+providers:
+  - name: Landeshauptstadt Hannover, FB Planen und Stadtentwicklung, Bereich Geoinformation
+    url: https://www.hannover.de
+    roles:
+      - producer
+      - licensor
+    description: Publisher of the 3D City Model Hannover
+    # NOTE: Contact via geoservice@hannover-stadt.de
+inputs:
+  - https://opengeodata.hannover-stadt.de/Stadtmodell_Hannover_CityGML_LOD2.zip
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:25832
+  temporal:
+    interval:
+      start: ""
+      end: "2024-12-05T00:00:00Z" # NOTE: Based on last modification date (2nd link in 'Links')
+links:
+  - rel: related
+    href: https://www.hannover.de/content/download/641519/file/Testdaten_3D_Stadtmodell.zip
+    type: application/zip
+    title: Sample Data for the 3D City Model (LoD1 and LoD2)
+  - rel: source
+    href: https://e-government.hannover-stadt.de/geonetwork/srv/ger/catalog.search#/metadata/b90cdf49-93e4-41f4-ba67-ae267f2b7e4a
+    type: text/html
+    title: LoD2 Product Page
+  - rel: source
+    href: https://e-government.hannover-stadt.de/geonetwork/srv/ger/catalog.search#/search?resultType=details&sortBy=relevance&from=1&to=20&fast=index&_content_type=json
+    type: application/json
+    title: Geonetwork Catalog Search - Hannover
+# Additional Notes:
+# - Vertical Accuracy: +/- 1m
+# - Exclusions: Buildings < 15m² and allotment gardens (Kleingärten) are not included.
+# - Update Frequency: Annually

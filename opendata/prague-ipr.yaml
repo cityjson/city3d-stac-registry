@@ -1,0 +1,43 @@
+id: ipr-prague-2020
+title: 3D Building Model of Prague
+description: |
+  Photogrammetrically processed 3D building model for Prague, Czech Republic.
+  The dataset is divided into 1:5000 map sheets and is available in multiple
+  formats including CityGML, 3D Shapefile, and Multipatch.
+license: CC-BY-4.0
+keywords:
+  - 3d city model
+  - czech republic
+  - prague
+  - buildings
+  - citygml
+providers:
+  - name: Institut plánování a rozvoje hl. m. Prahy (IPR Prague)
+    url: https://geoportalpraha.cz
+    roles:
+      - producer
+      - licensor
+    description: Prague Institute of Planning and Development
+extent:
+  spatial:
+    bbox: [14.201491, 49.918791, 14.735087, 50.193123] # [west, south, east, north]
+    crs: EPSG:5514
+  temporal:
+    interval:
+      start: "2015-03-31T00:00:00Z" # NOTE: Extracted from data creation date described on website (1st link in 'Links')
+      end: "2020-07-17T00:00:00Z" # NOTE: Extracted from data update date described on website (1st link in 'Links')
+inputs:
+  - https://geoportalpraha.cz/data-a-sluzby/ke-stazeni/7e6316e95cfe4f36ae06bbfb687bf34b # NOTE: Area-based download
+links:
+  - rel: about
+    href: https://geoportalpraha.cz/data-a-sluzby/7e6316e95cfe4f36ae06bbfb687bf34b
+    type: text/html
+    title: IPR Prague Geoportal - 3D Buildings Metadata and Description
+  - rel: source
+    href: https://geoportalpraha.cz
+    type: text/html
+    title: IPR Prague Geoportal - Home
+# Additional Notes:
+# - Formats available: CityGML, Multipatch, Shapefile, DGN, DWG
+# - Structure: Divided by map sheets (1:5000)
+# - Access: Area-based download. Data requires manual download of specific map sheets via the portal interface.

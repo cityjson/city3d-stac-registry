@@ -1,0 +1,58 @@
+id: geobremen-bremen
+title: 3D Building Model LoD2 Land Bremen
+description: |
+  Digital 3D building model (LoD2) for the state of Bremen, Germany.
+  The block models feature standardized roof shapes and are generated based
+  on data from the official real estate cadastre (ALKIS), the Digital
+  Terrain Model (DGM), and Digital Orthophotos (DOP).
+license: CC-BY-4.0
+keywords:
+  - 3d city model
+  - germany
+  - bremen
+  - buildings
+  - citygml
+  - lod2
+providers:
+  - name: Landesamt GeoInformation Bremen
+    url: https://www.geo.bremen.de/
+    roles:
+      - producer
+      - licensor
+    description: State Office for GeoInformation Bremen
+    # NOTE: Contact via geodatenservice@geo.bremen.de
+inputs:
+  - https://gdi2.geo.bremen.de/inspire/download/LoD/data/LOD2_CITYGML_HB.zip # NOTE: Contains the 3D buildings for the inland City of Bremen (HB).
+  - https://gdi2.geo.bremen.de/inspire/download/LoD/data/LOD2_CITYGML_BHV.zip # NOTE: Contains the 3D buildings for the coastal City of Bremerhaven (BHV).
+extent:
+  spatial:
+    bbox: [8.477, 53.010, 8.991, 53.611] # [west, south, east, north]
+    crs: EPSG:25832
+  temporal:
+    interval:
+      start: ""
+      end: "2025-04-28T00:00:00Z" # NOTE: Extracted from 'Timeliness of the data' (Aktualität der Daten) information on MetaVer Website (3rd link in Links)
+links:
+  - rel: source
+    href: https://www.geo.bremen.de
+    type: text/html
+    title: Website of State Office for GeoInformation Bremen
+  - rel: source
+    href: https://www.geo.bremen.de/produkte/3d-produkte/3d-gebaeudemodelle-11892
+    type: text/html
+    title: GeoInformation Bremen - 3D Building Models Product Page
+  - rel: source
+    href: https://www.metaver.de/trefferanzeige?docuuid=226971C2-6677-4B79-95F3-C5311F1275C8
+    type: text/html
+    title: Website of MetaVer - Page for LoD2 3D Building Models of Bremen (HB)
+  - rel: alternate
+    href: https://geoportal.bremen.de/geoportal/?Map/layerIds=11,26_1,10506,10115&visibility=true,true,true,true&transparency=0,0,0,0&Map/center=%5B481553.9694444183,5884828.401962801%5D&Map/zoomLevel=2
+    type: text/html
+    title: Geoportal Bremen - Web Map Viewer
+  - rel: alternate
+    href: https://www.metaver.de/trefferanzeige?docuuid=ABE54657-54A9-4AE5-81D5-DA3BF7FC9382
+    type: text/html
+    title: Website of MetaVer - Page for LoD1 3D Building Models of Bremen (HB) (Alternative Level of Detail)
+# Additional Notes:
+# - Access Method: Direct ZIP downloads available separately for Bremen (HB) and Bremerhaven (BHV).
+# - Mandatory Attribution: "Landesamt GeoInformation Bremen"

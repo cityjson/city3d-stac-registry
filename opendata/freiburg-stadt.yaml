@@ -1,0 +1,51 @@
+id: stadt-freiburg-2024
+title: 3D Building Model LoD2 Freiburg
+description: |
+  Digital 3D building model (LoD2) for the city of Freiburg im Breisgau, Germany.
+  Buildings are modeled with standardized roof shapes (e.g., gable, hip, mansard,
+  flat) without roof structures or facade textures. Geometries are derived from
+  official building footprints (ALKIS), aerial imagery (orthophotos, oblique
+  images, cycloramas), and digital elevation models (DGM5, DOM).
+license: dl-de/by-2-0
+keywords:
+  - 3d city model
+  - germany
+  - freiburg
+  - buildings
+  - citygml
+  - lod2
+providers:
+  - name: Stadt Freiburg i. Br. - Sachgebiet Geoinformation
+    url: https://www.freiburg.de
+    roles:
+      - producer
+      - licensor
+    description: City of Freiburg im Breisgau - Geoinformation Department
+    # NOTE: Contact via vermessung@freiburg.de or gdi-support@freiburg.de
+inputs:
+  - https://geoportal.freiburg.de/stadtmodell/20240426_Freiburg_LoD2.gml
+extent:
+  spatial:
+    bbox: [7.661, 47.903, 7.932, 48.072] # [west, south, east, north]
+    crs: EPSG:25832
+  temporal:
+    interval:
+      start: ""
+      end: "2024-04-09T00:00:00Z" # NOTE: Extracted from the ISO metadata where the dateType is defined as "revision" (3rd link in 'Links').
+links:
+  - rel: about
+    href: https://geodaten.freiburg.de/geonetwork/srv/eng/catalog.search#/metadata/1c576440-e5e1-4095-bff1-a14d76cec6f4
+    type: text/html
+    title: Freiburg Geoportal 3D Data Download Page
+  - rel: related
+    href: https://geodaten.freiburg.de/geonetwork/srv/eng/catalog.search#/home
+    type: text/html
+    title: Freiburg Geoportal Catalog Home
+  - rel: about
+    href: https://geodaten.freiburg.de/geonetwork/srv/api/records/1c576440-e5e1-4095-bff1-a14d76cec6f4/formatters/xml
+    type: application/xml
+    title: XML Metadata for Freiburg 3D City Model
+# Additional Notes:
+# - Access Method: Direct HTTP download.
+# - Alternate Formats: Cesium 3D Tilesets (textured and untextured) are also available via the provider's endpoints.
+# - Mandatory Attribution: "Datengrundlage: Stadt Freiburg, www.freiburg.de"

@@ -1,0 +1,43 @@
+id: bvv-bavaria
+title: 3D Building Model (LoD2) Bayern
+description: |
+  Complete 3D building models (LoD2) for the state of Bavaria, Germany.
+  Models feature ALKIS-compliant standard roof shapes and descriptive attributes.
+  Geometries are derived from ALKIS building footprints, airborne laser scanning,
+  and aerial digital surface models.
+license: CC-BY-4.0
+keywords:
+  - 3d city model
+  - germany
+  - bavaria
+  - buildings
+  - citygml
+  - lod2
+providers:
+  - name: Bayerische Vermessungsverwaltung (BVV)
+    url: https://geodaten.bayern.de
+    roles:
+      - producer
+      - licensor
+    description: Bavarian State Administration for Surveying
+    # NOTE: Contact information not available
+inputs:
+  - https://geodaten.bayern.de/odd/a/lod2/citygml/meta/metalink/09.meta4 # Note: Bulk download for a complete dataset is available via this Metalink.
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:25832
+links:
+  - rel: about
+    href: https://geodaten.bayern.de/opengeodata/OpenDataDetail.html?pn=lod2
+    type: text/html
+    title: BVV Bayern - LoD2 Product Details
+  - rel: source
+    href: https://geodaten.bayern.de/opengeodata/
+    type: text/html
+    title: Geodaten Bayern - Open Data Portal
+# Additional Notes:
+# - Format: CityGML
+# - Structure: Tiled dataset (2 km x 2 km tiles)
+# - Update Frequency: Weekly
+# - Total Size: ~ 150 GB

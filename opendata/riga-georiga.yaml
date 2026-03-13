@@ -1,0 +1,111 @@
+id: georiga-riga-2022
+title: LOD2 model of structures - GEO RĪGA
+description: |
+  Digital 3D building models (LoD2) for the city of Riga, Latvia. The models represent
+  the spatial extent and contour of the objects, including simplified roof shapes.
+  Data for the historical center and 13 built-up protection territories is based on
+  2022 aerial laser scanning commissioned by the Riga municipality. Data for other
+  territories is based on 2021 aerial laser scanning from the Latvian Geospatial
+  Information Agency.
+license: CC-BY-4.0
+keywords:
+  - 3d city model
+  - latvia
+  - riga
+  - buildings
+  - citygml
+  - lod2
+providers:
+  - name: Rīga Local Government City Development Department (GEO RĪGA)
+    url: https://georiga.eu
+    roles:
+      - producer
+      - licensor
+    description: Official Open Data Portal for the City of Riga
+inputs:
+  - https://data.gov.lv/dati/dataset/rigas-apkaimju-lod2-modeli/resource/2e00bb17-0c84-4ec4-9626-48002d0a47c8 # Atgāzene
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/4369472d-b735-46bc-b9fa-42fedb3368a3/download/avoti_lod2.gml # Avoti
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/c3c92738-0a40-4328-b380-97d0c414add4/download/agenskalns_lod2.gml # Āgenskalns
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/1f37867a-451c-4371-9279-6627e5739c10/download/beberbeki_lod2.gml # Beberbeķi
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/fe85fcd1-be33-4058-9bd6-e77e4d2e898f/download/bergi_lod2.gml # Berģi
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/d169fda9-cd84-4091-b188-a2b5e1e440a5/download/bierini_lod2.gml # Bieriņi
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/543fb86c-fe32-4f29-9bb4-a804c8bb99b3/download/bisumuiza_lod2.gml # Bišumuiža
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/fde6421a-a58f-4974-9128-6bea3d0eb1c5/download/bolderaja_lod2.gml # Bolderāja
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/b90bd4a9-ba73-4025-bb20-60cbaac6d4eb/download/brasa_lod2.gml # Brasa
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/fd9c4c1a-2f27-44ac-bb46-4f59c93efb60/download/breksi_lod2.gml # Brekši
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/fa283d35-7cc9-4ab1-b8ec-2d6113e5a79c/download/bukulti_lod2.gml # Bukulti
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/3c2fdfef-9a3b-4cab-96da-aa843e2524f2/download/bulli_lod2.gml # Buļļi
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/f2e94f22-9625-4683-9f1b-db94e1695dba/download/centrs_lod2.zip # Centrs
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/8b13d1a7-c822-4995-901e-5ecea8c53046/download/ciekurkalns_lod2.gml # Čiekurkalns
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/eca32eb9-85b7-43a5-b38c-2ee24a4f9545/download/daugavgriva_lod2.gml # Daugavgrīva
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/c6b18185-21d1-4a7d-bd54-3146f84d7924/download/darzciems_lod2.gml # Dārzciems
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/a168648c-aeab-4b53-a91a-381778694a12/download/darzini_lod2.gml # Dārziņi
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/e6ea92ef-71cc-4b39-ad53-72e5fe9ddde2/download/dreilini_lod2.gml # Dreiliņi
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/05fa6cf8-25e2-48ac-a832-1544f457d7d2/download/dzirciems_lod2.gml # Dzirciems
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/8943e318-48df-499d-b761-ab1ad0da8999/download/grizinkalns_lod2.gml # Grīziņkalns
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/1987f206-f8d7-41d6-bcba-a98a45c1907f/download/ilguciems_lod2.gml # Iļģuciems
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/d779ec92-c4ef-4556-abff-58b366a3fc96/download/imanta_lod2.gml # Imanta
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/375deb49-b08c-4554-ab1a-eb9fbb6e44d4/download/jaunciems_lod2.gml # Jaunciems
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/3c636bd8-5bd1-44f8-be8d-1c47eeb0c0ff/download/jugla_lod2.gml # Jugla
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/c6b0777e-5dba-4ec9-8db4-12786c4ea464/download/katlakalns_lod2.gml # Katlakalns
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/4cd11d92-5d25-4652-b8e5-3b6139a985fc/download/kleisti_lod2.gml # Kleisti
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/8ab870c9-1ebe-4fe9-aed0-a40064f3fb86/download/kundzinsala_lod2.gml # Kundziņsala
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/5f1e36b7-3074-452e-af88-3d2cdaadfb67/download/kengarags_lod2.gml # Ķengarags
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/ff8072d7-a455-4a26-92c7-8b5f1597ef39/download/kipsala_lod2.gml # Ķīpsala
+  - https://data.gov.lv/dati/lv/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/c65a4736-d209-4aae-b4a5-83f69fcd58bd/download/latgale_lod2.zip # Latgale
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/4d59dffd-4614-4ae3-87d6-45afc025086e/download/mangalsala_lod2.gml # Mangaļsala
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/15f5b87d-0d26-45fa-8da9-a5d905c37114/download/mezaparks_lod2.gml # Mežaparks
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/7c4f36ac-b7a2-4302-982a-21318989e7bd/download/mezciems_lod2.gml # Mežciems
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/5552ce4e-f421-49c1-b922-09b4e568adce/download/milgravis_lod2.gml # Mīlgrāvis
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/9480fcf7-f51c-41e4-857a-d960b722d3eb/download/mukupurvs_lod2.gml # Mūkupurvs
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/3d09f4b2-8e28-4d33-9e97-2d1622dc73d9/download/petersala_andrejsala_lod2.gml # Pētersala-Andrejsala
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/72efe922-2545-4b41-9ee4-f9be4b94c2bd/download/pleskodale_lod2.gml # Pleskodāle
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/8d892f71-4e59-4890-bc81-8ce975e36218/download/plavnieki_lod2.gml # Pļavnieki
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/6634383c-1dc9-4357-b375-6740587a79da/download/purvciems_lod2.gml # Purvciems
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/eb5a0937-2c59-49fa-bdc2-c474f22775c0/download/rumbula_lod2.gml # Rumbula
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/7dfb72df-c040-4f85-8e71-1487c8e11da7/download/salas_lod2.gml # Salas
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/aa5932a1-3113-43e9-8784-e75f408952f5/download/sarkandaugava_lod2.gml # Sarkandaugava
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/39dbf532-4bb4-4ef3-bc88-a72fbcfa161b/download/skanste_lod2.gml # Skanste
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/6035078e-2a73-4d63-8191-9b5db459287f/download/spilve_lod2.gml # Spilve
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/479b5fbe-57c0-4425-aee1-d839532f8ee4/download/suzi_lod2.gml # Suži
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/0df311b2-40f1-4d1c-bd09-508c7ce332bc/download/sampeteris_lod2.gml # Šampēteris
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/d58cb13c-e144-4135-89a0-e1711cbae0b0/download/skirotava_lod2.gml # Šķirotava
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/472af78f-4aed-48ac-baad-409094620678/download/teika_lod2.gml # Teika
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/45dc9fc4-515f-466d-9e3b-a293aaf581df/download/tornakalns_lod2.gml # Torņakalns
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/7307fd0b-bcb2-418f-9fda-b7e0c5bdcc0a/download/trisciems_lod2.gml # Trīsciems
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/8270ab39-6c61-49d2-92d9-c72e56230abf/download/vecaki_lod2.gml # Vecāķi
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/b2f3ed57-1f3b-437d-811f-ca9b84046e4e/download/vecdaugava_lod2.gml # Vecdaugava
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/a91cba1d-7631-4169-a290-182b843b6707/download/vecmilgravis_lod2.gml # Vecmīlgrāvis
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/3e5a3719-882f-46f7-a678-3fdbd7def370/download/vecpilseta_lod2.gml # Vecpilsēta
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/e203d502-760e-434a-98f8-3a1546a4f08b/download/voleri_lod2.gml # Voleri
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/fd366917-eaf5-4acd-aef2-0181dd4d3067/download/zasulauks_lod2.gml # Zasulauks
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/27ec843b-db54-455f-b421-37517b04c94c/download/ziepniekkalns_lod2.gml # Ziepniekkalns
+  - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/0a3f4dcf-5047-4762-8b5a-71695f9c5057/download/zolitude_lod2.gml # Zolitūde
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:3059
+  temporal:
+    interval:
+      start: "2021-01-01T00:00:00Z"
+      end: "2022-12-31T00:00:00Z" # NOTE: Extracted from the aerial laser scanning data acquisition years (2021 and 2022) mentioned in the description.
+links:
+  - rel: about
+    href: https://georiga.eu/en/atvertie-dati/lod2/
+    type: text/html
+    title: GEO RĪGA LoD2 Dataset Information and Download Portal
+  - rel: alternate
+    href: https://experience.arcgis.com/experience/1525b7aa346342e6bbcffd99bc96a734#widget_26=active_datasource_id:dataSource_1,viewpoint:%7B%22rotation%22%3A320.1242458216441%2C%22scale%22%3A416.9546088897428%2C%22targetGeometry%22%3A%7B%22spatialReference%22%3A%7B%22latestWkid%22%3A3857%2C%22wkid%22%3A102100%7D%2C%22x%22%3A2684315.4862065692%2C%22y%22%3A7750342.256316601%2C%22z%22%3A6.690406645648181%7D%2C%22camera%22%3A%7B%22position%22%3A%7B%22spatialReference%22%3A%7B%22latestWkid%22%3A3857%2C%22wkid%22%3A102100%7D%2C%22x%22%3A2684095.697680771%2C%22y%22%3A7750079.173752196%2C%22z%22%3A36.77982608228922%7D%2C%22heading%22%3A39.87575417835592%2C%22tilt%22%3A80.85598257226634%7D%7D
+    type: text/html
+    title: Interactive 3D Web Viewer (ArcGIS Experience)
+  - rel: source
+    href: https://georiga.eu/en/3d-riga/
+    type: text/html
+    title: 3D Rīga Information Page
+  - rel: source
+    href: https://georiga.eu/en/
+    type: text/html
+    title: Rīga Open Data Portal (GEO RīGA)
+# Additional Notes:
+# - Formats Available: .gdb, .skp, .obj, .3ds, and .gml
+# - Structure: The dataset is divided into 58 separate files, corresponding to each neighborhood in Riga.

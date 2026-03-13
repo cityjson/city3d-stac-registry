@@ -1,0 +1,51 @@
+id: municipa-kuopio-2021
+title: Kuopion 3D-rakennukset CityGML LOD2 teksturoituna 7/2021
+description: |
+  Textured 3D building models of Kuopio in CityGML 2.0 format.
+  The dataset includes JPG textures for some areas. The level
+  of detail is LOD2. The coordinate system is ETRS-GK27 (EPSG:3881)
+  and N2000 height system.
+license: CC-BY-4.0
+keywords:
+  - 3d city model
+  - finland
+  - kuopio
+  - buildings
+  - citygml
+  - lod2
+  - textured
+providers:
+  - name: City of Kuopio (Kuopion kaupunki)
+    url: https://www.kuopio.fi/
+    roles:
+      - producer
+      - licensor
+    description: Municipal provider of the Kuopio 3D city model
+    # NOTE: Contact via paikkatietopalvelut@kuopio.fi
+inputs:
+  - https://avoindata.suomi.fi/data/dataset/1cda485e-0c0a-4f77-9f7d-185bae9144f7/resource/b4aa97c2-f41c-4863-82f0-aaa88687a20b/download/kuopion_3d_rakennukset_citygml_lod2_2_2022_textured.zip
+extent:
+  spatial:
+    bbox: [26.95207, 62.75776, 28.49907, 63.30932]
+    crs: EPSG:3881
+  temporal:
+    start: "2020-08-13T00:00:00Z" # Note: Temporal extent extracted from the creation date in the metadata of the citygml file
+    end: ""
+links:
+  - rel: alternate
+    href: https://kuopio.kunta3d.fi/Map.html?locale=en
+    type: text/html
+    title: Kuopio 3D Web Viewer (Kunta3D)
+  - rel: source
+    href: https://avoindata.suomi.fi/en
+    type: text/html
+    title: Suomi.fi Open Data Portal (Finland's National Open Data Portal)
+  - rel: source
+    href: https://www.kuopio.fi/en/environment-and-housing/maps-and-location-information/
+    type: text/html
+    title: City of Kuopio Web Portal - Maps and Location Information
+# Additional Notes:
+# - Format: CityGML 2.0
+# - Compression: ZIP containing textured CityGML files (JPG textures)
+# - Original Projection: EPSG:3881 (ETRS-GK27) and N2000 height system
+# - SHA1 Checksum: 444d0d89cc8151e6fa149a3c9113ee0f73c70486cc73f7560d366614ad235a98
