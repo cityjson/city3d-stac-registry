@@ -23,7 +23,7 @@ providers:
       - licensor
     description: Official Open Data Portal for the City of Riga
 inputs:
-  - https://data.gov.lv/dati/dataset/rigas-apkaimju-lod2-modeli/resource/2e00bb17-0c84-4ec4-9626-48002d0a47c8 # Atgāzene
+  - https://data.gov.lv/dati/dataset/rigas-apkaimju-lod2-modeli/resource/2e00bb17-0c84-4ec4-9626-48002d0a47c8/download/atgazene_lod2.gml # Atgāzene
   - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/4369472d-b735-46bc-b9fa-42fedb3368a3/download/avoti_lod2.gml # Avoti
   - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/c3c92738-0a40-4328-b380-97d0c414add4/download/agenskalns_lod2.gml # Āgenskalns
   - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/1f37867a-451c-4371-9279-6627e5739c10/download/beberbeki_lod2.gml # Beberbeķi
