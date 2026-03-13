@@ -29,9 +29,8 @@ extent:
     bbox: [7.661, 47.903, 7.932, 48.072] # [west, south, east, north]
     crs: EPSG:25832
   temporal:
-    interval:
-      start: ""
-      end: "2024-04-09T00:00:00Z" # NOTE: Extracted from the ISO metadata where the dateType is defined as "revision" (3rd link in 'Links').
+    start: ""
+    end: "2024-04-09T00:00:00Z" # NOTE: Extracted from the ISO metadata where the dateType is defined as "revision" (3rd link in 'Links').
 links:
   - rel: about
     href: https://geodaten.freiburg.de/geonetwork/srv/eng/catalog.search#/metadata/1c576440-e5e1-4095-bff1-a14d76cec6f4
