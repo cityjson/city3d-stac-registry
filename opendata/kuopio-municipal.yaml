@@ -30,7 +30,6 @@ extent:
     crs: EPSG:3881
   temporal:
     start: "2020-08-13T00:00:00Z" # Note: Temporal extent extracted from the creation date in the metadata of the citygml file
-    end: ""
 links:
   - rel: alternate
     href: https://kuopio.kunta3d.fi/Map.html?locale=en
