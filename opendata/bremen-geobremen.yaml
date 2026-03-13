@@ -29,9 +29,8 @@ extent:
     bbox: [8.477, 53.010, 8.991, 53.611] # [west, south, east, north]
     crs: EPSG:25832
   temporal:
-    interval:
-      start: ""
-      end: "2025-04-28T00:00:00Z" # NOTE: Extracted from 'Timeliness of the data' (Aktualität der Daten) information on MetaVer Website (3rd link in Links)
+    start: ""
+    end: "2025-04-28T00:00:00Z" # NOTE: Extracted from 'Timeliness of the data' (Aktualität der Daten) information on MetaVer Website (3rd link in Links)
 links:
   - rel: source
     href: https://www.geo.bremen.de
