@@ -86,9 +86,8 @@ extent:
     bbox: []
     crs: EPSG:3059
   temporal:
-    interval:
-      start: "2021-01-01T00:00:00Z"
-      end: "2022-12-31T00:00:00Z" # NOTE: Extracted from the aerial laser scanning data acquisition years (2021 and 2022) mentioned in the description.
+    start: "2021-01-01T00:00:00Z"
+    end: "2022-12-31T00:00:00Z" # NOTE: Extracted from the aerial laser scanning data acquisition years (2021 and 2022) mentioned in the description.
 links:
   - rel: about
     href: https://georiga.eu/en/atvertie-dati/lod2/
