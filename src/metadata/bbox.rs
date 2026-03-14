@@ -108,6 +108,23 @@ impl BBox3D {
         // (e.g., EPSG:7415 = EPSG:28992 + EPSG:5709)
         let horizontal_epsg = resolve_horizontal_epsg(epsg);
 
+        // Geographic CRS that are essentially identical to WGS84.
+        // CityGML files with geographic CRS use (lat, lon) axis order per EPSG,
+        // but STAC/GeoJSON requires (lon, lat). We detect (lat, lon) order by
+        // checking if x values are in latitude range [-90, 90] while y values
+        // are in longitude range, then swap. JGD2011 (EPSG:6668) is based on
+        // GRS80 which differs from WGS84 by < 1mm, so no reprojection is needed.
+        if is_wgs84_equivalent_geographic(horizontal_epsg) {
+            if self.xmin >= -90.0 && self.xmax <= 90.0 {
+                // Coordinates appear to be in (lat, lon) order — swap to (lon, lat)
+                return Ok(BBox3D::new(
+                    self.ymin, self.xmin, self.zmin, self.ymax, self.xmax, self.zmax,
+                ));
+            }
+            // Already in (lon, lat) order (e.g., from CityJSON)
+            return Ok(self.clone());
+        }
+
         // epsg code is u32 but proj4rs uses u16
         let proj_code = u16::try_from(horizontal_epsg).map_err(|_| {
             CityJsonStacError::Other(format!("EPSG code {horizontal_epsg} exceeds u16 range"))
@@ -159,6 +176,17 @@ impl BBox3D {
     }
 }
 
+/// Check if an EPSG code is a geographic CRS essentially identical to WGS84.
+/// These CRS are based on datums (like GRS80) that differ from WGS84 by < 1mm,
+/// so no reprojection is needed — only axis order normalization.
+fn is_wgs84_equivalent_geographic(epsg: u32) -> bool {
+    matches!(
+        epsg,
+        4326  // WGS84 geographic 2D
+        | 6668 // JGD2011 geographic 2D (GRS80 ellipsoid)
+    )
+}
+
 /// Resolve compound CRS to their horizontal component EPSG code
 ///
 /// Compound CRS combine a horizontal and vertical CRS (e.g., EPSG:7415 = EPSG:28992 + EPSG:5709).
@@ -177,6 +205,8 @@ fn resolve_horizontal_epsg(epsg: u32) -> u32 {
         5775 => 31287,
         // Belgium: Belge 1972 / Belgian Lambert 72 + Ostend height
         6190 => 31370,
+        // Japan: JGD2011 (geographic 3D) → JGD2011 (geographic 2D)
+        6697 => 6668,
         // Not a known compound CRS, use as-is
         _ => epsg,
     }
@@ -347,7 +377,23 @@ mod tests {
     fn test_resolve_horizontal_epsg() {
         assert_eq!(resolve_horizontal_epsg(7415), 28992);
         assert_eq!(resolve_horizontal_epsg(9518), 25832);
+        assert_eq!(resolve_horizontal_epsg(6697), 6668); // JGD2011 3D → 2D
         assert_eq!(resolve_horizontal_epsg(28992), 28992); // Not compound, returned as-is
         assert_eq!(resolve_horizontal_epsg(4326), 4326); // WGS84, returned as-is
+    }
+
+    #[test]
+    fn test_to_wgs84_from_jgd2011_3d() {
+        // EPSG:6697 = JGD2011 geographic 3D (lat/lon + height)
+        // Sendai area coordinates from PLATEAU dataset
+        let bbox = BBox3D::new(38.275, 141.037, 0.0, 38.283, 141.043, 54.7);
+        let crs = CRS::from_epsg(6697);
+        let result = bbox.to_wgs84(&crs).unwrap();
+        // JGD2011 is essentially the same as WGS84 (sub-meter difference)
+        // so the output should be very close to the input
+        assert!((result.xmin - 141.037).abs() < 0.001);
+        assert!((result.ymin - 38.275).abs() < 0.001);
+        assert!((result.xmax - 141.043).abs() < 0.001);
+        assert!((result.ymax - 38.283).abs() < 0.001);
     }
 }
