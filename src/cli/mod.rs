@@ -464,9 +464,17 @@ async fn handle_item_command(
     let spinner = create_spinner("Building STAC Item…");
 
     // Build STAC Item
-    // For remote URLs, use the virtual path from the reader
-    let mut builder =
-        StacItemBuilder::from_file(reader.file_path(), reader.as_ref(), base_url.as_deref())?;
+    // For remote URLs, use the original URL as the asset href when no base_url is given
+    let original_url = match &source {
+        InputSource::Remote(url) => Some(url.as_str()),
+        InputSource::Local(_) => None,
+    };
+    let mut builder = StacItemBuilder::from_file(
+        reader.file_path(),
+        reader.as_ref(),
+        base_url.as_deref(),
+        original_url,
+    )?;
 
     // Apply custom options
     if let Some(custom_id) = id {
@@ -1224,9 +1232,10 @@ async fn process_collection_logic(
                 file_path,
                 reader.as_ref(),
                 config.base_url.as_deref(),
+                None,
             )
         } else {
-            StacItemBuilder::from_file(file_path, reader.as_ref(), config.base_url.as_deref())
+            StacItemBuilder::from_file(file_path, reader.as_ref(), config.base_url.as_deref(), None)
         };
 
         match builder_result {

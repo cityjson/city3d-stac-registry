@@ -316,10 +316,13 @@ impl StacItemBuilder {
     /// * `base_url` - Optional base URL for asset hrefs. If provided, asset hrefs will be
     ///   absolute URLs (e.g., "https://example.com/data/file.json").
     ///   If None, hrefs will be relative paths (just the filename).
+    /// * `original_url` - Optional original remote URL. If the file was fetched from a remote
+    ///   source and no `base_url` is provided, this URL is used as the asset href.
     pub fn from_file(
         file_path: &Path,
         reader: &dyn CityModelMetadataReader,
         base_url: Option<&str>,
+        original_url: Option<&str>,
     ) -> Result<Self> {
         let id = file_path
             .file_stem()
@@ -362,7 +365,7 @@ impl StacItemBuilder {
             }
         };
 
-        // Generate asset href based on base_url
+        // Generate asset href based on base_url or original_url
         let file_name = file_path
             .file_name()
             .and_then(|n| n.to_str())
@@ -378,7 +381,10 @@ impl StacItemBuilder {
                 };
                 format!("{normalized_base}{file_name}")
             }
-            None => file_name.to_string(),
+            None => match original_url {
+                Some(url) => url.to_string(),
+                None => file_name.to_string(),
+            },
         };
 
         builder = builder.data_asset(href, media_type);
@@ -398,10 +404,12 @@ impl StacItemBuilder {
     /// * `file_path` - Path to the CityJSON file
     /// * `reader` - Reader instance for the file
     /// * `base_url` - Optional base URL for asset hrefs
+    /// * `original_url` - Optional original remote URL for asset hrefs when no base_url
     pub fn from_file_with_format_suffix(
         file_path: &Path,
         reader: &dyn CityModelMetadataReader,
         base_url: Option<&str>,
+        original_url: Option<&str>,
     ) -> Result<Self> {
         let stem = file_path
             .file_stem()
@@ -453,7 +461,7 @@ impl StacItemBuilder {
             }
         };
 
-        // Generate asset href based on base_url
+        // Generate asset href based on base_url or original_url
         let file_name = file_path
             .file_name()
             .and_then(|n| n.to_str())
@@ -469,7 +477,10 @@ impl StacItemBuilder {
                 };
                 format!("{normalized_base}{file_name}")
             }
-            None => file_name.to_string(),
+            None => match original_url {
+                Some(url) => url.to_string(),
+                None => file_name.to_string(),
+            },
         };
 
         builder = builder.data_asset(href, media_type);
@@ -554,7 +565,7 @@ mod tests {
         let temp_file = create_test_cityjson();
         let reader = CityJSONReader::new(temp_file.path()).unwrap();
 
-        let builder = StacItemBuilder::from_file(temp_file.path(), &reader, None).unwrap();
+        let builder = StacItemBuilder::from_file(temp_file.path(), &reader, None, None).unwrap();
         let item = builder.build().unwrap();
 
         assert!(item.bbox.is_some());

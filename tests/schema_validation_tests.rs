@@ -72,7 +72,7 @@ fn test_data_path(filename: &str) -> PathBuf {
 fn build_item_from_file(filename: &str) -> Value {
     let path = test_data_path(filename);
     let reader = get_reader(&path).expect(&format!("Failed to create reader for {filename}"));
-    let builder = StacItemBuilder::from_file(&path, reader.as_ref(), None)
+    let builder = StacItemBuilder::from_file(&path, reader.as_ref(), None, None)
         .expect(&format!("Failed to build item for {filename}"));
     let item = builder.build().expect("Failed to build STAC Item");
     serde_json::to_value(item).expect("Failed to serialize STAC Item")
@@ -660,7 +660,7 @@ mod aggregate_collection_schema_tests {
             .map(|f| {
                 let path = test_data_path(f);
                 let reader = get_reader(&path).expect(&format!("Failed to read {f}"));
-                let builder = StacItemBuilder::from_file(&path, reader.as_ref(), None)
+                let builder = StacItemBuilder::from_file(&path, reader.as_ref(), None, None)
                     .expect(&format!("Failed to build item for {f}"));
                 builder.build().expect("Failed to build STAC Item")
             })
