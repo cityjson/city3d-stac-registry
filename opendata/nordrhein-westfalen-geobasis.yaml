@@ -1,0 +1,54 @@
+id: geobasis-nrw
+title: 3D Building Models LoD2 Nordrhein-Westfalen
+description: |
+  Digital 3D building models (LoD2) for the state of Nordrhein-Westfalen (North Rhine-Westphalia), Germany.
+  The models are derived from Airborne Laser Scanning (ALS, 2019-2024), a 1m resolution Digital
+  Terrain Model (DGM1, 2019-2024), and building footprints from ALKIS (as of 01.09.2023) and
+  ATKIS (as of 01.10.2024). Buildings feature standardized roof shapes (e.g., gable or hipped roofs).
+  Standard heights based on building function are applied if the automatically calculated height is less than 1m.
+  It is provided as an open dataset without any usage restrictions or conditions (Zero license).
+license: dl-de/zero-2-0
+keywords:
+  - 3d city model
+  - germany
+  - nordrhein-westfalen
+  - nrw
+  - buildings
+  - citygml
+  - lod2
+providers:
+  - name: Geobasis NRW (Bezirksregierung Köln)
+    url: https://www.bezreg-koeln.nrw.de/geobasis-nrw
+    roles:
+      - producer
+      - licensor
+      - host
+    description: State Office for Geoinformation and Surveying North Rhine-Westphalia
+    # NOTE: Contact via geobasis@bezreg-koeln.nrw.de
+inputs:
+  - https://www.opengeodata.nrw.de/produkte/geobasis/3dg/lod2_gml/lod2_gml/ # NOTE: Direct HTTP directory listing containing the bulk data files (tiled downloads).
+extent:
+  spatial:
+    bbox: [5.8, 50.3, 9.5, 52.6] # [west, south, east, north]
+    crs: EPSG:25832
+  temporal:
+    interval:
+      start: "2019-01-01T00:00:00Z" # NOTE: Based on the earliest ALS/DGM1 data vintage (2019).
+      end: "2024-10-01T00:00:00Z" # NOTE: Based on the latest ATKIS data vintage (01.10.2024).
+links:
+  - rel: about
+    href: https://www.bezreg-koeln.nrw.de/geobasis-nrw/produkte-und-dienste/3d-gebaeudemodelle
+    type: text/html
+    title: Geobasis NRW - 3D Building Models Product Page
+  - rel: about
+    href: https://www.geoportal.nrw/?activetab=map#/datasets/iso/5d9a8abc-dfd0-4dda-b8fa-165cce4d8065
+    type: text/html
+    title: Geoportal NRW Metadata (ISO 19115)
+  - rel: alternate
+    href: https://www.bezreg-koeln.nrw.de/system/files/media/document/file/geobasis_3dg_testdaten_3d-gm-lod2_citygml.zip
+    type: application/zip
+    title: Test Data Download (LoD2 CityGML)
+# Additional Notes:
+# - Format: CityGML
+# - Access Method: Direct HTTP directory containing data archives.
+# - License Constraint: Zero conditions, absolute free use.

@@ -1,0 +1,57 @@
+id: lvermgeo-schleswig-holstein
+title: 3D building models LoD2 Schleswig-Holstein
+description: |
+  Digital 3D building models (Level of Detail 2) for the state of Schleswig-Holstein, Germany.
+  Compared to LoD1, the LoD2 models additionally feature standardized roof shapes that correspond
+  to the actual ridge lines. The heights of the buildings are generally derived from
+  laser scanning data. The data is provided in CityGML format.
+  The dataset allows for statewide mass extraction via a GeoJSON link list, as well as area-based downloads.
+license: proprietary # NOTE: Despite being hosted on an "open geodata" portal, the metadata strictly states that reproduction or distribution violates copyright law and survey law. Verification of the actual terms of use on the portal is recommended.
+keywords:
+  - 3d city model
+  - germany
+  - schleswig-holstein
+  - buildings
+  - citygml
+  - geojson
+  - lod2
+  - laserscanning
+providers:
+  - name: Landesamt für Vermessung und Geoinformation Schleswig-Holstein
+    url: https://www.schleswig-holstein.de/DE/landesregierung/ministerien-behoerden/LVERMGEOSH/lvermgeosh_node.html
+    roles:
+      - producer
+      - licensor
+      - host
+    description: State Office for Surveying and Geoinformation Schleswig-Holstein
+    #NOTE: Contact via Vertrieb.Geobasisdaten@LVermGeo.landsh.de.
+inputs:
+  - https://geodaten.schleswig-holstein.de/gaialight-sh/_apps/dladownload/single.php?file=LOD2_SH_Massendownload.geojson&id=4 # NOTE: GeoJSON file containing the mass download links for the entire state.
+extent:
+  spatial:
+    bbox: [7.87, 53.37, 11.32, 55.06] # [west, south, east, north]
+    crs: EPSG:25832
+  temporal:
+    interval:
+      start: "2018-04-24T00:00:00Z" # NOTE: Initial creation date from the metadata.
+      end: "2022-04-30T00:00:00Z" # NOTE: Date of the revision/publication referenced in the metadata.
+links:
+  - rel: about
+    href: https://sh-mis.gdi-sh.de/smartfinder-sdi/?lang=en#/datasets/iso/0cd0b5b3-d5f8-407f-a7a3-b01739ed9806
+    type: text/html
+    title: Metadata (ISO 19119)
+  - rel: about
+    href: https://www.schleswig-holstein.de/DE/landesregierung/ministerien-behoerden/LVERMGEOSH/Service/serviceGeobasisdaten/geodatenService_Geobasisdaten_LoD.html
+    type: text/html
+    title: LVermGeo SH - 3D Building Models (LoD1, LoD2) Product Page
+  - rel: source
+    href: https://geodaten.schleswig-holstein.de/gaialight-sh/_apps/dladownload/
+    type: text/html
+    title: Open Geo Data Download Portal Schleswig-Holstein
+  - rel: alternate
+    href: https://geodaten.schleswig-holstein.de/gaialight-sh/_apps/dladownload/dl-lod2.html
+    type: text/html
+    title: Area-based Download Interface (Alternative Access)
+# Additional Notes:
+# - Formats: CityGML
+# - Access Method: Mass download via GeoJSON link list (recommended for statewide processing) or interactive area-based selection.

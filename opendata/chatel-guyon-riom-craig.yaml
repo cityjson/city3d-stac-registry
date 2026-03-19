@@ -1,0 +1,66 @@
+id: craig-chatel-guyon-riom-2024
+title: 3D building models Châtel-Guyon & Riom 2024
+description: |
+  Digital 3D building models for the municipalities of Châtel-Guyon and Riom, France.
+  The dataset contains approximately 15,000 buildings modeled in LoD 2.2 with textured roofs.
+  Produced in 2024 by ATGT using 5cm resolution nadir aerial photographs acquired in 2018 for the PCRS.
+  The precision is under 10 cm in planimetry (XY) and under 20 cm in altimetry (Z).
+license: etalab-2.0 # NOTE: Licence Ouverte v2.0
+keywords:
+  - 3d city model
+  - france
+  - chatel-guyon
+  - riom
+  - auvergne-rhone-alpes
+  - buildings
+  - citygml
+  - cityjson
+  - lod2
+  - textured roofs
+providers:
+  - name: CRAIG (Centre Régional Auvergne-Rhône-Alpes de l'Information Géographique)
+    url: https://ids.craig.fr/geocat/srv/eng/catalog.search#/home
+    roles:
+      - producer
+      - host
+      - licensor
+    description: Regional geographic information center for Auvergne-Rhône-Alpes.
+    # NOTE: Contact via contact@craig.fr
+inputs:
+  - https://drive.opendata.craig.fr/s/opendata?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_Building%2FRiom_Chatel-Guyon # NOTE: Main repository folder for CityGML files.
+  - https://drive.opendata.craig.fr/s/opendata?path=%2F3d%2Fbati3d%2F02_CIM%2FCityJSON%2F2024_Building%2FRiom_Chatel-Guyon # NOTE: Main repository folder for CityJSON files.
+extent:
+  spatial:
+    bbox: [3.0301, 45.8647, 3.1841, 45.9415] # [west, south, east, north]
+    crs: EPSG:2154
+    interval:
+      start: "2018-01-01T00:00:00Z" # NOTE: Start of aerial imagery acquisition (2018).
+      end: "2018-12-31T23:59:59Z" # NOTE: End of aerial imagery acquisition.
+links:
+  - rel: alternate
+    href: https://ids.craig.fr/mapstore/#/viewer/3788
+    type: text/html
+    title: Web 3D Viewer - Riom Limagne et Volcans
+  - rel: about
+    href: https://ids.craig.fr/geocat/srv/api/records/d47e5a19-12f6-42d7-833b-5d7d8d94b3d8/formatters/xml
+    type: application/xml
+    title: Metadata
+  - rel: source
+    href: https://ids.craig.fr/geocat/srv/api/records/d47e5a19-12f6-42d7-833b-5d7d8d94b3d8
+    type: text/html
+    title: CRAIG Geocat - Product Description Page
+  - rel: source
+    href: https://ids.craig.fr/geocat/srv/eng/catalog.search#/home
+    type: text/html
+    title: CRAIG Geocat Catalog Search
+  - rel: source
+    href: https://www.data.gouv.fr
+    type: text/html
+    title: French National Open Data Portal
+  - rel: license
+    href: https://www.etalab.gouv.fr/wp-content/uploads/2017/04/ETALAB-Licence-Ouverte-v2.0.pdf
+    type: application/pdf
+    title: Licence Ouverte 2.0
+# Additional Notes:
+# - Formats Available: CityGML, CityJSON, COLLADA, ESRI Geodatabase, OBJ.
+# - Required Attribution: "CRAIG - FEDER Auvergne-Rhône-Alpes - 2025"

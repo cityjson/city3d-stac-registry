@@ -1,0 +1,66 @@
+id: craig-clermont-ferrand-2024
+title: 3D building models Clermont-Ferrand 2024
+description: |
+  Digital 3D building models for part of the Clermont-Ferrand agglomeration, France.
+  The dataset covers the municipalities of Cournon-d'Auvergne, Gerzat, and parts of Chamalières and Clermont-Ferrand.
+  It contains approximately 45,000 buildings modeled in LoD 2.2 with textured roofs.
+  Produced between 2024 and 2025 by ATGT using 5cm resolution nadir aerial photographs acquired in 2022.
+license: etalab-2.0 # NOTE: Licence Ouverte v2.0
+keywords:
+  - 3d city model
+  - france
+  - clermont-ferrand
+  - auvergne-rhone-alpes
+  - buildings
+  - citygml
+  - cityjson
+  - lod2
+  - textured roofs
+providers:
+  - name: CRAIG (Centre Régional Auvergne-Rhône-Alpes de l'Information Géographique)
+    url: https://ids.craig.fr/geocat/srv/eng/catalog.search#/home
+    roles:
+      - producer
+      - host
+      - licensor
+    description: Regional geographic information center for Auvergne-Rhône-Alpes.
+    # NOTE: Contact via contact@craig.fr
+inputs:
+  - https://drive.opendata.craig.fr/s/opendata?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_Building%2FClermont # NOTE: Main repository folder for CityGML files.
+  - https://drive.opendata.craig.fr/s/opendata?path=%2F3d%2Fbati3d%2F02_CIM%2FCityJSON%2F2024_Building%2FClermont # NOTE: Main repository folder for CityJSON files.
+extent:
+  spatial:
+    bbox: [3.0563, 45.7214, 3.2241, 45.8486] # [west, south, east, north]
+    crs: EPSG:2154 # NOTE: RGF93 / Lambert-93 (from XML). Vertical datum is EPSG:5720 (NGF-IGN69).
+  temporal:
+    interval:
+      start: "2022-01-01T00:00:00Z" # NOTE: Start of aerial imagery acquisition.
+      end: "2022-12-31T23:59:59Z" # NOTE: End of aerial imagery acquisition.
+links:
+  - rel: alternate
+    href: https://ids.craig.fr/mapstore/#/viewer/3771
+    type: text/html
+    title: Web 3D Viewer - Clermont Auvergne Métropole
+  - rel: about
+    href: https://ids.craig.fr/geocat/srv/api/records/271cf7a7-6d32-4291-8ebf-64f47dde8568/formatters/xml
+    type: application/xml
+    title: Metadata
+  - rel: source
+    href: https://ids.craig.fr/geocat/srv/api/records/271cf7a7-6d32-4291-8ebf-64f47dde8568
+    type: text/html
+    title: CRAIG Geocat - Product Description Page
+  - rel: source
+    href: https://ids.craig.fr/geocat/srv/eng/catalog.search#/home
+    type: text/html
+    title: CRAIG Geocat Catalog Search
+  - rel: source
+    href: https://www.data.gouv.fr
+    type: text/html
+    title: French National Open Data Portal
+  - rel: license
+    href: https://www.etalab.gouv.fr/wp-content/uploads/2017/04/ETALAB-Licence-Ouverte-v2.0.pdf
+    type: application/pdf
+    title: Licence Ouverte 2.0
+# Additional Notes:
+# - Formats Available: CityGML, CityJSON, COLLADA, ESRI Geodatabase, OBJ.
+# - Required Attribution: "CRAIG - FEDER Auvergne-Rhône-Alpes - 2025"
