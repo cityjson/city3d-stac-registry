@@ -1,0 +1,68 @@
+id: craig-isere-2025
+title: 3D building models Isère 2025
+description: |
+  Digital 3D building models for 14 EPCIs (municipalities) in the Isère department, France.
+  The dataset contains approximately 30,000 buildings modeled in LoD 2.2 and LoD 3.
+  A unique feature of this dataset is that the building roofs are textured with a color gradient
+  representing the calculated solar irradiation for the year 2023, taking into account roof
+  characteristics and shadows from surrounding terrain and vegetation.
+  Produced by ATGT from 5cm resolution nadir aerial photographs acquired between 2019 and 2024.
+license: etalab-2.0 # NOTE: Licence Ouverte 2.0 (Open License version 2.0) is the standard French open data license.
+keywords:
+  - 3d city model
+  - france
+  - isere
+  - auvergne-rhone-alpes
+  - buildings
+  - citygml
+  - cityjson
+  - lod2
+  - lod3
+  - solar irradiation
+providers:
+  - name: CRAIG (Centre Régional Auvergne-Rhône-Alpes de l'Information Géographique)
+    url: https://ids.craig.fr/geocat/srv/eng/catalog.search#/home
+    roles:
+      - producer
+      - host
+      - licensor
+    description: Regional geographic information center for Auvergne-Rhône-Alpes.
+    # NOTE: Contact via contact@craig.fr
+inputs:
+  - https://drive.opendata.craig.fr/s/opendata?path=%2F3d%2Fbati3d_isere%2F02_CIM%2FCityGML # NOTE: Main repository folder for CityGML files per EPCI.
+extent:
+  spatial:
+    bbox: [4.6486, 44.6959, 6.3593, 45.8139] # [west, south, east, north]
+    crs: EPSG:3945
+  temporal:
+    interval:
+      start: "2019-01-01T00:00:00Z" # NOTE: Start of aerial imagery acquisition.
+      end: "2024-12-31T23:59:59Z" # NOTE: End of aerial imagery acquisition.
+links:
+  - rel: alternate
+    href: https://3d.craig.fr/datasets/2025_bati3d_isere/2025_BC3_D38_solar_tileset.json
+    type: application/json
+    title: OGC 3D Tiles format specifically for web visualization of the solar textures
+  - rel: about
+    href: https://ids.craig.fr/geocat/srv/api/records/cd983dca-c7bd-4bf9-bb48-ab8ddf7af8a4/formatters/xml
+    type: application/xml
+    title: Metadata
+  - rel: source
+    href: https://ids.craig.fr/geocat/srv/api/records/cd983dca-c7bd-4bf9-bb48-ab8ddf7af8a4
+    type: text/html
+    title: CRAIG Geocat - Product Description Page
+  - rel: source
+    href: https://ids.craig.fr/geocat/srv/eng/catalog.search#/home
+    type: text/html
+    title: CRAIG Geocat Catalog Search
+  - rel: source
+    href: https://www.data.gouv.fr
+    type: text/html
+    title: French National Open Data Portal
+  - rel: license
+    href: https://www.etalab.gouv.fr/wp-content/uploads/2017/04/ETALAB-Licence-Ouverte-v2.0.pdf
+    type: application/pdf
+    title: Licence Ouverte 2.0
+# Additional Notes:
+# - Formats Available: CityGML, CityJSON, COLLADA, ESRI Geodatabase, OBJ, OGC 3DTiles.
+# - Required Attribution: "CRAIG - CD 38 - FEDER Auvergne-Rhône-Alpes - 2025"

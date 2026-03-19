@@ -1,0 +1,72 @@
+id: craig-vichy-unesco-2024
+title: 3D building models Vichy UNESCO perimeter 2024
+description: |
+  High-precision digital 3D building models strictly limited to the UNESCO World Heritage perimeter within the city of Vichy, France.
+  Unlike broader city models, this dataset focuses on a specific historical zone, containing exactly 879 buildings.
+  Because of its focus on heritage preservation, the models are highly detailed at LoD 3 with textured roofs.
+  Produced in 2024 by ATGT using ultra-high resolution (3cm) nadir aerial photographs acquired in 2021.
+license: etalab-2.0 # NOTE: Licence Ouverte v2.0
+keywords:
+  - 3d city model
+  - france
+  - vichy
+  - auvergne-rhone-alpes
+  - unesco
+  - buildings
+  - citygml
+  - cityjson
+  - lod3
+  - textured roofs
+  - high resolution
+providers:
+  - name: CRAIG (Centre Régional Auvergne-Rhône-Alpes de l'Information Géographique)
+    url: https://ids.craig.fr/geocat/srv/eng/catalog.search#/home
+    roles:
+      - producer
+      - host
+      - licensor
+    description: Regional geographic information center for Auvergne-Rhône-Alpes.
+    # NOTE: Contact via contact@craig.fr
+inputs:
+  - https://drive.opendata.craig.fr/s/opendata?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_Building%2FVichy_UNESCO # NOTE: Main repository folder for CityGML files.
+  - https://drive.opendata.craig.fr/s/opendata?path=%2F3d%2Fbati3d%2F02_CIM%2FCityJSON%2F2024_Building%2FVichy_UNESCO # NOTE: Main repository folder for CityJSON files.
+extent:
+  spatial:
+    bbox: [3.4151, 46.1185, 3.4309, 46.1279] # [west, south, east, north]
+    crs: EPSG:2154
+  temporal:
+    interval:
+      start: "2021-01-01T00:00:00Z" # NOTE: Start of aerial imagery acquisition (3cm resolution).
+      end: "2021-12-31T23:59:59Z" # NOTE: End of aerial imagery acquisition.
+links:
+  - rel: alternate
+    href: https://3d.craig.fr/datasets/bati3d_aura/03_vichy_communaute/2024_building/tileset.json
+    type: application/json
+    title: OGC 3D Tiles format for web visualization
+  - rel: about
+    href: https://www.vichy-patrimoine-mondial.com/situer/
+    type: text/html
+    title: Information about the Vichy UNESCO World Heritage perimeter
+  - rel: about
+    href: https://ids.craig.fr/geocat/srv/api/records/ce6d5788-f1af-43de-bfd3-6fd7c9010676/formatters/xml
+    type: application/xml
+    title: Metadata
+  - rel: source
+    href: https://ids.craig.fr/geocat/srv/api/records/ce6d5788-f1af-43de-bfd3-6fd7c9010676
+    type: text/html
+    title: CRAIG Geocat - Product Description Page
+  - rel: source
+    href: https://ids.craig.fr/geocat/srv/eng/catalog.search#/home
+    type: text/html
+    title: CRAIG Geocat Catalog Search
+  - rel: source
+    href: https://www.data.gouv.fr
+    type: text/html
+    title: French National Open Data Portal
+  - rel: license
+    href: https://www.etalab.gouv.fr/wp-content/uploads/2017/04/ETALAB-Licence-Ouverte-v2.0.pdf
+    type: application/pdf
+    title: Licence Ouverte 2.0
+# Additional Notes:
+# - Formats Available: CityGML, CityJSON, COLLADA, ESRI Geodatabase, OBJ, OGC 3DTiles.
+# - Required Attribution: "CRAIG - FEDER Auvergne-Rhône-Alpes - 2025"

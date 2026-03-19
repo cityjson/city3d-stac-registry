@@ -1,0 +1,59 @@
+id: lvermgeo-sachsen-anhalt
+title: Digital 3D building models LoD2 Sachsen-Anhalt
+description: |
+  Digital 3D building models (LoD1 and LoD2) for the state of Sachsen-Anhalt, Germany.
+  The models represent buildings and selected structures (e.g., towers, industrial facilities, sports facilities, historic buildings, and locks) derived from ALKIS and ATKIS databases.
+  Underground buildings are explicitly excluded.
+  LoD1 models are represented as block models with flat roofs, featuring a height accuracy of approximately 5 meters.
+  LoD2 models feature standardized roof shapes aligned with actual ridge lines, providing a height accuracy of approximately 1 meter.
+license: dl-de/by-2-0
+keywords:
+  - 3d city model
+  - germany
+  - sachsen-anhalt
+  - buildings
+  - citygml
+  - lod1
+  - lod2
+providers:
+  - name: Landesamt für Vermessung und Geoinformation Sachsen-Anhalt (LVermGeo)
+    url: https://www.lvermgeo.sachsen-anhalt.de/
+    roles:
+      - producer
+      - licensor
+      - host
+    description: State Office for Surveying and Geoinformation Saxony-Anhalt
+    # NOTE: Contact via poststelle.lvermgeo@sachsen-anhalt.de
+inputs:
+  - https://www.geodatenportal.sachsen-anhalt.de/gfds_webshare/download/LVermGeo/Geodatenportal/Online-Bereitstellung-LVermGeo/3D/LoD2-1.zip
+  - https://www.geodatenportal.sachsen-anhalt.de/gfds_webshare/download/LVermGeo/Geodatenportal/Online-Bereitstellung-LVermGeo/3D/LoD2-2.zip
+  - https://www.geodatenportal.sachsen-anhalt.de/gfds_webshare/download/LVermGeo/Geodatenportal/Online-Bereitstellung-LVermGeo/3D/LoD2-3.zip
+  - https://www.geodatenportal.sachsen-anhalt.de/gfds_webshare/download/LVermGeo/Geodatenportal/Online-Bereitstellung-LVermGeo/3D/LoD2-4.zip
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:25832
+links:
+  - rel: source
+    href: https://www.lvermgeo.sachsen-anhalt.de/de/gdp-open-data.html
+    type: text/html
+    title: LVermGeo Sachsen-Anhalt Open Data Portal
+  - rel: about
+    href: https://www.lvermgeo.sachsen-anhalt.de/de/gdp-3d-gebaeudemodell.html
+    type: text/html
+    title: LVermGeo Sachsen-Anhalt - 3D Building Models Product Page
+  - rel: alternate
+    href: https://www.lvermgeo.sachsen-anhalt.de/de/gdp-download-lod2.html
+    type: text/html
+    title: Area-based Download Interface
+  - rel: alternate
+    href: https://www.geodatenportal.sachsen-anhalt.de/wss/service/ST_LVermGeo_LoD2_WFS/guest?Service=WFS&Request=GetCapabilities
+    type: application/xml
+    title: Web Feature Service (WFS) Capabilities for LoD2
+  - rel: alternate
+    href: https://geodatenportal.sachsen-anhalt.de/ows_INSPIRE_LVermGeo_ALKIS_LOD2_BU?Service=WMS&Request=GetCapabilities
+    type: application/xml
+    title: Web Map Service (WMS) Capabilities for LoD2
+# Additional Notes:
+# - Formats: CityGML (AdV-CityGML-Profil) and AdV-Shape-Format.
+# - Height Reference System: EPSG:7837 (DE_DHHN2016_NH).

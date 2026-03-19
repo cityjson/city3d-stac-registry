@@ -1,0 +1,48 @@
+id: laiv-mecklenburg-vorpommern
+title: 3D Building Models LoD2 Mecklenburg-Vorpommern
+description: |
+  Digital 3D building models (LoD2) for the state of Mecklenburg-Vorpommern, Germany.
+  The models are reduced to surface buildings and structures recorded in the land register
+  (underground buildings are not included). In this LoD2 structural model, buildings are
+  modeled with standardized roof shapes (e.g., gable or hipped roofs). The 3D building
+  volumes carry the ALKIS UUID, allowing them to be linked to other specialist data via
+  the ALKIS reference. The dataset contains approximately 1.3 million buildings.
+license: CC-BY-4.0
+keywords:
+  - 3d city model
+  - germany
+  - mecklenburg-vorpommern
+  - buildings
+  - citygml
+  - lod2
+  - alkis
+providers:
+  - name: Landesamt für innere Verwaltung Mecklenburg-Vorpommern (LAiV)
+    url: https://www.laiv-mv.de/Geoinformation/Geobasisdaten/
+    roles:
+      - producer
+      - licensor
+    description: State Office for Internal Administration, Geoinformation and Surveying
+    # NOTE: Contact via geodatenservice@laiv-mv.de
+inputs:
+  - https://www.geodaten-mv.de/dienste/gebaeude_atom?type=dataset&id=8397b554-5cb9-4274-8be8-c20490d9a6e8 # NOTE: ATOM feed providing direct download links for the dataset.
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:25833
+links:
+  - rel: about
+    href: https://laiv.geodaten-mv.de/afgvk/Geotopographie/Beschreibung?produkt=3DGbm
+    type: text/html
+    title: LAiV MV - Product Description 3D Building Models
+  - rel: source
+    href: https://www.geoportal-mv.de/portal/
+    type: text/html
+    title: Geoportal Mecklenburg-Vorpommern
+# Additional Notes:
+# - Format: CityGML (compressed as ZIP)
+# - Structure: Tiled dataset (2 km x 2 km tiles)
+# - Size/Scope: Approx. 1.3 million buildings.
+# - Update Frequency: Continuously updated according to the ALKIS floor plans of the previous year.
+# - Data Linkage: All 3D building volumes carry their respective ALKIS UUID for cross-referencing.
+# - Mandatory Attribution: "© GeoBasis-DE/M-V <Jahr der letzten Datenlieferung>" (Required by the CC BY 4.0 terms for this dataset).

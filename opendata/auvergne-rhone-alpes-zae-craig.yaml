@@ -1,0 +1,67 @@
+id: craig-aura-zae-2024
+title: 3D building models - Economic Activity Zones (ZAE) Auvergne-Rhône-Alpes 2024
+description: |
+  Digital 3D building models strictly limited to the Economic Activity Zones (ZAE - Zones d'activités économiques) across 9 municipalities (EPCI) in the Auvergne-Rhône-Alpes region, France.
+  IMPORTANT: This dataset does NOT cover the entirety of these cities or municipalities. It exclusively models specific industrial, commercial, and business parks within those territories.
+  The dataset contains approximately 24,000 buildings modeled in high detail at LoD 3 with textured roofs.
+  Produced between 2024 and 2025 by ATGT using 3 to 5 cm resolution nadir aerial photographs acquired between 2016 and 2022.
+license: etalab-2.0 # NOTE: Licence Ouverte v2.0
+keywords:
+  - 3d city model
+  - france
+  - auvergne-rhone-alpes
+  - zae
+  - economic zones
+  - buildings
+  - citygml
+  - cityjson
+  - lod3
+  - textured roofs
+providers:
+  - name: CRAIG (Centre Régional Auvergne-Rhône-Alpes de l'Information Géographique)
+    url: https://ids.craig.fr/geocat/srv/eng/catalog.search#/home
+    roles:
+      - producer
+      - host
+      - licensor
+    description: Regional geographic information center for Auvergne-Rhône-Alpes.
+    # NOTE: Contact via contact@craig.fr
+inputs:
+  - https://drive.opendata.craig.fr/s/opendata?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_ZAE # NOTE: Main repository folder for CityGML files.
+  - https://drive.opendata.craig.fr/s/opendata?path=%2F3d%2Fbati3d%2F02_CIM%2FCityJSON%2F2024_ZAE # NOTE: Main repository folder for CityJSON files.
+extent:
+  spatial:
+    bbox: [2.5502, 44.7974, 6.1437, 46.3868] # [west, south, east, north] / Merged from 9 distinct EPCI zones
+    crs: EPSG:2154
+  temporal:
+    interval:
+      start: "2016-01-01T00:00:00Z" # NOTE: Start of aerial imagery acquisition.
+      end: "2022-12-31T23:59:59Z" # NOTE: End of aerial imagery acquisition.
+links:
+  - rel: alternate
+    href: https://ids.craig.fr/mapstore/#/viewer/3802
+    type: text/html
+    title: Web 3D Viewer - Zones d'activités économiques (ZAE) en AuRA
+  - rel: about
+    href: https://ids.craig.fr/geocat/srv/api/records/e8f0e2e2-fd9f-4db7-924f-1194e912e6c5/formatters/xml
+    type: application/xml
+    title: Metadata
+  - rel: source
+    href: https://ids.craig.fr/geocat/srv/eng/catalog.search#/metadata/e8f0e2e2-fd9f-4db7-924f-1194e912e6c5
+    type: text/html
+    title: CRAIG Geocat - Product Description Page
+  - rel: source
+    href: https://ids.craig.fr/geocat/srv/eng/catalog.search#/home
+    type: text/html
+    title: CRAIG Geocat Catalog Search
+  - rel: source
+    href: https://www.data.gouv.fr
+    type: text/html
+    title: French National Open Data Portal
+  - rel: license
+    href: https://www.etalab.gouv.fr/wp-content/uploads/2017/04/ETALAB-Licence-Ouverte-v2.0.pdf
+    type: application/pdf
+    title: Licence Ouverte 2.0
+# Additional Notes:
+# - Formats Available: CityGML, CityJSON, COLLADA, ESRI Geodatabase, OBJ.
+# - Required Attribution: "CRAIG - FEDER Auvergne-Rhône-Alpes - 2025"

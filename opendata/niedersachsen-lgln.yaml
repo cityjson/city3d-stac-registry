@@ -1,0 +1,68 @@
+id: lgln-niedersachsen
+title: 3D Building Models LoD2 Niedersachsen
+description: |
+  Digital 3D building models (LoD1 and LoD2) for the state of Niedersachsen (Lower Saxony), Germany.
+  The models are derived from ALKIS building footprints, a 5m resolution Digital Terrain Model (DGM),
+  and 3D measurement data (laser scanning or matching point clouds). The statewide production of LoD2
+  was completed in 2019 and is continuously updated. LoD2 models feature standardized roof shapes
+  with a height accuracy of approximately +/- 1m. The dataset includes extensive attributes defined
+  by the AdV standard, plus additional custom attributes provided by LGLN such as roof inclination,
+  roof orientation, and calculated roof area.
+license: proprietary # NOTE: Exact license isn't explicitly named in the snippet (states "Geltende Lizenz je Gebäude"). Assumed restricted until a specific open data license (e.g., dl-de/by-2-0) is verified.
+keywords:
+  - 3d city model
+  - germany
+  - niedersachsen
+  - buildings
+  - citygml
+  - geojson
+  - lod2
+  - stac-api
+providers:
+  - name: Landesamt für Geoinformation und Landesvermessung Niedersachsen (LGLN)
+    url: https://lgln-geodaten.niedersachsen.de
+    roles:
+      - producer
+      - host
+    description: State Office for Geoinformation and Land Surveying Lower Saxony
+    # NOTE: Contact via Data_Access@lgln.niedersachsen.de
+inputs:
+  - https://arcgis-geojson.s3.eu-de.cloud-object-storage.appdomain.cloud/lod2/lgln-opengeodata-lod2.geojson # NOTE: GeoJSON file containing the mass download links.
+extent:
+  spatial:
+    bbox: [
+        6.604678999999889,
+        51.204314999999134,
+        11.7407869999998,
+        54.002131999999094,
+      ] # [west, south, east, north]
+    crs: EPSG:25832
+  temporal:
+    interval:
+      start: "2024-05-31T00:00:00Z" # NOTE: Extracted from the product STAC (1st link in Links section)
+      end: "2024-08-30T00:00:00Z" # NOTE: Extracted from the product STAC (1st link in Links section)
+links:
+  - rel: about
+    href: https://lod.stac.lgln.niedersachsen.de/collections/lod2
+    type: application/json
+    title: 3D Building Models LoD2 Product STAC API Root
+  - rel: about
+    href: https://www.arcgis.com/sharing/rest/content/items/f5d8dace5aa6479f95147bee4f80a276/info/metadata/metadata.xml?format=default&output=html
+    type: text/html
+    title: ArcGIS Metadata XML
+  - rel: about
+    href: https://ni-lgln-opengeodata.hub.arcgis.com/apps/lgln-opengeodata::3d-geb%C3%A4udemodell-lod2/about
+    type: text/html
+    title: LGLN Niedersachsen - 3D Building Models Product Description Page
+  - rel: source
+    href: https://ni-lgln-opengeodata.hub.arcgis.com
+    type: text/html
+    title: LGLN OpenGeoData Hub
+  - rel: alternate
+    href: https://lod.stac.lgln.niedersachsen.de/collections/lod2/items # NOTE: Alternative programmatic access to individual 1x1km tiles via STAC API.
+    type: application/geo+json
+    title: STAC API Items (Alternative Access)
+# Additional Notes:
+# - Format: AdV-CityGML 1.0, 3D-Shape
+# - Structure: Tiled dataset (1 x 1 km² tiles)
+# - Access Method: Direct access via STAC API. Mass download instructions are available on the portal.

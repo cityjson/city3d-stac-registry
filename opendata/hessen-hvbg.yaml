@@ -1,0 +1,64 @@
+id: hvbg-hessen
+title: 3D Building Models Hessen LoD2
+description: |
+  Digital 3D building models (LoD2) for the state of Hessen, Germany.
+  The dataset is an extension of ALKIS building footprints into the third dimension.
+  Heights are calculated by intersecting footprints with 3D geobasis data such as
+  Airborne Laser Scanning (ALS) and bDOM. It also optionally includes
+  the 'ALKIS-ATKIS-übergreifender Grunddatenbestand', which adds
+  topographical structures with 3D relevance like bridges, towers, and wind turbines.
+  LoD2 models feature standardized roof shapes with a general height
+  accuracy of +/- 1m[cite: 21].
+license: proprietary # NOTE: Offered as free self-service download, but exact open data license (e.g., dl-de/by-2-0) is not explicitly named.
+keywords:
+  - 3d city model
+  - germany
+  - hessen
+  - buildings
+  - citygml
+  - lod2
+providers:
+  - name: Hessian Administration for Land Management and Geoinformation (HVBG)
+    url: https://hvbg.hessen.de
+    roles:
+      - producer
+      - licensor
+    description: State Office for Land Management and Geoinformation Hessen
+    # NOTE: Contact via vertrieb-geobasisdaten@hvbg.hessen.de
+inputs:
+  - https://gds.hessen.de/INTERSHOP/web/WFS/HLBG-Geodaten-Site/de_DE/-/EUR/ViewDownloadcenter-Start?path=3D-Daten/3D-Geb%C3%A4udemodelle/3D-Geb%C3%A4udemodelle%20LoD2/Hochtaunuskreis
+  # NOTE: Direct link to the download portal page, as the direct .zip download URLs for Hessen are dynamic and expire daily.
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:25832
+  temporal:
+    interval:
+      start: "2007-01-01T00:00:00Z" # NOTE: Airborne Laser Scanning (ALS) baseline acquisition started in 2007.
+      end: "2024-12-31T00:00:00Z" # NOTE: ALKIS update cycle and supplementary data mention 2024.
+links:
+  - rel: source
+    href: https://gds.hessen.de/INTERSHOP/web/WFS/HLBG-Geodaten-Site/de_DE/-/EUR/ViewDownloadcenter-Start?path=3D-Daten/3D-Geb%C3%A4udemodelle/3D-Geb%C3%A4udemodelle%20LoD2
+    type: text/html
+    title: HVBG Hessen web portal
+  - rel: about
+    href: https://hvbg.hessen.de/landesvermessung/geotopographie/3d-daten/3d-gebaeudemodelle
+    type: text/html
+    title: HVBG Hessen - 3D Building Models Product Page
+  - rel: about
+    href: https://gds.hessen.de/INTERSHOP/static/WFS/HLBG-Geodaten-Site/-/HLBG-Geodaten/de_DE/Downloadcenter/Daten/3D-Daten/Produktbeschreibung_3D-Geb%C3%A4udemodelle.pdf
+    type: application/pdf
+    title: Product Description - 3D Building Models (PDF)
+  - rel: about
+    href: https://gds.hessen.de/INTERSHOP/static/WFS/HLBG-Geodaten-Site/-/HLBG-Geodaten/de_DE/Downloadcenter/Daten/3D-Daten/Produktbeschreibung_Erweiterter_Grunddatenbestand_LoD2.pdf
+    type: application/pdf
+    title: Product Description - Extended Basic Data Stock LoD2 (PDF)
+  - rel: alternative
+    href: https://hvbg.hessen.de/sites/hvbg.hessen.de/files/2022-08/3d_gebaeude_testdaten_lodd2.zip
+    type: application/zip
+    title: Test Data Download (LoD2)
+# Additional Notes:
+# - Format: CityGML 1.0
+# - Coordinate Reference System: ETRS89/UTM (Zone 32) (EPSG:25832) with height reference DHHN2016 (m ü. NHN)
+# - Update Frequency: Annual updates planned according to AdV product standards.
+# - Accuracy: LoD2 height accuracy is generally +/- 1m[cite: 21], though complex roofs or ATKIS-derived structures (like bridges) may have varying accuracy or be modeled effectively at LoD1 geometry.

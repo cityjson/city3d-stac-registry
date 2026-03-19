@@ -1,0 +1,51 @@
+id: geosn-sachsen
+title: Digital 3D city model (LoD2) Freistaat Sachsen
+description: |
+  Digital 3D city model for the Free State of Saxony (Sachsen), Germany.
+  The model includes both buildings and structures (e.g., bridges, wind turbines, masts, walls, weirs).
+  Buildings are available in Level of Detail 1 (LoD1, flat roof) and Level of Detail 2 (LoD2, standardized roof shapes).
+  Structures are currently modeled exclusively as LoD1 objects because standard roof shapes cannot typically be assigned to them.
+  The models are automatically generated using building floor plans from the ATKIS database, combined with a Digital Terrain Model (DGM) and non-ground points from classified LiDAR point clouds.
+  The dataset is updated annually based on ATKIS and new laser scan data. No manual detailed modeling or texturing is applied.
+license: dl-de/by-2-0
+keywords:
+  - 3d city model
+  - germany
+  - sachsen
+  - saxony
+  - buildings
+  - structures
+  - citygml
+  - lod1
+  - lod2
+providers:
+  - name: Landesamt für Geobasisinformation Sachsen (GeoSN)
+    url: https://www.landesvermessung.sachsen.de/
+    roles:
+      - producer
+      - licensor
+      - host
+    description: State Office for Geobasis Information Saxony.
+    # NOTE: Contact via servicedesk@geosn.sachsen.de
+inputs:
+  - https://www.geodaten.sachsen.de/batch-download-4719.html # NOTE: Area-based batch download. Pre-packaged datasets can be selected and downloaded by district and municipality.
+extent:
+  spatial:
+    bbox: [11.67, 50.00, 15.05, 51.80] # [west, south, east, north]
+    crs: EPSG:25833
+links:
+  - rel: source
+    href: https://www.geodaten.sachsen.de/digitale-hoehenmodelle-3994.html
+    type: text/html
+    title: GeoSN - Digital Elevation and 3D City Models Product Page
+  - rel: about
+    href: https://www.landesvermessung.sachsen.de/fachliche-details-8645.html
+    type: text/html
+    title: GeoSN - Technical Details for 3D City Models
+  - rel: about
+    href: https://geomis.sachsen.de/geomis-client/?lang=de#/datasets/ac2293e2-62a6-4889-b9c4-3534cbdc27bd
+    type: text/html
+    title: GeoMIS Sachsen Metadata (ISO 19115)
+# Additional Notes:
+# - Formats: CityGML, 3D-Shape (with attributes), 3D-DXF (geometry only, no attributes).
+# - Mandatory Attribution: "© GeoSN, dl-de/by-2-0" (or specifically as requested by Data License Germany Attribution 2.0).

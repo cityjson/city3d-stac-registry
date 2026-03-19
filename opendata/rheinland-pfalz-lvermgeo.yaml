@@ -1,0 +1,46 @@
+id: lvermgeo-rheinland-pfalz
+title: 3D Building Models LoD2 Rheinland-Pfalz
+description: |
+  Digital 3D building models (LoD1 and LoD2) for the state of Rheinland-Pfalz, Germany.
+  The models are based on the ALKIS footprints and feature standardized roof shapes.
+  The height accuracy for LoD2 is generally 1 meter, although larger deviations can occur with complex roof shapes.
+license: dl-de/by-2-0
+keywords:
+  - 3d city model
+  - germany
+  - rheinland-pfalz
+  - buildings
+  - citygml
+  - lod2
+providers:
+  - name: Landesamt für Vermessung und Geobasisinformation Rheinland-Pfalz
+    url: https://lvermgeo.rlp.de
+    roles:
+      - producer
+      - licensor
+      - host
+    description: State Office for Surveying and Geobasis Information Rhineland-Palatinate
+    # NOTE: Contact via geodaten@vermkv.rlp.de
+inputs:
+  - https://geoshop.rlp.de/opendata-geb3dlo.html # NOTE: Area-based downloads
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:25832
+links:
+  - rel: source
+    href: https://lvermgeo.rlp.de
+    type: text/html
+    title: LvermGeo RLP Geo Portal
+  - rel: about
+    href: https://www.metaportal.rlp.de/gui/html/0b28684d-b2ce-4b0b-b080-928025588c61
+    type: text/html
+    title: Metadata
+  - rel: alternate
+    href: https://rlp.bl.geoplex.de/v/RLP-in-3D-neu/
+    type: text/html
+    title: Interactive 3D Web Viewer (Geoplex)
+# Additional Notes:
+# - Format: CityGML
+# - Height Reference System: EPSG: 7837 (DE_DHHN2016_NH)
+# - Positional Accuracy: Corresponds to the underlying ALKIS footprints.

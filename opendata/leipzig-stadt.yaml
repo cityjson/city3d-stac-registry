@@ -1,0 +1,44 @@
+id: stadt-leipzig
+title: 3D City Model Leipzig LoD2
+description: |
+  Digital 3D building models (LoD2) for the city of Leipzig, Germany.
+  The models feature standardized roof shapes and are provided in CityGML format.
+license: dl-de/by-2-0
+keywords:
+  - 3d city model
+  - germany
+  - leipzig
+  - buildings
+  - citygml
+  - lod2
+providers:
+  - name: Stadt Leipzig - Amt für Geoinformation und Bodenordnung
+    url: https://www.leipzig.de
+    roles:
+      - producer
+      - licensor
+    description: Office for Geoinformation and Land Management, City of Leipzig
+    # NOTE: Contact via geoinformation@leipzig.de
+inputs:
+  - https://geodaten.leipzig.de/open_data/organisationseinheit/Amt_fuer_Geoinformation_und_Bodenordnung/3d/LoD2/GEB3D_Leipzig_LoD2_CityGML.zip
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:25833
+links:
+  - rel: source
+    href: https://opendata.leipzig.de/dataset/3d-stadtmodell
+    type: text/html
+    title: Open Data Portal Leipzig - 3D City Model Download Page
+  - rel: source
+    href: https://www.leipzig.de/rathaus/statistik-und-daten/geodaten-und-karten/3d-stadtmodell
+    type: text/html
+    title: City of Leipzig - 3D City Model Product Introduction
+  - rel: alternate
+    href: https://geoportal.leipzig.de/arcgis/apps/webappviewer3d/index.html?id=636b96152aac4769b6cf316312f3bf70
+    type: text/html
+    title: Interactive 3D Web Viewer (Geoportal Leipzig)
+# Additional Notes:
+# - Format: CityGML (compressed as ZIP)
+# - Compression: Single ZIP file containing the CityGML data.
+# - Mandatory Attribution: "Datenlizenz Deutschland - Namensnennung - Version 2.0" (dl-de/by-2-0)

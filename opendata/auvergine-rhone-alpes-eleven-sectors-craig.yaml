@@ -1,0 +1,81 @@
+id: craig-aura-eleven-sectors-2021
+title: 3D building models - Eleven Sectors of Auvergne-Rhône-Alpes 2021 (Experimental)
+description: |
+  Experimental digital 3D building models for 11 specific sectors across the Auvergne-Rhône-Alpes region, France.
+  IMPORTANT: This dataset does NOT cover the entirety of the cities. It is a targeted, experimental project evaluating the use of 3D data by modeling specific landmarks and zones.
+  The dataset contains approximately 5,000 buildings modeled in LoD 2.2 or LoD 3 with textured facades and roofs.
+  Produced in 2021 by Avineon. A unique feature of this dataset is the use of oblique aerial photographs (3-5 cm resolution) for the Vichy and Saint-Étienne sectors to improve facade texturing, while other sectors use standard nadir imagery (5 cm) acquired between 2016 and 2020.
+  Modeled sectors include:
+  - Domérat (Châteaugay business park (ZAC))
+  - Moulins (Place d'Allier and Régemortes bridge)
+  - Vichy (Thermal baths district)
+  - Riom (Tobacco factory)
+  - Clermont-Ferrand (Marcel Michelin stadium
+  - Cézeaux campus, and Cournon petroleum depot)
+  - Aurillac (Lescudilliers industrial zone (ZI))
+  - Saint-Étienne (Badouillière-Chavanelle district)
+  - Voiron (City hall district)
+  - Sainte-Colombe (City center)
+  - Bourgoin-Jallieu (L'Oiselet high school)
+  - Montluçon-Domérat (Photovoltaic power station at the airfield (untextured))
+license: etalab-2.0 # NOTE: Licence Ouverte v2.0
+keywords:
+  - 3d city model
+  - france
+  - auvergne-rhone-alpes
+  - experimental
+  - oblique imagery
+  - buildings
+  - citygml
+  - cityjson
+  - esri geodatabase
+  - lod2
+  - lod3
+providers:
+  - name: CRAIG (Centre Régional Auvergne-Rhône-Alpes de l'Information Géographique)
+    url: https://ids.craig.fr/geocat/srv/eng/catalog.search#/home
+    roles:
+      - producer
+      - host
+      - licensor
+    description: Regional geographic information center for Auvergne-Rhône-Alpes.
+    # NOTE: Contact via contact@craig.fr
+inputs:
+  - https://drive.opendata.craig.fr/s/opendata?path=%2F3d%2F2021_aura_3d%2F02_Bati3D%2FCityGML # NOTE: Main repository folder for CityGML files.
+  - https://drive.opendata.craig.fr/s/opendata?path=%2F3d%2F2021_aura_3d%2F02_Bati3D%2FCityJSON # NOTE: Main repository folder for CityJSON files.
+extent:
+  spatial:
+    bbox: [2.4215, 44.9123, 5.5973, 46.5658] # [west, south, east, north] / Merged from 14 localized patches across the region
+    crs: EPSG:2154
+  temporal:
+    interval:
+      start: "2016-01-01T00:00:00Z" # NOTE: Start of nadir aerial imagery acquisition.
+      end: "2021-08-31T23:59:59Z" # NOTE: End of oblique aerial imagery acquisition (August 2021).
+links:
+  - rel: alternate
+    href: https://drive.opendata.craig.fr/s/opendata?path=%2F3d%2F2021_aura_3d%2F02_Bati3D%2FESRI_Geodatabase
+    type: application/octet-stream
+    title: ESRI Geodatabase Download Folder
+  - rel: about
+    href: https://ids.craig.fr/geocat/srv/api/records/2c2a81c6-9d26-40d1-b909-b075f4d88f1c/formatters/xml
+    type: application/xml
+    title: Metadata
+  - rel: source
+    href: https://ids.craig.fr/geocat/srv/eng/catalog.search#/metadata/2c2a81c6-9d26-40d1-b909-b075f4d88f1c
+    type: text/html
+    title: CRAIG Geocat - Product Description Page
+  - rel: source
+    href: https://ids.craig.fr/geocat/srv/eng/catalog.search#/home
+    type: text/html
+    title: CRAIG Geocat Catalog Search
+  - rel: source
+    href: https://www.data.gouv.fr
+    type: text/html
+    title: French National Open Data Portal
+  - rel: license
+    href: https://www.etalab.gouv.fr/wp-content/uploads/2017/04/ETALAB-Licence-Ouverte-v2.0.pdf
+    type: application/pdf
+    title: Licence Ouverte 2.0
+# Additional Notes:
+# - Formats Available: CityGML, CityJSON, COLLADA, ESRI Geodatabase, OBJ.
+# - Required Attribution: "CRAIG - FEDER Auvergne-Rhône-Alpes - 2021"
