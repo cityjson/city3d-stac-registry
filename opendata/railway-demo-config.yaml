@@ -29,8 +29,8 @@ providers:
   description: 3D Geoinformation Research Group at TU Delft - Created demo dataset and CityJSON conversion
 inputs:
   - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/LoD3_Railway.city.json
-  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/LoD3_Railway.gml
-  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/LoD3_Railway.zip  # Textures
+  # - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/LoD3_Railway.gml
+  # - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/LoD3_Railway.zip  # Textures
 extent:
   spatial:
     bbox: []

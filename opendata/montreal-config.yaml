@@ -22,7 +22,7 @@ providers:
   description: City of Montréal open data portal
 inputs:
   - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/VM05_2009.city.json
-  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/VM05_2009.gml
+  # - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/VM05_2009.gml
 extent:
   spatial:
     bbox: []

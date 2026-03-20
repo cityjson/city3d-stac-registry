@@ -20,7 +20,7 @@ providers:
   description: NYC Department of Information Technology & Telecommunications
 inputs:
   - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/DA13_3D_Buildings_Merged.city.json
-  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/DA13_3D_Buildings_Merged.gml
+  # - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/DA13_3D_Buildings_Merged.gml
 extent:
   spatial:
     bbox: []

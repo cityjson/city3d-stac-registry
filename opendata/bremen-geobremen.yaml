@@ -23,7 +23,7 @@ providers:
     # NOTE: Contact via geodatenservice@geo.bremen.de
 inputs:
   - https://gdi2.geo.bremen.de/inspire/download/LoD/data/LOD2_CITYGML_HB.zip # NOTE: Contains the 3D buildings for the inland City of Bremen (HB).
-  - https://gdi2.geo.bremen.de/inspire/download/LoD/data/LOD2_CITYGML_BHV.zip # NOTE: Contains the 3D buildings for the coastal City of Bremerhaven (BHV).
+  # - https://gdi2.geo.bremen.de/inspire/download/LoD/data/LOD2_CITYGML_BHV.zip # NOTE: Contains the 3D buildings for the coastal City of Bremerhaven (BHV).
 extent:
   spatial:
     bbox: [8.477, 53.010, 8.991, 53.611] # [west, south, east, north]

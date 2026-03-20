@@ -27,7 +27,7 @@ providers:
   description: Official open data portal of the City of Namur
 inputs:
   - https://carto.ville.namur.be/data/3D_Ponts_Citadelle/3D_Ponts.ZIP
-  - https://carto.ville.namur.be/data/3D_Ponts_Citadelle/3D_Citadelle.ZIP
+  # - https://carto.ville.namur.be/data/3D_Ponts_Citadelle/3D_Citadelle.ZIP
 extent:
   spatial:
     bbox: []

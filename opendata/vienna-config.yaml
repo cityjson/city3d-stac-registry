@@ -21,7 +21,7 @@ providers:
   description: Vienna city government
 inputs:
   - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/Vienna_102081.city.json
-  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/Vienna_102081.gml
+  # - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/Vienna_102081.gml
 extent:
   spatial:
     bbox: []

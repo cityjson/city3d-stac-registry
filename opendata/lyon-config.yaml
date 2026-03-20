@@ -25,10 +25,10 @@ providers:
   description: Lyon metropolitan government (Grand Lyon), the public authority responsible for the 3D city model production and licensing
 inputs:
   - https://data.grandlyon.com/geoserver/metropole-de-lyon/ows?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=metropole-de-lyon:fpc_fond_plan_communaut.fpctoit&outputFormat=GML3&SRSNAME=EPSG:4171&sortBy=gid # Note: Data for 1. Roof volumes (captured at gutter level)
-  - https://data.grandlyon.com/geoserver/metropole-de-lyon/ows?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=metropole-de-lyon:fpc_fond_plan_communaut.fpclignefaitage&outputFormat=GML3&SRSNAME=EPSG:4171&sortBy=gid # Note: Data for 2. 3D ridege lines (roof edges)
-  - https://data.grandlyon.com/geoserver/metropole-de-lyon/ows?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=metropole-de-lyon:fpc_fond_plan_communaut.fpcsommetfaitage&outputFormat=GML3&SRSNAME=EPSG:4171&sortBy=gid # Note: Data for 3. Ridge vertices (highest points)
-  - https://data.grandlyon.com/geoserver/metropole-de-lyon/ows?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=metropole-de-lyon:fpc_fond_plan_communaut.fpcsurtoit&outputFormat=GML3&SRSNAME=EPSG:4171&sortBy=gid # Note: Data for 4. Superstructures (roof-on-roof features)
-  - https://data.grandlyon.com/geoserver/metropole-de-lyon/ows?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=metropole-de-lyon:fpc_fond_plan_communaut.fpcbaticonstruction&outputFormat=GML3&SRSNAME=EPSG:4171&sortBy=gid. # Note: Data for 5. Buildings under construction
+  # - https://data.grandlyon.com/geoserver/metropole-de-lyon/ows?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=metropole-de-lyon:fpc_fond_plan_communaut.fpclignefaitage&outputFormat=GML3&SRSNAME=EPSG:4171&sortBy=gid # Note: Data for 2. 3D ridege lines (roof edges)
+  # - https://data.grandlyon.com/geoserver/metropole-de-lyon/ows?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=metropole-de-lyon:fpc_fond_plan_communaut.fpcsommetfaitage&outputFormat=GML3&SRSNAME=EPSG:4171&sortBy=gid # Note: Data for 3. Ridge vertices (highest points)
+  # - https://data.grandlyon.com/geoserver/metropole-de-lyon/ows?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=metropole-de-lyon:fpc_fond_plan_communaut.fpcsurtoit&outputFormat=GML3&SRSNAME=EPSG:4171&sortBy=gid # Note: Data for 4. Superstructures (roof-on-roof features)
+  # - https://data.grandlyon.com/geoserver/metropole-de-lyon/ows?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=metropole-de-lyon:fpc_fond_plan_communaut.fpcbaticonstruction&outputFormat=GML3&SRSNAME=EPSG:4171&sortBy=gid. # Note: Data for 5. Buildings under construction
 extent:
   spatial:
     bbox: []

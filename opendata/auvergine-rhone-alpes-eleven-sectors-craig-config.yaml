@@ -42,15 +42,14 @@ providers:
     # NOTE: Contact via contact@craig.fr
 inputs:
   - https://drive.opendata.craig.fr/s/opendata?path=%2F3d%2F2021_aura_3d%2F02_Bati3D%2FCityGML # NOTE: Main repository folder for CityGML files.
-  - https://drive.opendata.craig.fr/s/opendata?path=%2F3d%2F2021_aura_3d%2F02_Bati3D%2FCityJSON # NOTE: Main repository folder for CityJSON files.
+  # - https://drive.opendata.craig.fr/s/opendata?path=%2F3d%2F2021_aura_3d%2F02_Bati3D%2FCityJSON # NOTE: Main repository folder for CityJSON files.
 extent:
   spatial:
     bbox: [2.4215, 44.9123, 5.5973, 46.5658] # [west, south, east, north] / Merged from 14 localized patches across the region
     crs: EPSG:2154
   temporal:
-    interval:
-      start: "2016-01-01T00:00:00Z" # NOTE: Start of nadir aerial imagery acquisition.
-      end: "2021-08-31T23:59:59Z" # NOTE: End of oblique aerial imagery acquisition (August 2021).
+    start: "2016-01-01T00:00:00Z" # NOTE: Start of nadir aerial imagery acquisition.
+    end: "2021-08-31T23:59:59Z" # NOTE: End of oblique aerial imagery acquisition (August 2021).
 links:
   - rel: alternate
     href: https://drive.opendata.craig.fr/s/opendata?path=%2F3d%2F2021_aura_3d%2F02_Bati3D%2FESRI_Geodatabase

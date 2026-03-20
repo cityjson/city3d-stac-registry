@@ -38,9 +38,8 @@ extent:
       ] # [west, south, east, north]
     crs: EPSG:25832
   temporal:
-    interval:
-      start: "2024-05-31T00:00:00Z" # NOTE: Extracted from the product STAC (1st link in Links section)
-      end: "2024-08-30T00:00:00Z" # NOTE: Extracted from the product STAC (1st link in Links section)
+    start: "2024-05-31T00:00:00Z" # NOTE: Extracted from the product STAC (1st link in Links section)
+    end: "2024-08-30T00:00:00Z" # NOTE: Extracted from the product STAC (1st link in Links section)
 links:
   - rel: about
     href: https://lod.stac.lgln.niedersachsen.de/collections/lod2

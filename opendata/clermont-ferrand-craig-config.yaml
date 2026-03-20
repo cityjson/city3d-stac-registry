@@ -27,15 +27,14 @@ providers:
     # NOTE: Contact via contact@craig.fr
 inputs:
   - https://drive.opendata.craig.fr/s/opendata?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_Building%2FClermont # NOTE: Main repository folder for CityGML files.
-  - https://drive.opendata.craig.fr/s/opendata?path=%2F3d%2Fbati3d%2F02_CIM%2FCityJSON%2F2024_Building%2FClermont # NOTE: Main repository folder for CityJSON files.
+  # - https://drive.opendata.craig.fr/s/opendata?path=%2F3d%2Fbati3d%2F02_CIM%2FCityJSON%2F2024_Building%2FClermont # NOTE: Main repository folder for CityJSON files.
 extent:
   spatial:
     bbox: [3.0563, 45.7214, 3.2241, 45.8486] # [west, south, east, north]
     crs: EPSG:2154 # NOTE: RGF93 / Lambert-93 (from XML). Vertical datum is EPSG:5720 (NGF-IGN69).
   temporal:
-    interval:
-      start: "2022-01-01T00:00:00Z" # NOTE: Start of aerial imagery acquisition.
-      end: "2022-12-31T23:59:59Z" # NOTE: End of aerial imagery acquisition.
+    start: "2022-01-01T00:00:00Z" # NOTE: Start of aerial imagery acquisition.
+    end: "2022-12-31T23:59:59Z" # NOTE: End of aerial imagery acquisition.
 links:
   - rel: alternate
     href: https://ids.craig.fr/mapstore/#/viewer/3771

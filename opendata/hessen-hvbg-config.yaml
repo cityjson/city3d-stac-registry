@@ -33,9 +33,8 @@ extent:
     bbox: []
     crs: EPSG:25832
   temporal:
-    interval:
-      start: "2007-01-01T00:00:00Z" # NOTE: Airborne Laser Scanning (ALS) baseline acquisition started in 2007.
-      end: "2024-12-31T00:00:00Z" # NOTE: ALKIS update cycle and supplementary data mention 2024.
+    start: "2007-01-01T00:00:00Z" # NOTE: Airborne Laser Scanning (ALS) baseline acquisition started in 2007.
+    end: "2024-12-31T00:00:00Z" # NOTE: ALKIS update cycle and supplementary data mention 2024.
 links:
   - rel: source
     href: https://gds.hessen.de/INTERSHOP/web/WFS/HLBG-Geodaten-Site/de_DE/-/EUR/ViewDownloadcenter-Start?path=3D-Daten/3D-Geb%C3%A4udemodelle/3D-Geb%C3%A4udemodelle%20LoD2

@@ -35,9 +35,8 @@ extent:
     bbox: [4.6486, 44.6959, 6.3593, 45.8139] # [west, south, east, north]
     crs: EPSG:3945
   temporal:
-    interval:
-      start: "2019-01-01T00:00:00Z" # NOTE: Start of aerial imagery acquisition.
-      end: "2024-12-31T23:59:59Z" # NOTE: End of aerial imagery acquisition.
+    start: "2019-01-01T00:00:00Z" # NOTE: Start of aerial imagery acquisition.
+    end: "2024-12-31T23:59:59Z" # NOTE: End of aerial imagery acquisition.
 links:
   - rel: alternate
     href: https://3d.craig.fr/datasets/2025_bati3d_isere/2025_BC3_D38_solar_tileset.json

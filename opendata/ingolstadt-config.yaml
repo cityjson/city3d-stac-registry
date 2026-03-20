@@ -28,7 +28,7 @@ providers:
   description: Ingolstadt municipality - Data acquisition support
 inputs:
   - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/Ingolstadt.city.json
-  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/Ingolstadt.gml
+  # - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/Ingolstadt.gml
 extent:
   spatial:
     bbox: []

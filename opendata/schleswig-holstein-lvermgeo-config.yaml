@@ -32,9 +32,8 @@ extent:
     bbox: [7.87, 53.37, 11.32, 55.06] # [west, south, east, north]
     crs: EPSG:25832
   temporal:
-    interval:
-      start: "2018-04-24T00:00:00Z" # NOTE: Initial creation date from the metadata.
-      end: "2022-04-30T00:00:00Z" # NOTE: Date of the revision/publication referenced in the metadata.
+    start: "2018-04-24T00:00:00Z" # NOTE: Initial creation date from the metadata.
+    end: "2022-04-30T00:00:00Z" # NOTE: Date of the revision/publication referenced in the metadata.
 links:
   - rel: about
     href: https://sh-mis.gdi-sh.de/smartfinder-sdi/?lang=en#/datasets/iso/0cd0b5b3-d5f8-407f-a7a3-b01739ed9806

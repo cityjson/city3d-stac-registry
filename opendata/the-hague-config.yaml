@@ -32,7 +32,7 @@ providers:
   description: 3D Geoinformation Research Group at TU Delft - converted to CityJSON and hosts sample dataset
 inputs:
   - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/DenHaag_01.city.json
-  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/DenHaag_01.xml
+  # - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/DenHaag_01.xml
 extent:
   spatial:
     bbox: []

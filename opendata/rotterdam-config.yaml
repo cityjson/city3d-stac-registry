@@ -33,8 +33,8 @@ providers:
   description: 3D Geoinformation Research Group at TU Delft - converted to CityJSON and hosts sample dataset
 inputs:
   - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/3-20-DELFSHAVEN.city.json
-  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/3-20-DELFSHAVEN.xml
-  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/3-20-DELFSHAVEN.zip  # Textures
+  # - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/3-20-DELFSHAVEN.xml
+  # - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/3-20-DELFSHAVEN.zip  # Textures
 extent:
   spatial:
     bbox: []
