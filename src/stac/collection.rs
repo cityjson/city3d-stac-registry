@@ -113,6 +113,18 @@ impl StacCollectionBuilder {
         self
     }
 
+    /// Add a parent link (points to parent catalog or collection)
+    pub fn parent_link(mut self, href: impl ToString) -> Self {
+        self.links.push(stac::Link::parent(href));
+        self
+    }
+
+    /// Add a root link (points to root catalog)
+    pub fn root_link(mut self, href: impl ToString) -> Self {
+        self.links.push(stac::Link::root(href));
+        self
+    }
+
     /// Add an item link
     pub fn item_link(mut self, href: impl ToString, title: Option<String>) -> Self {
         let mut link = stac::Link::item(href);
@@ -688,7 +700,7 @@ impl StacCollectionBuilder {
         // Auto-generate item_assets if not explicitly set
         if self.item_assets.is_empty() && self.summaries.contains_key("city3d:version") {
             let item_asset = stac::ItemAsset {
-                title: Some("3D City Model data file".to_string()),
+                title: Some("3D city model data".to_string()),
                 description: None,
                 r#type: None,
                 roles: vec!["data".to_string()],

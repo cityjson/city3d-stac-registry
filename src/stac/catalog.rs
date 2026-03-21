@@ -33,6 +33,11 @@ impl StacCatalogBuilder {
         self
     }
 
+    pub fn root_link(mut self, href: impl ToString) -> Self {
+        self.catalog.links.push(stac::Link::root(href));
+        self
+    }
+
     pub fn build(self) -> stac::Catalog {
         self.catalog
     }

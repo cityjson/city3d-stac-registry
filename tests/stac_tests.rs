@@ -93,14 +93,14 @@ mod stac_item_builder_tests {
     #[test]
     fn test_item_builder_with_data_asset() {
         let item = StacItemBuilder::new("test-id")
-            .data_asset("./data.json", "application/json", None)
+            .data_asset("./data.city.json", "application/city+json", None)
             .build()
             .expect("Failed to build item");
 
         assert!(item.assets.contains_key("data"));
         let asset = &item.assets["data"];
-        assert_eq!(asset.href, "./data.json");
-        assert_eq!(asset.r#type, Some("application/json".to_string()));
+        assert_eq!(asset.href, "./data.city.json");
+        assert_eq!(asset.r#type, Some("application/city+json".to_string()));
     }
 
     #[test]

@@ -353,7 +353,7 @@ mod from_content_schema_tests {
             builder
         };
 
-        let builder = builder.data_asset("remote_railway.city.json", "application/json", None);
+        let builder = builder.data_asset("remote_railway.city.json", "application/city+json", None);
         let item = builder.build().expect("Failed to build item");
         let item_json = serde_json::to_value(item).unwrap();
 
@@ -389,7 +389,11 @@ mod from_content_schema_tests {
             builder
         };
 
-        let builder = builder.data_asset("remote_railway.city.jsonl", "application/json-seq", None);
+        let builder = builder.data_asset(
+            "remote_railway.city.jsonl",
+            "application/city+json-seq",
+            None,
+        );
         let item = builder.build().expect("Failed to build item");
         let item_json = serde_json::to_value(item).unwrap();
 
@@ -809,7 +813,7 @@ mod remote_url_schema_tests {
         }
 
         let item = builder
-            .data_asset(url, "application/json", None)
+            .data_asset(url, "application/city+json", None)
             .build()
             .expect("Failed to build item");
 
@@ -848,7 +852,7 @@ mod remote_url_schema_tests {
         }
 
         let item = builder
-            .data_asset(url, "application/json-seq", None)
+            .data_asset(url, "application/city+json-seq", None)
             .build()
             .expect("Failed to build item");
 

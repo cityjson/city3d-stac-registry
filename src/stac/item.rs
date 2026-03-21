@@ -9,6 +9,17 @@ use indexmap::IndexMap;
 use serde_json::Value;
 use std::path::Path;
 
+/// Map encoding name to IANA/vendor media type
+fn encoding_media_type(encoding: &str) -> &'static str {
+    match encoding {
+        "CityJSON" => "application/city+json",
+        "CityJSONSeq" => "application/city+json-seq",
+        "CityGML" => "application/gml+xml",
+        "FlatCityBuf" => "application/vnd.flatcitybuf",
+        _ => "application/octet-stream",
+    }
+}
+
 /// Builder for STAC Items
 pub struct StacItemBuilder {
     id: String,
@@ -224,7 +235,7 @@ impl StacItemBuilder {
     ) -> Self {
         let mut asset = stac::Asset::new(href.into());
         asset.r#type = Some(media_type.to_string());
-        asset.title = Some("CityJSON data file".to_string());
+        asset.title = Some("3D city model data".to_string());
         asset.roles = vec!["data".to_string()];
 
         if let Some(size) = file_size {
@@ -393,12 +404,7 @@ impl StacItemBuilder {
         let media_type = if is_zip {
             "application/zip"
         } else {
-            match reader.encoding() {
-                "CityJSON" => "application/json",
-                "CityJSONSeq" => "application/json-seq",
-                "FlatCityBuf" => "application/octet-stream",
-                _ => "application/octet-stream",
-            }
+            encoding_media_type(reader.encoding())
         };
 
         // Generate asset href based on base_url or original_url
@@ -487,12 +493,7 @@ impl StacItemBuilder {
         let media_type = if is_zip {
             "application/zip"
         } else {
-            match reader.encoding() {
-                "CityJSON" => "application/json",
-                "CityJSONSeq" => "application/json-seq",
-                "FlatCityBuf" => "application/octet-stream",
-                _ => "application/octet-stream",
-            }
+            encoding_media_type(reader.encoding())
         };
 
         let file_name = file_path

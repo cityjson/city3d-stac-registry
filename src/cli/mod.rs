@@ -355,6 +355,8 @@ pub async fn run() -> Result<()> {
                 overwrite_items: overwrite_items || overwrite,
                 overwrite_collection: overwrite_collection || overwrite,
                 geoparquet,
+                parent_href: None,
+                root_href: None,
             })
             .await
         }
@@ -822,6 +824,9 @@ async fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
             overwrite_items: config.overwrite_items,
             overwrite_collection: config.overwrite_collections,
             geoparquet: config.geoparquet,
+            // Collections under a catalog get parent/root links
+            parent_href: Some("../catalog.json".to_string()),
+            root_href: Some("../catalog.json".to_string()),
         };
 
         // Check if input is a config file
@@ -916,7 +921,9 @@ async fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
         catalog_builder = catalog_builder.child_link(href, Some(title));
     }
 
-    catalog_builder = catalog_builder.self_link("./catalog.json");
+    catalog_builder = catalog_builder
+        .self_link("./catalog.json")
+        .root_link("./catalog.json");
 
     let catalog = catalog_builder.build();
     let catalog_json = if config.pretty {
@@ -959,6 +966,10 @@ struct CollectionConfig {
     overwrite_items: bool,
     overwrite_collection: bool,
     geoparquet: bool,
+    /// Parent link href (set when collection is part of a catalog)
+    parent_href: Option<String>,
+    /// Root link href (set when collection is part of a catalog)
+    root_href: Option<String>,
 }
 
 async fn handle_collection_command(config: CollectionConfig) -> Result<()> {
@@ -1263,7 +1274,7 @@ async fn process_collection_logic(
         };
 
         match builder_result {
-            Ok(builder) => match builder.build() {
+            Ok(builder) => match builder.collection_link("../collection.json").build() {
                 Ok(item) => {
                     // Buffer item for GeoParquet if enabled
                     if config.geoparquet {
@@ -1512,6 +1523,14 @@ async fn process_collection_logic(
 
     // Add self link
     collection_builder = collection_builder.self_link("./collection.json");
+
+    // Add parent and root links (set when collection is part of a catalog)
+    if let Some(parent_href) = &config.parent_href {
+        collection_builder = collection_builder.parent_link(parent_href);
+    }
+    if let Some(root_href) = &config.root_href {
+        collection_builder = collection_builder.root_link(root_href);
+    }
 
     // GeoParquet: if buffer is empty (e.g. all items skipped), read items from disk
     if config.geoparquet && geoparquet_items.is_empty() {
