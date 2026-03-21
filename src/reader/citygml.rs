@@ -259,6 +259,42 @@ impl CityGMLReader {
                         }
                     }
 
+                    // Detect semantic surfaces, textures, and materials
+                    if let Ok(local_name) = std::str::from_utf8(name) {
+                        if let Some(suffix) = local_name.split(':').next_back() {
+                            if !metadata.has_semantic_surfaces {
+                                match suffix {
+                                    "WallSurface"
+                                    | "RoofSurface"
+                                    | "GroundSurface"
+                                    | "ClosureSurface"
+                                    | "OuterCeilingSurface"
+                                    | "OuterFloorSurface"
+                                    | "CeilingSurface"
+                                    | "FloorSurface"
+                                    | "InteriorWallSurface"
+                                    | "Window"
+                                    | "Door"
+                                    | "WaterSurface"
+                                    | "WaterGroundSurface"
+                                    | "WaterClosureSurface" => {
+                                        metadata.has_semantic_surfaces = true;
+                                    }
+                                    _ => {}
+                                }
+                            }
+                            if !metadata.has_textures
+                                && (suffix == "ParameterizedTexture"
+                                    || suffix == "GeoreferencedTexture")
+                            {
+                                metadata.has_textures = true;
+                            }
+                            if !metadata.has_materials && suffix == "X3DMaterial" {
+                                metadata.has_materials = true;
+                            }
+                        }
+                    }
+
                     // Detect attributes (CityGML 2.0 format)
                     // <gen:stringAttribute name="..."><gen:value>...</gen:value></gen:stringAttribute>
                     if metadata.version == CityGMLVersion::V2_0 {

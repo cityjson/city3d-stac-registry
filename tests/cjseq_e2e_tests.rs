@@ -67,8 +67,8 @@ fn test_cjseq_item_generation() {
     assert!(content.contains("id"));
 
     // Check for correct projection and metadata
-    assert!(content.contains("proj:epsg"));
-    assert!(content.contains("7415"));
+    assert!(content.contains("proj:code"));
+    assert!(content.contains("EPSG:7415"));
     assert!(content.contains("city3d:version"));
 
     // Check that we detected the object (count 1 from feature + 0 from header = 1)
@@ -76,7 +76,7 @@ fn test_cjseq_item_generation() {
     // Let's parse JSON to be sure about validation
     let item: serde_json::Value = serde_json::from_str(&content).unwrap();
 
-    assert_eq!(item["properties"]["proj:epsg"], 7415);
+    assert_eq!(item["properties"]["proj:code"], "EPSG:7415");
     assert_eq!(item["properties"]["city3d:version"], "2.0");
     // Count depends on how aggregation works for CJSeq.
     // The reader should count all city objects across features.

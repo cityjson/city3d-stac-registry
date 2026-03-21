@@ -44,9 +44,9 @@ links:
   type: text/html
   title: TU Delft 3D Open Cities Portal
 - rel: related
-  href: https://github.com/tudelft3d/citygml4j
+  href: https://github.com/citygml4j/citygml4j
   type: text/html
-  title: citygml4j Conversion Tool
+  title: citygml4j - Java Library for CityGML Processing
 - rel: source
   href: https://data.stadt-zuerich.ch/
   type: text/html

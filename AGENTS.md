@@ -77,7 +77,7 @@ The CLI supports ZIP archives containing CityJSON, CityJSONSeq, or CityGML files
 - **Asset Href**: Points to the ZIP file URL
 - **Asset Type**: `application/zip`
 - **Metadata**: Aggregated from all supported files inside (bbox union, object count sum, LODs/types union)
-- **city3d:encoding**: Reflects the internal format (CityJSON/CityGML/etc)
+- **Encoding**: Detected from internal format (CityJSON/CityGML/etc)
 
 ### Security
 
@@ -253,9 +253,7 @@ The tool uses the [STAC 3D City Models Extension](https://cityjson.github.io/sta
 
 | Property                   | Type          | Description               |
 | -------------------------- | ------------- | ------------------------- |
-| `city3d:encoding`          | string        | Format name (required)    |
 | `city3d:version`           | string        | Specification version     |
-| `city3d:encoding_version`  | string        | Encoding-specific version |
 | `city3d:city_objects`      | integer/stats | Object count              |
 | `city3d:lods`              | array[string] | Levels of detail          |
 | `city3d:co_types`          | array[string] | City object types         |

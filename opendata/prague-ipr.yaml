@@ -29,9 +29,9 @@ inputs:
   - https://geoportalpraha.cz/data-a-sluzby/ke-stazeni/7e6316e95cfe4f36ae06bbfb687bf34b # NOTE: Area-based download
 links:
   - rel: about
-    href: https://geoportalpraha.cz/data-a-sluzby/7e6316e95cfe4f36ae06bbfb687bf34b
+    href: https://geoportalpraha.cz/en/data-and-services/articles-and-projects/3D-model/3d-model-budovy-mosty
     type: text/html
-    title: IPR Prague Geoportal - 3D Buildings Metadata and Description
+    title: IPR Prague Geoportal - 3D Buildings and Bridges Model
   - rel: source
     href: https://geoportalpraha.cz
     type: text/html

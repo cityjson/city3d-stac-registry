@@ -1,7 +1,7 @@
 id: berlin-3d
 title: Berlin 3D City Model (LoD2)
 description: "3D LoD2 city model of Berlin, Germany, with textures.\nOriginally released in 2015. Available in CityGML and multiple other formats:\n2D Shape, 3D Shape (PolygonZ), 3D Shape (Multipatch), KMZ, DXF, DWG, 3DS, and ESRI File Geodatabase.\n"
-license: dl-de/by-2-0
+license: dl-de/zero-2-0
 keywords:
 - 3d city model
 - buildings
@@ -12,12 +12,12 @@ keywords:
 - textured
 - capital
 providers:
-- name: Senate Department for Urban Development, Mobility, Environment and Climate (Berlin)
+- name: Senatsverwaltung für Stadtentwicklung, Bauen und Wohnen (Berlin)
   url: https://www.berlin.de/sen/stadtentwicklung/
   roles:
   - producer
   - licensor
-  description: Berlin Senate department responsible for 3D city model
+  description: Berlin Senate Department for Urban Development, Building and Housing
 inputs: []
 extent:
   spatial:
@@ -28,14 +28,14 @@ extent:
     end: '2015-12-31T23:59:59Z'
 links:
 - rel: source
-  href: https://www.berlin.de/sen/stadtentwicklung/geoinformationen/3d-stadtmodell/
+  href: https://daten.berlin.de/datensaetze/3d-gebaudemodelle-im-level-of-detail-2-lod-2-3c7c49af
   type: text/html
-  title: Berlin 3D City Model Official Page
+  title: Berlin 3D Building Models LoD2 (Berlin Open Data)
 - rel: alternate
   href: https://3d.bk.tudelft.nl/opendata/opencities/
   type: text/html
   title: TU Delft 3D Open Cities Portal (host)
 - rel: license
-  href: https://www.govdata.de/dl-de/by-2-0
+  href: https://www.govdata.de/dl-de/zero-2-0
   type: text/html
-  title: Datenlizenz Deutschland - Namensnennung - Version 2.0
+  title: Datenlizenz Deutschland - Zero - Version 2.0

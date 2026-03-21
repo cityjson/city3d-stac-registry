@@ -4,43 +4,58 @@ use crate::error::Result;
 use crate::metadata::BBox3D;
 use crate::metadata::CRS;
 use crate::reader::CityModelMetadataReader;
-use crate::stac::models::{Asset, Link, StacItem};
 use chrono::{DateTime, Utc};
+use indexmap::IndexMap;
 use serde_json::Value;
-use std::collections::HashMap;
 use std::path::Path;
+
+/// Map encoding name to IANA/vendor media type
+fn encoding_media_type(encoding: &str) -> &'static str {
+    match encoding {
+        "CityJSON" => "application/city+json",
+        "CityJSONSeq" => "application/city+json-seq",
+        "CityGML" => "application/gml+xml",
+        "FlatCityBuf" => "application/vnd.flatcitybuf",
+        _ => "application/octet-stream",
+    }
+}
 
 /// Builder for STAC Items
 pub struct StacItemBuilder {
     id: String,
     bbox: Option<Vec<f64>>,
     geometry: Option<Value>,
-    properties: HashMap<String, Value>,
-    assets: HashMap<String, Asset>,
-    links: Vec<Link>,
+    properties: serde_json::Map<String, Value>,
+    datetime: Option<DateTime<Utc>>,
+    start_datetime: Option<DateTime<Utc>>,
+    end_datetime: Option<DateTime<Utc>>,
+    title: Option<String>,
+    description: Option<String>,
+    assets: IndexMap<String, stac::Asset>,
+    links: Vec<stac::Link>,
     /// Track if File Extension is used (for stac_extensions list)
     uses_file_extension: bool,
+    /// Collection ID (set when item belongs to a collection)
+    collection_id: Option<String>,
 }
 
 impl StacItemBuilder {
     /// Create a new STAC Item builder
     pub fn new(id: impl Into<String>) -> Self {
-        let mut properties = HashMap::new();
-
-        // Set default datetime to now
-        properties.insert(
-            "datetime".to_string(),
-            Value::String(Utc::now().to_rfc3339()),
-        );
-
         Self {
             id: id.into(),
             bbox: None,
             geometry: None,
-            properties,
-            assets: HashMap::new(),
+            properties: serde_json::Map::new(),
+            datetime: None,
+            start_datetime: None,
+            end_datetime: None,
+            title: None,
+            description: None,
+            assets: IndexMap::new(),
             links: Vec::new(),
             uses_file_extension: false,
+            collection_id: None,
         }
     }
 
@@ -68,24 +83,33 @@ impl StacItemBuilder {
         self
     }
 
-    /// Set datetime
-    pub fn datetime(mut self, dt: DateTime<Utc>) -> Self {
-        self.properties
-            .insert("datetime".to_string(), Value::String(dt.to_rfc3339()));
+    /// Set datetime as an RFC3339 string, or null if None
+    pub fn datetime(mut self, dt: Option<String>) -> Self {
+        self.datetime = dt.and_then(|s| s.parse::<DateTime<Utc>>().ok());
+        self
+    }
+
+    /// Set start_datetime (used when datetime is null and a date range is specified)
+    pub fn start_datetime(mut self, dt: impl Into<String>) -> Self {
+        self.start_datetime = dt.into().parse::<DateTime<Utc>>().ok();
+        self
+    }
+
+    /// Set end_datetime (used when datetime is null and a date range is specified)
+    pub fn end_datetime(mut self, dt: impl Into<String>) -> Self {
+        self.end_datetime = dt.into().parse::<DateTime<Utc>>().ok();
         self
     }
 
     /// Set title
     pub fn title(mut self, title: impl Into<String>) -> Self {
-        self.properties
-            .insert("title".to_string(), Value::String(title.into()));
+        self.title = Some(title.into());
         self
     }
 
     /// Set description
     pub fn description(mut self, description: impl Into<String>) -> Self {
-        self.properties
-            .insert("description".to_string(), Value::String(description.into()));
+        self.description = Some(description.into());
         self
     }
 
@@ -99,11 +123,20 @@ impl StacItemBuilder {
     ///
     /// Uses the STAC 3D City Models Extension (city3d: prefix)
     /// https://cityjson.github.io/stac-city3d/v0.1.0/schema.json
-    /// Add 3D City Models extension properties from metadata reader
-    ///
-    /// Uses the STAC 3D City Models Extension (city3d: prefix)
-    /// https://cityjson.github.io/stac-city3d/v0.1.0/schema.json
     pub fn cityjson_metadata(mut self, reader: &dyn CityModelMetadataReader) -> Result<Self> {
+        // Extract referenceDate from CityJSON metadata → set as datetime
+        if let Ok(Some(metadata)) = reader.metadata() {
+            if let Some(ref_date) = metadata.get("referenceDate").and_then(|v| v.as_str()) {
+                // referenceDate is typically "YYYY-MM-DD"; convert to RFC3339
+                let datetime_str = if ref_date.contains('T') {
+                    ref_date.to_string()
+                } else {
+                    format!("{ref_date}T00:00:00Z")
+                };
+                self.datetime = datetime_str.parse::<DateTime<Utc>>().ok();
+            }
+        }
+
         // Add city3d:version
         if let Ok(version) = reader.version() {
             self.properties
@@ -124,19 +157,13 @@ impl StacItemBuilder {
                 let numeric_lods: Vec<Value> = lods
                     .iter()
                     .map(|lod| {
-                        // Try to parse as number
                         if let Ok(num) = lod.parse::<f64>() {
-                            // If it's a number, use Number
                             if let Some(n) = serde_json::Number::from_f64(num) {
                                 Value::Number(n)
                             } else {
-                                // Fallback for NaN/Infinity
                                 Value::String(lod.clone())
                             }
                         } else {
-                            // Keep as string if not parseable (should not happen if schema requires number, but safe fallback)
-                            // Or better, filter out non-numerics?
-                            // For now, let's assume valid data or fallback to string which might fail valid later but preserves data
                             Value::String(lod.clone())
                         }
                     })
@@ -166,130 +193,148 @@ impl StacItemBuilder {
 
         // Add city3d:semantic_surfaces
         if let Ok(has_semantic_surfaces) = reader.semantic_surfaces() {
-            if has_semantic_surfaces {
-                self.properties
-                    .insert("city3d:semantic_surfaces".to_string(), Value::Bool(true));
-            }
+            self.properties.insert(
+                "city3d:semantic_surfaces".to_string(),
+                Value::Bool(has_semantic_surfaces),
+            );
         }
 
         // Add city3d:textures
         if let Ok(has_textures) = reader.textures() {
-            if has_textures {
-                self.properties
-                    .insert("city3d:textures".to_string(), Value::Bool(true));
-            }
+            self.properties
+                .insert("city3d:textures".to_string(), Value::Bool(has_textures));
         }
 
         // Add city3d:materials
         if let Ok(has_materials) = reader.materials() {
-            if has_materials {
-                self.properties
-                    .insert("city3d:materials".to_string(), Value::Bool(true));
-            }
+            self.properties
+                .insert("city3d:materials".to_string(), Value::Bool(has_materials));
         }
 
-        // Add proj:epsg from CRS (integer, as per STAC Projection Extension v1)
+        // Add proj:code from CRS (string, as per STAC Projection Extension v2.0.0)
         if let Ok(crs) = reader.crs() {
-            if let Some(epsg) = crs.to_stac_epsg() {
-                self.properties.insert(
-                    "proj:epsg".to_string(),
-                    Value::Number(serde_json::Number::from(epsg)),
-                );
+            if let Some(proj_code) = crs.to_stac_proj_code() {
+                self.properties
+                    .insert("proj:code".to_string(), Value::String(proj_code));
             }
         }
 
         Ok(self)
     }
 
-    /// Add file size property (File Extension)
-    pub fn file_size(mut self, size: u64) -> Self {
-        self.properties.insert(
-            "file:size".to_string(),
-            Value::Number(serde_json::Number::from(size)),
-        );
-        self.uses_file_extension = true;
-        self
-    }
-
     /// Add a data asset pointing to the source file
-    pub fn data_asset(mut self, href: impl Into<String>, media_type: &str) -> Self {
-        let asset = Asset::new(href)
-            .with_type(media_type)
-            .with_title("CityJSON data file")
-            .with_roles(vec!["data".to_string()]);
+    ///
+    /// Optionally accepts a file size which is placed on the asset as `file:size`
+    /// per the STAC File Extension spec (file extension fields belong on assets, not item properties).
+    pub fn data_asset(
+        mut self,
+        href: impl Into<String>,
+        media_type: &str,
+        file_size: Option<u64>,
+    ) -> Self {
+        let mut asset = stac::Asset::new(href.into());
+        asset.r#type = Some(media_type.to_string());
+        asset.title = Some("3D city model data".to_string());
+        asset.roles = vec!["data".to_string()];
+
+        if let Some(size) = file_size {
+            asset
+                .additional_fields
+                .insert("file:size".to_string(), Value::Number(size.into()));
+            self.uses_file_extension = true;
+        }
 
         self.assets.insert("data".to_string(), asset);
         self
     }
 
     /// Add a custom asset
-    pub fn asset(mut self, key: impl Into<String>, asset: Asset) -> Self {
+    pub fn asset(mut self, key: impl Into<String>, asset: stac::Asset) -> Self {
         self.assets.insert(key.into(), asset);
         self
     }
 
     /// Add a link
-    pub fn link(mut self, link: Link) -> Self {
+    pub fn link(mut self, link: stac::Link) -> Self {
         self.links.push(link);
         self
     }
 
     /// Add a self link
-    pub fn self_link(mut self, href: impl Into<String>) -> Self {
-        self.links
-            .push(Link::new("self", href).with_type("application/json"));
+    pub fn self_link(mut self, href: impl ToString) -> Self {
+        self.links.push(stac::Link::self_(href));
         self
     }
 
     /// Add a parent link
-    pub fn parent_link(mut self, href: impl Into<String>) -> Self {
-        self.links
-            .push(Link::new("parent", href).with_type("application/json"));
+    pub fn parent_link(mut self, href: impl ToString) -> Self {
+        self.links.push(stac::Link::parent(href));
+        self
+    }
+
+    /// Set the collection ID this item belongs to
+    pub fn collection_id(mut self, id: impl Into<String>) -> Self {
+        self.collection_id = Some(id.into());
         self
     }
 
     /// Add a collection link
-    pub fn collection_link(mut self, href: impl Into<String>) -> Self {
-        self.links
-            .push(Link::new("collection", href).with_type("application/json"));
+    pub fn collection_link(mut self, href: impl ToString) -> Self {
+        self.links.push(stac::Link::collection(href));
         self
     }
 
     /// Build the STAC Item
-    pub fn build(self) -> Result<StacItem> {
-        // city3d:encoding check removed
+    pub fn build(self) -> Result<stac::Item> {
+        let mut item = stac::Item::new(&self.id);
 
-        // Build stac_extensions list dynamically based on which extensions are used
-        // IMPORTANT: We do NOT rely on schema dependencies anymore, so we must add explicit extension URLs
+        // Set datetime fields
+        item.properties.datetime = self.datetime;
+        item.properties.start_datetime = self.start_datetime;
+        item.properties.end_datetime = self.end_datetime;
+        item.properties.title = self.title;
+        item.properties.description = self.description;
+
+        // Extension properties go in properties.additional_fields
+        item.properties.additional_fields = self.properties;
+
+        // Set bbox
+        if let Some(bbox_vec) = self.bbox {
+            item.bbox = bbox_vec.try_into().ok();
+        }
+
+        // Set geometry
+        if let Some(geom_value) = self.geometry {
+            item.geometry = serde_json::from_value(geom_value).ok();
+        }
+
+        // Set assets
+        item.assets = self.assets;
+
+        // Set collection
+        item.collection = self.collection_id;
+
+        // Set links
+        item.links = self.links;
+
+        // Build stac_extensions list dynamically
         let mut stac_extensions =
             vec!["https://cityjson.github.io/stac-city3d/v0.1.0/schema.json".to_string()];
 
-        // Add Projection Extension if proj:epsg is present
-        if self.properties.contains_key("proj:epsg") {
-            // We can check for legacy proj:epsg just in case, but we write proj:code now
-            // Using v2.0.0 projection extension as it removed proj:epsg but we use proper proj:code
+        if item.properties.additional_fields.contains_key("proj:code") {
             stac_extensions.push(
                 "https://stac-extensions.github.io/projection/v2.0.0/schema.json".to_string(),
             );
         }
 
-        // Add File Extension if file:size is present
         if self.uses_file_extension {
             stac_extensions
                 .push("https://stac-extensions.github.io/file/v2.1.0/schema.json".to_string());
         }
 
-        Ok(StacItem {
-            stac_version: "1.1.0".to_string(),
-            stac_extensions,
-            item_type: "Feature".to_string(),
-            id: self.id,
-            bbox: self.bbox,
-            geometry: self.geometry,
-            properties: self.properties,
-            assets: self.assets,
-            links: self.links,
-        })
+        item.extensions = stac_extensions;
+
+        Ok(item)
     }
 
     /// Generate a simple 2D polygon geometry from bbox
@@ -319,18 +364,6 @@ impl StacItemBuilder {
     }
 
     /// Helper to create item from file path
-    ///
-    /// Bbox and geometry are automatically transformed to WGS84 (EPSG:4326)
-    /// as required by the STAC specification (per GeoJSON RFC 7946).
-    ///
-    /// # Arguments
-    /// * `file_path` - Path to the CityJSON file
-    /// * `reader` - Reader instance for the file
-    /// * `base_url` - Optional base URL for asset hrefs. If provided, asset hrefs will be
-    ///   absolute URLs (e.g., "https://example.com/data/file.json").
-    ///   If None, hrefs will be relative paths (just the filename).
-    /// * `original_url` - Optional original remote URL. If the file was fetched from a remote
-    ///   source and no `base_url` is provided, this URL is used as the asset href.
     pub fn from_file(
         file_path: &Path,
         reader: &dyn CityModelMetadataReader,
@@ -341,9 +374,6 @@ impl StacItemBuilder {
     }
 
     /// Helper to create item from file path with an optional CRS override
-    ///
-    /// When the data file lacks CRS metadata, the `crs_override` is used as fallback
-    /// for reprojecting coordinates to WGS84.
     pub fn from_file_with_crs_override(
         file_path: &Path,
         reader: &dyn CityModelMetadataReader,
@@ -369,10 +399,8 @@ impl StacItemBuilder {
         // Add CityJSON metadata
         builder = builder.cityjson_metadata(reader)?;
 
-        // Add file size (File Extension)
-        if let Ok(metadata) = std::fs::metadata(file_path) {
-            builder = builder.file_size(metadata.len());
-        }
+        // Get file size for the asset (File Extension)
+        let file_size = std::fs::metadata(file_path).ok().map(|m| m.len());
 
         // Add data asset - detect ZIP files for proper media type
         let is_zip = file_path
@@ -384,12 +412,7 @@ impl StacItemBuilder {
         let media_type = if is_zip {
             "application/zip"
         } else {
-            match reader.encoding() {
-                "CityJSON" => "application/json",
-                "CityJSONSeq" => "application/json-seq",
-                "FlatCityBuf" => "application/octet-stream",
-                _ => "application/octet-stream",
-            }
+            encoding_media_type(reader.encoding())
         };
 
         // Generate asset href based on base_url or original_url
@@ -400,7 +423,6 @@ impl StacItemBuilder {
 
         let href = match base_url {
             Some(base) => {
-                // Ensure base URL ends with a slash
                 let normalized_base = if base.ends_with('/') {
                     base.to_string()
                 } else {
@@ -414,24 +436,16 @@ impl StacItemBuilder {
             },
         };
 
-        builder = builder.data_asset(href, media_type);
+        builder = builder.data_asset(href.clone(), media_type, file_size);
+
+        // Add city-model relation link (per STAC 3D City Models Extension)
+        builder =
+            builder.link(stac::Link::new(&href, "city-model").r#type(Some(media_type.to_string())));
 
         Ok(builder)
     }
 
     /// Helper to create item from file path with format suffix in ID
-    ///
-    /// This variant generates IDs with format suffixes (e.g., "delft_cj", "delft_cjseq", "delft_fcb")
-    /// to handle filename collisions where multiple formats have the same stem.
-    ///
-    /// Bbox and geometry are automatically transformed to WGS84 (EPSG:4326)
-    /// as required by the STAC specification (per GeoJSON RFC 7946).
-    ///
-    /// # Arguments
-    /// * `file_path` - Path to the CityJSON file
-    /// * `reader` - Reader instance for the file
-    /// * `base_url` - Optional base URL for asset hrefs
-    /// * `original_url` - Optional original remote URL for asset hrefs when no base_url
     pub fn from_file_with_format_suffix(
         file_path: &Path,
         reader: &dyn CityModelMetadataReader,
@@ -454,7 +468,6 @@ impl StacItemBuilder {
             .and_then(|s| s.to_str())
             .unwrap_or("unknown");
 
-        // Generate format-specific suffix
         let suffix = match reader.encoding() {
             "CityJSON" => "_cj",
             "CityJSONSeq" => "_cjseq",
@@ -476,12 +489,9 @@ impl StacItemBuilder {
         // Add CityJSON metadata
         builder = builder.cityjson_metadata(reader)?;
 
-        // Add file size (File Extension)
-        if let Ok(metadata) = std::fs::metadata(file_path) {
-            builder = builder.file_size(metadata.len());
-        }
+        // Get file size for the asset (File Extension)
+        let file_size = std::fs::metadata(file_path).ok().map(|m| m.len());
 
-        // Add data asset - detect ZIP files for proper media type
         let is_zip = file_path
             .extension()
             .and_then(|e| e.to_str())
@@ -491,15 +501,9 @@ impl StacItemBuilder {
         let media_type = if is_zip {
             "application/zip"
         } else {
-            match reader.encoding() {
-                "CityJSON" => "application/json",
-                "CityJSONSeq" => "application/json-seq",
-                "FlatCityBuf" => "application/octet-stream",
-                _ => "application/octet-stream",
-            }
+            encoding_media_type(reader.encoding())
         };
 
-        // Generate asset href based on base_url or original_url
         let file_name = file_path
             .file_name()
             .and_then(|n| n.to_str())
@@ -507,7 +511,6 @@ impl StacItemBuilder {
 
         let href = match base_url {
             Some(base) => {
-                // Ensure base URL ends with a slash
                 let normalized_base = if base.ends_with('/') {
                     base.to_string()
                 } else {
@@ -521,7 +524,11 @@ impl StacItemBuilder {
             },
         };
 
-        builder = builder.data_asset(href, media_type);
+        builder = builder.data_asset(href.clone(), media_type, file_size);
+
+        // Add city-model relation link (per STAC 3D City Models Extension)
+        builder =
+            builder.link(stac::Link::new(&href, "city-model").r#type(Some(media_type.to_string())));
 
         Ok(builder)
     }
@@ -578,8 +585,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(item.id, "test-item");
-        assert_eq!(item.stac_version, "1.1.0");
-        assert_eq!(item.properties.get("title").unwrap(), "Test Item");
+        assert_eq!(item.properties.title, Some("Test Item".to_string()));
     }
 
     #[test]
@@ -593,9 +599,24 @@ mod tests {
             .build()
             .unwrap();
 
-        assert_eq!(item.properties.get("city3d:version").unwrap(), "2.0");
-        assert_eq!(item.properties.get("city3d:city_objects").unwrap(), 1);
-        assert_eq!(item.properties.get("proj:epsg").unwrap(), 7415);
+        assert_eq!(
+            item.properties
+                .additional_fields
+                .get("city3d:version")
+                .unwrap(),
+            "2.0"
+        );
+        assert_eq!(
+            item.properties
+                .additional_fields
+                .get("city3d:city_objects")
+                .unwrap(),
+            1
+        );
+        assert_eq!(
+            item.properties.additional_fields.get("proj:code").unwrap(),
+            "EPSG:7415"
+        );
     }
 
     #[test]
@@ -622,7 +643,7 @@ mod tests {
             .unwrap();
 
         assert!(item.geometry.is_some());
-        let geom = item.geometry.unwrap();
-        assert_eq!(geom["type"], "Polygon");
+        let geom_value = serde_json::to_value(&item.geometry).unwrap();
+        assert_eq!(geom_value["type"], "Polygon");
     }
 }

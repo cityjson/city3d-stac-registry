@@ -45,8 +45,7 @@
     "datetime": "2023-05-15T10:30:00Z",
     "title": "Rotterdam Buildings - District A",
     "description": "Building models in Level of Detail 2 with semantic attributes for district A",
-    "proj:epsg": 7415,
-    "city3d:encoding": "CityJSON",
+    "proj:code": "EPSG:7415",
     "city3d:version": "2.0",
     "city3d:city_objects": 1523,
     "city3d:lods": [
@@ -121,8 +120,8 @@
   "assets": {
     "data": {
       "href": "./rotterdam_buildings_district_a.json",
-      "type": "application/json",
-      "title": "CityJSON data file",
+      "type": "application/city+json",
+      "title": "3D city model data",
       "roles": [
         "data"
       ]

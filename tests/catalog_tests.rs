@@ -44,7 +44,7 @@ fn test_catalog_builder() {
     let child_link = catalog.links.iter().find(|l| l.rel == "child").unwrap();
     assert_eq!(child_link.href, "./child/collection.json");
     assert_eq!(child_link.title, Some("Child Title".to_string()));
-    assert_eq!(child_link.link_type, Some("application/json".to_string()));
+    assert_eq!(child_link.r#type, Some("application/json".to_string()));
 
     let self_link = catalog.links.iter().find(|l| l.rel == "self").unwrap();
     assert_eq!(self_link.href, "./catalog.json");

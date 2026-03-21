@@ -280,11 +280,11 @@ mod item_property_tests {
     }
 
     #[test]
-    fn test_item_has_proj_epsg() {
+    fn test_item_has_proj_code() {
         let item = build_item_from_file("delft.city.json");
-        let epsg = item["properties"]["proj:epsg"].as_u64();
-        assert!(epsg.is_some(), "Item should have proj:epsg property");
-        assert_eq!(epsg.unwrap(), 7415);
+        let proj_code = item["properties"]["proj:code"].as_str();
+        assert!(proj_code.is_some(), "Item should have proj:code property");
+        assert_eq!(proj_code.unwrap(), "EPSG:7415");
     }
 
     #[test]
@@ -303,9 +303,11 @@ mod item_property_tests {
     #[test]
     fn test_item_has_datetime() {
         let item = build_item_from_file("delft.city.json");
+        // datetime is null when no referenceDate is available in the source data
+        // STAC allows null datetime when no temporal info is known
         assert!(
-            item["properties"]["datetime"].is_string(),
-            "Item should have a datetime property"
+            item["properties"].get("datetime").is_some(),
+            "Item should have a datetime property (may be null)"
         );
     }
 
@@ -351,7 +353,7 @@ mod from_content_schema_tests {
             builder
         };
 
-        let builder = builder.data_asset("remote_railway.city.json", "application/json");
+        let builder = builder.data_asset("remote_railway.city.json", "application/city+json", None);
         let item = builder.build().expect("Failed to build item");
         let item_json = serde_json::to_value(item).unwrap();
 
@@ -387,7 +389,11 @@ mod from_content_schema_tests {
             builder
         };
 
-        let builder = builder.data_asset("remote_railway.city.jsonl", "application/json-seq");
+        let builder = builder.data_asset(
+            "remote_railway.city.jsonl",
+            "application/city+json-seq",
+            None,
+        );
         let item = builder.build().expect("Failed to build item");
         let item_json = serde_json::to_value(item).unwrap();
 
@@ -627,13 +633,19 @@ mod collection_property_tests {
     }
 
     #[test]
-    fn test_collection_has_proj_epsg_summary() {
+    fn test_collection_has_proj_code_summary() {
         let collection = build_mixed_collection();
         let summaries = &collection["summaries"];
 
-        let epsg = summaries["proj:epsg"].as_array();
-        assert!(epsg.is_some(), "Collection should have proj:epsg summary");
-        assert!(!epsg.unwrap().is_empty(), "proj:epsg should not be empty");
+        let proj_codes = summaries["proj:code"].as_array();
+        assert!(
+            proj_codes.is_some(),
+            "Collection should have proj:code summary"
+        );
+        assert!(
+            !proj_codes.unwrap().is_empty(),
+            "proj:code should not be empty"
+        );
     }
 }
 
@@ -715,7 +727,7 @@ mod cross_format_consistency_tests {
 
         // Both should have the same CRS
         assert_eq!(
-            json_item["properties"]["proj:epsg"], jsonl_item["properties"]["proj:epsg"],
+            json_item["properties"]["proj:code"], jsonl_item["properties"]["proj:code"],
             "CRS should match between CityJSON and CityJSONSeq for same dataset"
         );
 
@@ -801,7 +813,7 @@ mod remote_url_schema_tests {
         }
 
         let item = builder
-            .data_asset(url, "application/json")
+            .data_asset(url, "application/city+json", None)
             .build()
             .expect("Failed to build item");
 
@@ -840,7 +852,7 @@ mod remote_url_schema_tests {
         }
 
         let item = builder
-            .data_asset(url, "application/json-seq")
+            .data_asset(url, "application/city+json-seq", None)
             .build()
             .expect("Failed to build item");
 
@@ -925,6 +937,86 @@ mod citygml_schema_tests {
     }
 }
 
+// ===========================================================================
+// stac-validate crate validation (validates against upstream STAC schemas)
+// ===========================================================================
+
+mod stac_validate_tests {
+    use super::*;
+    use stac_validate::Validate;
+
+    #[tokio::test]
+    async fn test_item_validates_with_stac_validate_crate() {
+        let path = test_data_path("delft.city.json");
+        let reader = get_reader(&path).expect("Failed to create reader");
+        let mut item = StacItemBuilder::from_file(
+            &path,
+            reader.as_ref(),
+            Some("https://example.com/data"),
+            None,
+        )
+        .expect("Failed to create builder")
+        // Test data lacks referenceDate, so set an explicit datetime
+        .datetime(Some("2024-01-01T00:00:00Z".to_string()))
+        .build()
+        .expect("Failed to build item");
+
+        // Remove relative links (stac-validate requires absolute IRIs for self links)
+        item.links.retain(|l| l.href.starts_with("http"));
+
+        item.validate()
+            .await
+            .expect("stac-validate: Item failed upstream schema validation");
+    }
+
+    #[tokio::test]
+    async fn test_collection_validates_with_stac_validate_crate() {
+        let readers: Vec<Box<dyn CityModelMetadataReader>> = vec![
+            get_reader(&test_data_path("delft.city.json")).unwrap(),
+            get_reader(&test_data_path("railway.city.json")).unwrap(),
+        ];
+
+        let mut collection = StacCollectionBuilder::new("validate-test")
+            .license("proprietary")
+            .description("Validation test collection")
+            .temporal_extent(Some(chrono::Utc::now()), None)
+            .aggregate_cityjson_metadata(&readers)
+            .expect("Failed to aggregate")
+            .build()
+            .expect("Failed to build collection");
+
+        // Remove relative links (stac-validate requires absolute IRIs)
+        collection.links.retain(|l| l.href.starts_with("http"));
+
+        collection
+            .validate()
+            .await
+            .expect("stac-validate: Collection failed upstream schema validation");
+    }
+
+    #[tokio::test]
+    async fn test_cjseq_item_validates_with_stac_validate_crate() {
+        let path = test_data_path("railway.city.jsonl");
+        let reader = get_reader(&path).expect("Failed to create reader");
+        let mut item = StacItemBuilder::from_file(
+            &path,
+            reader.as_ref(),
+            Some("https://example.com/data"),
+            None,
+        )
+        .expect("Failed to create builder")
+        .datetime(Some("2024-01-01T00:00:00Z".to_string()))
+        .build()
+        .expect("Failed to build item");
+
+        item.links.retain(|l| l.href.starts_with("http"));
+
+        item.validate()
+            .await
+            .expect("stac-validate: CityJSONSeq Item failed upstream schema validation");
+    }
+}
+
 mod remote_citygml_schema_tests {
     use super::*;
 
@@ -949,7 +1041,7 @@ mod remote_citygml_schema_tests {
         }
 
         let item = builder
-            .data_asset(url, "application/gml+xml")
+            .data_asset(url, "application/gml+xml", None)
             .build()
             .expect("Failed to build item");
 
@@ -988,7 +1080,7 @@ mod remote_citygml_schema_tests {
         }
 
         let item = builder
-            .data_asset(url, "application/gml+xml")
+            .data_asset(url, "application/gml+xml", None)
             .build()
             .expect("Failed to build item");
 

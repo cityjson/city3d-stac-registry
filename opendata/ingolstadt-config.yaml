@@ -42,9 +42,9 @@ links:
   type: text/html
   title: TU Delft 3D Open Cities Portal
 - rel: related
-  href: https://github.com/tudelft3d/lod3-modelling-guide
+  href: https://creating-citygml-datasets.readthedocs.io/en/latest/creation-guidelines/lod3-models-based-on-point-clouds.html
   type: text/html
-  title: LoD3 Modeling Guide
+  title: LoD3 Modeling Guide (Creating CityGML Datasets)
 - rel: license
   href: https://creativecommons.org/licenses/by/4.0/
   type: text/html

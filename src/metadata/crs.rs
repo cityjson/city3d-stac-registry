@@ -112,9 +112,16 @@ impl CRS {
         None
     }
 
-    /// Get EPSG code for STAC proj:epsg property
+    /// Get EPSG code for STAC proj:epsg property (legacy)
     pub fn to_stac_epsg(&self) -> Option<u32> {
         self.epsg
+    }
+
+    /// Get proj:code string for STAC Projection Extension v2.0.0+
+    ///
+    /// Returns a string like "EPSG:7415" suitable for the `proj:code` property.
+    pub fn to_stac_proj_code(&self) -> Option<String> {
+        self.epsg.map(|code| format!("EPSG:{code}"))
     }
 
     /// Get the CRS as a CityJSON-compatible URL
@@ -165,6 +172,18 @@ mod tests {
     fn test_crs_to_stac_epsg() {
         let crs = CRS::from_epsg(7415);
         assert_eq!(crs.to_stac_epsg(), Some(7415));
+    }
+
+    #[test]
+    fn test_crs_to_stac_proj_code() {
+        let crs = CRS::from_epsg(7415);
+        assert_eq!(crs.to_stac_proj_code(), Some("EPSG:7415".to_string()));
+    }
+
+    #[test]
+    fn test_crs_to_stac_proj_code_unknown() {
+        let crs = CRS::unknown();
+        assert_eq!(crs.to_stac_proj_code(), None);
     }
 
     #[test]

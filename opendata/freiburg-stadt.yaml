@@ -44,6 +44,10 @@ links:
     href: https://geodaten.freiburg.de/geonetwork/srv/api/records/1c576440-e5e1-4095-bff1-a14d76cec6f4/formatters/xml
     type: application/xml
     title: XML Metadata for Freiburg 3D City Model
+  - rel: license
+    href: https://www.govdata.de/dl-de/by-2-0
+    type: text/html
+    title: Datenlizenz Deutschland - Namensnennung - Version 2.0
 # Additional Notes:
 # - Access Method: Direct HTTP download.
 # - Alternate Formats: Cesium 3D Tilesets (textured and untextured) are also available via the provider's endpoints.

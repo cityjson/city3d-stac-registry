@@ -30,37 +30,35 @@ mod e2e_single_file_tests {
             .build()
             .expect("Failed to build item");
 
-        // Step 3: Validate STAC item structure
-        assert_eq!(item.stac_version, "1.1.0");
-        assert_eq!(item.item_type, "Feature");
+        // Step 3: Validate STAC item structure via JSON serialization
+        // (stac_version and type are private fields in the stac crate)
+        let v = serde_json::to_value(&item).unwrap();
+        assert_eq!(v["stac_version"], "1.1.0");
+        assert_eq!(v["type"], "Feature");
         assert!(!item.id.is_empty());
 
         // Validate bbox
         assert!(item.bbox.is_some());
         let bbox = item.bbox.unwrap();
-        assert_eq!(bbox.len(), 6);
+        let bb: Vec<f64> = bbox.into();
+        assert_eq!(bb.len(), 6);
 
         // Validate geometry
         assert!(item.geometry.is_some());
         let geom = item.geometry.unwrap();
-        assert_eq!(geom["type"], "Polygon");
+        let gv = serde_json::to_value(&geom).unwrap();
+        assert_eq!(gv["type"], "Polygon");
 
         // Validate CityJSON extension properties
         // city3d:encoding is removed
-        assert_eq!(item.properties["city3d:version"], "2.0");
+        assert_eq!(item.properties.additional_fields["city3d:version"], "2.0");
 
         // Validate projection extension
-        assert_eq!(item.properties["proj:epsg"], 7415);
+        assert_eq!(item.properties.additional_fields["proj:code"], "EPSG:7415");
 
         // Validate required STAC extensions
-        assert!(item
-            .stac_extensions
-            .iter()
-            .any(|e| e.contains("stac-city3d")));
-        assert!(item
-            .stac_extensions
-            .iter()
-            .any(|e| e.contains("projection")));
+        assert!(item.extensions.iter().any(|e| e.contains("stac-city3d")));
+        assert!(item.extensions.iter().any(|e| e.contains("projection")));
 
         // Validate assets
         assert!(item.assets.contains_key("data"));
@@ -77,13 +75,24 @@ mod e2e_single_file_tests {
             .expect("Failed to build item");
 
         // Railway has city objects
-        assert!(item.properties["city3d:city_objects"].as_u64().unwrap() > 0);
+        assert!(
+            item.properties.additional_fields["city3d:city_objects"]
+                .as_u64()
+                .unwrap()
+                > 0
+        );
 
         // Railway has LODs
-        assert!(item.properties.contains_key("city3d:lods"));
+        assert!(item
+            .properties
+            .additional_fields
+            .contains_key("city3d:lods"));
 
         // Railway has object types
-        assert!(item.properties.contains_key("city3d:co_types"));
+        assert!(item
+            .properties
+            .additional_fields
+            .contains_key("city3d:co_types"));
     }
 
     #[test]
@@ -153,8 +162,11 @@ mod e2e_collection_tests {
 
         assert_eq!(collection.id, "test-collection");
         assert_eq!(collection.title, Some("Test Collection".to_string()));
-        assert_eq!(collection.stac_version, "1.1.0");
-        assert_eq!(collection.collection_type, "Collection");
+
+        // stac_version and type are private; verify via JSON serialization
+        let v = serde_json::to_value(&collection).unwrap();
+        assert_eq!(v["stac_version"], "1.1.0");
+        assert_eq!(v["type"], "Collection");
 
         // Validate extent
         assert!(!collection.extent.spatial.bbox.is_empty());
@@ -182,13 +194,14 @@ mod e2e_collection_tests {
 
         // Extent should contain merged bbox
         let bbox = &collection.extent.spatial.bbox[0];
-        assert_eq!(bbox.len(), 6);
+        let bb: Vec<f64> = (*bbox).into();
+        assert_eq!(bb.len(), 6);
 
         // Summaries should contain merged metadata
         let summaries = collection.summaries.as_ref().unwrap();
-        // Check proj:epsg
-        let epsg_codes = summaries["proj:epsg"].as_array().unwrap();
-        assert!(epsg_codes.iter().any(|c| c == 7415));
+        // Check proj:code
+        let proj_codes = summaries["proj:code"].as_array().unwrap();
+        assert!(proj_codes.iter().any(|c| c == "EPSG:7415"));
     }
 
     #[test]
@@ -317,20 +330,23 @@ mod e2e_workflow_tests {
 
         // Verify version matches
         let source_version = source_json["version"].as_str().unwrap();
-        let item_version = item.properties["city3d:version"].as_str().unwrap();
+        let item_version = item.properties.additional_fields["city3d:version"]
+            .as_str()
+            .unwrap();
         assert_eq!(source_version, item_version);
 
         // Verify bbox is transformed to WGS84 (lon/lat coordinates)
         // The source data is in EPSG:7415 (RD New), so the bbox should now be
         // in WGS84 with longitude/latitude values reasonable for Delft, Netherlands
         let item_bbox = item.bbox.as_ref().unwrap();
-        assert_eq!(item_bbox.len(), 6);
+        let bb: Vec<f64> = (*item_bbox).into();
+        assert_eq!(bb.len(), 6);
 
         // Delft is approximately at lon 4.3, lat 52.0
-        let lon_min = item_bbox[0];
-        let lat_min = item_bbox[1];
-        let lon_max = item_bbox[3];
-        let lat_max = item_bbox[4];
+        let lon_min = bb[0];
+        let lat_min = bb[1];
+        let lon_max = bb[3];
+        let lat_max = bb[4];
 
         assert!(
             lon_min > 3.0 && lon_min < 6.0,
@@ -358,16 +374,16 @@ mod e2e_workflow_tests {
         let source_zmin = source_extent[2].as_f64().unwrap();
         let source_zmax = source_extent[5].as_f64().unwrap();
         assert!(
-            (item_bbox[2] - source_zmin).abs() < 0.001,
+            (bb[2] - source_zmin).abs() < 0.001,
             "zmin should be preserved"
         );
         assert!(
-            (item_bbox[5] - source_zmax).abs() < 0.001,
+            (bb[5] - source_zmax).abs() < 0.001,
             "zmax should be preserved"
         );
 
-        // Verify the native CRS is preserved in proj:epsg
-        assert!(item.properties.contains_key("proj:epsg"));
+        // Verify the native CRS is preserved in proj:code
+        assert!(item.properties.additional_fields.contains_key("proj:code"));
     }
 }
 
@@ -482,18 +498,19 @@ mod e2e_zip_file_tests {
             .build()
             .expect("Failed to build item");
 
-        // Validate basic STAC structure
-        assert_eq!(item.stac_version, "1.1.0");
-        assert_eq!(item.item_type, "Feature");
+        // Validate basic STAC structure via JSON serialization
+        let v = serde_json::to_value(&item).unwrap();
+        assert_eq!(v["stac_version"], "1.1.0");
+        assert_eq!(v["type"], "Feature");
 
         // Validate metadata from inner CityJSON
-        assert_eq!(item.properties["city3d:version"], "2.0");
-        assert_eq!(item.properties["proj:epsg"], 7415);
+        assert_eq!(item.properties.additional_fields["city3d:version"], "2.0");
+        assert_eq!(item.properties.additional_fields["proj:code"], "EPSG:7415");
 
         // Validate asset has application/zip media type
         assert!(item.assets.contains_key("data"));
         let data_asset = &item.assets["data"];
-        assert_eq!(data_asset.media_type, Some("application/zip".to_string()));
+        assert_eq!(data_asset.r#type, Some("application/zip".to_string()));
     }
 
     #[test]

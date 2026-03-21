@@ -257,6 +257,14 @@ enum Commands {
     },
 }
 
+/// Helper to create a GeoParquet asset
+fn make_geoparquet_asset() -> crate::stac::Asset {
+    let mut asset = crate::stac::Asset::new("./items.parquet");
+    asset.r#type = Some("application/vnd.apache.parquet".to_string());
+    asset.roles = vec!["collection-mirror".to_string()];
+    asset
+}
+
 /// Run the CLI application
 pub async fn run() -> Result<()> {
     let cli = Cli::parse();
@@ -347,6 +355,8 @@ pub async fn run() -> Result<()> {
                 overwrite_items: overwrite_items || overwrite,
                 overwrite_collection: overwrite_collection || overwrite,
                 geoparquet,
+                parent_href: None,
+                root_href: None,
             })
             .await
         }
@@ -496,9 +506,11 @@ async fn handle_item_command(
         builder = builder.description(d);
     }
 
-    // Add collection link if specified
+    // Add collection link and ID if specified
     if let Some(coll_id) = collection {
-        builder = builder.collection_link(format!("./{coll_id}.json"));
+        builder = builder
+            .collection_id(&coll_id)
+            .collection_link(format!("./{coll_id}.json"));
     }
 
     // Generate output path
@@ -814,6 +826,9 @@ async fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
             overwrite_items: config.overwrite_items,
             overwrite_collection: config.overwrite_collections,
             geoparquet: config.geoparquet,
+            // Collections under a catalog get parent/root links
+            parent_href: Some("../catalog.json".to_string()),
+            root_href: Some("../catalog.json".to_string()),
         };
 
         // Check if input is a config file
@@ -908,7 +923,9 @@ async fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
         catalog_builder = catalog_builder.child_link(href, Some(title));
     }
 
-    catalog_builder = catalog_builder.self_link("./catalog.json");
+    catalog_builder = catalog_builder
+        .self_link("./catalog.json")
+        .root_link("./catalog.json");
 
     let catalog = catalog_builder.build();
     let catalog_json = if config.pretty {
@@ -946,11 +963,14 @@ struct CollectionConfig {
     skip_errors: bool,
     base_url: Option<String>,
     pretty: bool,
-    #[allow(dead_code)]
     dry_run: bool,
     overwrite_items: bool,
     overwrite_collection: bool,
     geoparquet: bool,
+    /// Parent link href (set when collection is part of a catalog)
+    parent_href: Option<String>,
+    /// Root link href (set when collection is part of a catalog)
+    root_href: Option<String>,
 }
 
 async fn handle_collection_command(config: CollectionConfig) -> Result<()> {
@@ -1050,6 +1070,15 @@ async fn process_collection_logic(
         .and_then(|e| e.spatial.as_ref())
         .and_then(|s| s.crs.as_ref())
         .and_then(|crs_str| CRS::from_citygml_srs_name(crs_str));
+
+    // Determine collection ID early so items can reference it
+    let collection_id = merged_config.id.clone().unwrap_or_else(|| {
+        final_inputs
+            .first()
+            .and_then(|p| p.file_name().and_then(|n| n.to_str()))
+            .unwrap_or("collection")
+            .to_string()
+    });
 
     // Check for remote URLs vs local files
     let mut sources: Vec<InputSource> = Vec::new();
@@ -1255,7 +1284,11 @@ async fn process_collection_logic(
         };
 
         match builder_result {
-            Ok(builder) => match builder.build() {
+            Ok(builder) => match builder
+                .collection_id(&collection_id)
+                .collection_link("../collection.json")
+                .build()
+            {
                 Ok(item) => {
                     // Buffer item for GeoParquet if enabled
                     if config.geoparquet {
@@ -1395,14 +1428,10 @@ async fn process_collection_logic(
                     serde_json::from_str(&collection_content)?;
 
                 // Add items-geoparquet asset if not already present
-                let assets = collection.assets.get_or_insert_with(Default::default);
-                assets
+                collection
+                    .assets
                     .entry("items-geoparquet".to_string())
-                    .or_insert_with(|| {
-                        crate::stac::Asset::new("./items.parquet")
-                            .with_type("application/vnd.apache.parquet")
-                            .with_roles(vec!["collection-mirror".to_string()])
-                    });
+                    .or_insert_with(make_geoparquet_asset);
 
                 // Write updated collection back
                 let updated_json = if config.pretty {
@@ -1432,14 +1461,6 @@ async fn process_collection_logic(
         }
 
         // Return info about existing collection
-        let collection_id = merged_config.id.unwrap_or_else(|| {
-            final_inputs
-                .first()
-                .and_then(|p| p.file_name().and_then(|n| n.to_str()))
-                .unwrap_or("collection")
-                .to_string()
-        });
-
         return Ok((collection_path, collection_id, merged_config.title));
     }
 
@@ -1462,16 +1483,6 @@ async fn process_collection_logic(
     }
 
     // Build collection from accumulated metadata
-    let collection_id = merged_config.id.unwrap_or_else(|| {
-        // For multiple inputs, try to use the first input's name
-        // or fall back to "collection"
-        final_inputs
-            .first()
-            .and_then(|p| p.file_name().and_then(|n| n.to_str()))
-            .unwrap_or("collection")
-            .to_string()
-    });
-
     let license = merged_config
         .license
         .clone()
@@ -1509,6 +1520,14 @@ async fn process_collection_logic(
     // Add self link
     collection_builder = collection_builder.self_link("./collection.json");
 
+    // Add parent and root links (set when collection is part of a catalog)
+    if let Some(parent_href) = &config.parent_href {
+        collection_builder = collection_builder.parent_link(parent_href);
+    }
+    if let Some(root_href) = &config.root_href {
+        collection_builder = collection_builder.root_link(root_href);
+    }
+
     // GeoParquet: if buffer is empty (e.g. all items skipped), read items from disk
     if config.geoparquet && geoparquet_items.is_empty() {
         let spinner = create_spinner("Reading existing items for GeoParquet…");
@@ -1531,12 +1550,7 @@ async fn process_collection_logic(
 
     // Add GeoParquet asset if enabled
     if config.geoparquet && !geoparquet_items.is_empty() {
-        collection_builder = collection_builder.asset(
-            "items-geoparquet",
-            crate::stac::Asset::new("./items.parquet")
-                .with_type("application/vnd.apache.parquet")
-                .with_roles(vec!["collection-mirror".to_string()]),
-        );
+        collection_builder = collection_builder.asset("items-geoparquet", make_geoparquet_asset());
     }
 
     // Build and write collection
@@ -1597,7 +1611,6 @@ struct UpdateCollectionConfig {
     items_base_url: Option<String>,
     skip_errors: bool,
     pretty: bool,
-    #[allow(dead_code)]
     dry_run: bool,
     geoparquet: bool,
 }
@@ -1811,12 +1824,7 @@ fn handle_update_collection_command(config: UpdateCollectionConfig) -> Result<()
 
     // Add GeoParquet asset if enabled
     if config.geoparquet && !parsed_items.is_empty() {
-        collection_builder = collection_builder.asset(
-            "items-geoparquet",
-            crate::stac::Asset::new("./items.parquet")
-                .with_type("application/vnd.apache.parquet")
-                .with_roles(vec!["collection-mirror".to_string()]),
-        );
+        collection_builder = collection_builder.asset("items-geoparquet", make_geoparquet_asset());
     }
 
     // Build and write collection

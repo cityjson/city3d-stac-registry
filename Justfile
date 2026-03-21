@@ -137,7 +137,7 @@ example-collection:
 
 # Generate example STAC catalog from config
 example-catalog:
-    cargo run -- catalog --config examples/full-catalog-config.toml -o target/example_catalog --pretty
+    cargo run -- catalog --config examples/full-catalog-config.toml -o target/example_catalog --pretty --geoparquet
     @echo "Generated: target/example_catalog/"
 
 # ============================================================================
@@ -153,3 +153,6 @@ devcon:
 devcon-build:
     devcontainer build --workspace-folder . --no-cache
     just devcon
+
+serve-files:
+    npx serve -s . -l 5500 --cors
