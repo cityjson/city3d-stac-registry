@@ -682,10 +682,8 @@ impl StacCollectionBuilder {
             );
         }
 
-        if self.summaries.contains_key("city3d:city_objects") {
-            stac_extensions
-                .push("https://stac-extensions.github.io/stats/v0.2.0/schema.json".to_string());
-        }
+        // Note: city3d:city_objects statistics (min/max/total) are defined by the
+        // city3d extension itself, not the STAC Stats Extension
 
         // Auto-generate item_assets if not explicitly set
         if self.item_assets.is_empty() && self.summaries.contains_key("city3d:version") {
@@ -700,12 +698,12 @@ impl StacCollectionBuilder {
                 .item_assets
                 .insert("data".to_string(), item_asset);
             stac_extensions.push(
-                "https://stac-extensions.github.io/item-assets/v1.1.0/schema.json".to_string(),
+                "https://stac-extensions.github.io/item-assets/v1.0.0/schema.json".to_string(),
             );
         } else if !self.item_assets.is_empty() {
             collection.item_assets = self.item_assets;
             stac_extensions.push(
-                "https://stac-extensions.github.io/item-assets/v1.1.0/schema.json".to_string(),
+                "https://stac-extensions.github.io/item-assets/v1.0.0/schema.json".to_string(),
             );
         }
 

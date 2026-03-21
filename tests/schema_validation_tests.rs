@@ -933,6 +933,86 @@ mod citygml_schema_tests {
     }
 }
 
+// ===========================================================================
+// stac-validate crate validation (validates against upstream STAC schemas)
+// ===========================================================================
+
+mod stac_validate_tests {
+    use super::*;
+    use stac_validate::Validate;
+
+    #[tokio::test]
+    async fn test_item_validates_with_stac_validate_crate() {
+        let path = test_data_path("delft.city.json");
+        let reader = get_reader(&path).expect("Failed to create reader");
+        let mut item = StacItemBuilder::from_file(
+            &path,
+            reader.as_ref(),
+            Some("https://example.com/data"),
+            None,
+        )
+        .expect("Failed to create builder")
+        // Test data lacks referenceDate, so set an explicit datetime
+        .datetime(Some("2024-01-01T00:00:00Z".to_string()))
+        .build()
+        .expect("Failed to build item");
+
+        // Remove relative links (stac-validate requires absolute IRIs for self links)
+        item.links.retain(|l| l.href.starts_with("http"));
+
+        item.validate()
+            .await
+            .expect("stac-validate: Item failed upstream schema validation");
+    }
+
+    #[tokio::test]
+    async fn test_collection_validates_with_stac_validate_crate() {
+        let readers: Vec<Box<dyn CityModelMetadataReader>> = vec![
+            get_reader(&test_data_path("delft.city.json")).unwrap(),
+            get_reader(&test_data_path("railway.city.json")).unwrap(),
+        ];
+
+        let mut collection = StacCollectionBuilder::new("validate-test")
+            .license("proprietary")
+            .description("Validation test collection")
+            .temporal_extent(Some(chrono::Utc::now()), None)
+            .aggregate_cityjson_metadata(&readers)
+            .expect("Failed to aggregate")
+            .build()
+            .expect("Failed to build collection");
+
+        // Remove relative links (stac-validate requires absolute IRIs)
+        collection.links.retain(|l| l.href.starts_with("http"));
+
+        collection
+            .validate()
+            .await
+            .expect("stac-validate: Collection failed upstream schema validation");
+    }
+
+    #[tokio::test]
+    async fn test_cjseq_item_validates_with_stac_validate_crate() {
+        let path = test_data_path("railway.city.jsonl");
+        let reader = get_reader(&path).expect("Failed to create reader");
+        let mut item = StacItemBuilder::from_file(
+            &path,
+            reader.as_ref(),
+            Some("https://example.com/data"),
+            None,
+        )
+        .expect("Failed to create builder")
+        .datetime(Some("2024-01-01T00:00:00Z".to_string()))
+        .build()
+        .expect("Failed to build item");
+
+        item.links.retain(|l| l.href.starts_with("http"));
+
+        item.validate()
+            .await
+            .expect("stac-validate: CityJSONSeq Item failed upstream schema validation");
+    }
+}
+
 mod remote_citygml_schema_tests {
     use super::*;
 
