@@ -2,6 +2,7 @@
 
 use crate::error::Result;
 use crate::metadata::BBox3D;
+use crate::metadata::CRS;
 use crate::reader::CityModelMetadataReader;
 use crate::stac::models::{Asset, Link, StacItem};
 use chrono::{DateTime, Utc};
@@ -40,6 +41,18 @@ impl StacItemBuilder {
             assets: HashMap::new(),
             links: Vec::new(),
             uses_file_extension: false,
+        }
+    }
+
+    /// Resolve CRS from reader, using the override as fallback when the reader's CRS is unknown.
+    fn resolve_crs(reader: &dyn CityModelMetadataReader, crs_override: Option<&CRS>) -> CRS {
+        let crs = reader.crs().unwrap_or_default();
+        if crs.is_known() {
+            crs
+        } else if let Some(override_crs) = crs_override {
+            override_crs.clone()
+        } else {
+            crs
         }
     }
 
@@ -324,6 +337,20 @@ impl StacItemBuilder {
         base_url: Option<&str>,
         original_url: Option<&str>,
     ) -> Result<Self> {
+        Self::from_file_with_crs_override(file_path, reader, base_url, original_url, None)
+    }
+
+    /// Helper to create item from file path with an optional CRS override
+    ///
+    /// When the data file lacks CRS metadata, the `crs_override` is used as fallback
+    /// for reprojecting coordinates to WGS84.
+    pub fn from_file_with_crs_override(
+        file_path: &Path,
+        reader: &dyn CityModelMetadataReader,
+        base_url: Option<&str>,
+        original_url: Option<&str>,
+        crs_override: Option<&CRS>,
+    ) -> Result<Self> {
         let id = file_path
             .file_stem()
             .and_then(|s| s.to_str())
@@ -334,7 +361,7 @@ impl StacItemBuilder {
 
         // Set bbox (transformed to WGS84 for STAC compliance)
         if let Ok(bbox) = reader.bbox() {
-            let crs = reader.crs().unwrap_or_default();
+            let crs = Self::resolve_crs(reader, crs_override);
             let wgs84_bbox = bbox.to_wgs84(&crs)?;
             builder = builder.bbox(wgs84_bbox).geometry_from_bbox();
         }
@@ -411,6 +438,17 @@ impl StacItemBuilder {
         base_url: Option<&str>,
         original_url: Option<&str>,
     ) -> Result<Self> {
+        Self::from_file_with_format_suffix_and_crs(file_path, reader, base_url, original_url, None)
+    }
+
+    /// Helper to create item from file path with format suffix and optional CRS override
+    pub fn from_file_with_format_suffix_and_crs(
+        file_path: &Path,
+        reader: &dyn CityModelMetadataReader,
+        base_url: Option<&str>,
+        original_url: Option<&str>,
+        crs_override: Option<&CRS>,
+    ) -> Result<Self> {
         let stem = file_path
             .file_stem()
             .and_then(|s| s.to_str())
@@ -430,7 +468,7 @@ impl StacItemBuilder {
 
         // Set bbox (transformed to WGS84 for STAC compliance)
         if let Ok(bbox) = reader.bbox() {
-            let crs = reader.crs().unwrap_or_default();
+            let crs = Self::resolve_crs(reader, crs_override);
             let wgs84_bbox = bbox.to_wgs84(&crs)?;
             builder = builder.bbox(wgs84_bbox).geometry_from_bbox();
         }

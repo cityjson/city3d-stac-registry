@@ -186,7 +186,7 @@ pub fn extract_extension_from_url(url: &str) -> Result<String> {
             .ok_or_else(|| {
                 CityJsonStacError::Other(format!("No file extension found in URL: {url}"))
             })
-            .map(|s| s.to_string())
+            .map(|s| s.to_lowercase())
     } else {
         Err(CityJsonStacError::Other(format!(
             "No file extension found in URL: {url}",

@@ -213,9 +213,10 @@ pub fn get_reader(path: &Path) -> Result<Box<dyn CityModelMetadataReader>> {
     let extension = path
         .extension()
         .and_then(|e| e.to_str())
+        .map(|e| e.to_lowercase())
         .ok_or_else(|| CityJsonStacError::InvalidCityJson("No file extension".to_string()))?;
 
-    match extension {
+    match extension.as_str() {
         "gz" => Ok(Box::new(GzipReader::new(path)?)),
         "zip" => Ok(Box::new(ZipReader::new(path)?)),
         "json" => Ok(Box::new(CityJSONReader::new(path)?)),

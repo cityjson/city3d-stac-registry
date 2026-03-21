@@ -5,6 +5,7 @@ pub mod progress;
 
 use crate::config::{CollectionCliArgs, CollectionConfigFile};
 use crate::error::{CityJsonStacError, Result};
+use crate::metadata::CRS;
 use crate::reader::{get_reader_from_source, InputSource};
 use crate::stac::{StacCollectionBuilder, StacItemBuilder};
 use crate::traversal;
@@ -1042,6 +1043,14 @@ async fn process_collection_logic(
         ));
     };
 
+    // Extract CRS override from config (used as fallback when files lack CRS metadata)
+    let crs_override: Option<CRS> = merged_config
+        .extent
+        .as_ref()
+        .and_then(|e| e.spatial.as_ref())
+        .and_then(|s| s.crs.as_ref())
+        .and_then(|crs_str| CRS::from_citygml_srs_name(crs_str));
+
     // Check for remote URLs vs local files
     let mut sources: Vec<InputSource> = Vec::new();
     let mut local_search_paths: Vec<PathBuf> = Vec::new();
@@ -1228,14 +1237,21 @@ async fn process_collection_logic(
 
         // Process and generate item
         let builder_result = if has_collision {
-            StacItemBuilder::from_file_with_format_suffix(
+            StacItemBuilder::from_file_with_format_suffix_and_crs(
                 file_path,
                 reader.as_ref(),
                 config.base_url.as_deref(),
                 None,
+                crs_override.as_ref(),
             )
         } else {
-            StacItemBuilder::from_file(file_path, reader.as_ref(), config.base_url.as_deref(), None)
+            StacItemBuilder::from_file_with_crs_override(
+                file_path,
+                reader.as_ref(),
+                config.base_url.as_deref(),
+                None,
+                crs_override.as_ref(),
+            )
         };
 
         match builder_result {
