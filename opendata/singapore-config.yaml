@@ -67,7 +67,7 @@ links:
   href: https://github.com/ualsg/hdb3d-code
   type: text/html
   title: Generation Code (GitHub)
-- rel:cite-as
+- rel: cite-as
   href: https://doi.org/10.5194/isprs-annals-vi-4-w1-2020-37-2020
   type: text/html
   title: Paper - Exploration of open data in Southeast Asia to generate 3D building

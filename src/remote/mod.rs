@@ -169,28 +169,52 @@ pub async fn download_from_url(url: &str) -> Result<bytes::Bytes> {
 /// # Returns
 /// File extension without dot, or error if no extension found
 pub fn extract_extension_from_url(url: &str) -> Result<String> {
-    let filename = url
-        .split('/')
-        .next_back()
-        .and_then(|s| s.split('?').next()) // Remove query string
-        .ok_or_else(|| {
-            CityJsonStacError::Other(format!("No file extension found in URL: {url}"))
-        })?;
+    // First try the path component (before query string)
+    let last_segment = url.split('/').next_back().unwrap_or("");
+    let path_part = last_segment.split('?').next().unwrap_or("");
 
-    // Check if filename contains a dot (has extension)
+    if let Some(ext) = extract_ext_from_filename(path_part) {
+        let lower = ext.to_lowercase();
+        // If the path extension is a known data format, use it directly
+        match lower.as_str() {
+            "json" | "jsonl" | "cjseq" | "gml" | "xml" | "zip" | "gz" | "fcb" => return Ok(lower),
+            _ => {}
+        }
+    }
+
+    // Fallback: check query parameters for a filename (e.g., ?file=data.gml&id=4)
+    if let Some(query) = url.split('?').nth(1) {
+        for param in query.split('&') {
+            if let Some(value) = param
+                .strip_prefix("file=")
+                .or_else(|| param.strip_prefix("f="))
+            {
+                // URL-decode the value and extract extension
+                let decoded = value.replace("%2F", "/").replace("%2E", ".");
+                let filename = decoded.split('/').next_back().unwrap_or(value);
+                if let Some(ext) = extract_ext_from_filename(filename) {
+                    return Ok(ext.to_lowercase());
+                }
+            }
+        }
+    }
+
+    // If path had any extension (even non-data like .php), return it
+    if let Some(ext) = extract_ext_from_filename(path_part) {
+        return Ok(ext.to_lowercase());
+    }
+
+    Err(CityJsonStacError::Other(format!(
+        "No file extension found in URL: {url}",
+    )))
+}
+
+/// Extract extension from a filename string (without dot)
+fn extract_ext_from_filename(filename: &str) -> Option<&str> {
     if filename.contains('.') {
-        filename
-            .rsplit('.')
-            .next()
-            .filter(|ext| !ext.is_empty())
-            .ok_or_else(|| {
-                CityJsonStacError::Other(format!("No file extension found in URL: {url}"))
-            })
-            .map(|s| s.to_lowercase())
+        filename.rsplit('.').next().filter(|ext| !ext.is_empty())
     } else {
-        Err(CityJsonStacError::Other(format!(
-            "No file extension found in URL: {url}",
-        )))
+        None
     }
 }
 
@@ -218,9 +242,25 @@ pub fn is_remote_url(input: &str) -> bool {
 /// # Returns
 /// Filename extracted from URL path
 pub fn url_filename(url: &str) -> String {
+    // First check query parameters for a filename (e.g., ?file=data.gml or ?f=data.zip)
+    if let Some(query) = url.split('?').nth(1) {
+        for param in query.split('&') {
+            if let Some(value) = param
+                .strip_prefix("file=")
+                .or_else(|| param.strip_prefix("f="))
+            {
+                let decoded = value.replace("%2F", "/").replace("%2E", ".");
+                let filename = decoded.split('/').next_back().unwrap_or(value);
+                if filename.contains('.') {
+                    return filename.to_string();
+                }
+            }
+        }
+    }
+    // Fall back to the path component
     url.split('/')
         .next_back()
-        .and_then(|s| s.split('?').next()) // Remove query string
+        .and_then(|s| s.split('?').next())
         .filter(|s| !s.is_empty())
         .unwrap_or("remote.file")
         .to_string()
@@ -287,6 +327,34 @@ mod tests {
         );
         assert!(extract_extension_from_url("https://example.com/file").is_err());
         assert!(extract_extension_from_url("https://example.com/").is_err());
+        // Case-insensitive
+        assert_eq!(
+            extract_extension_from_url("https://example.com/file.GML").unwrap(),
+            "gml"
+        );
+        assert_eq!(
+            extract_extension_from_url("https://example.com/file.ZIP").unwrap(),
+            "zip"
+        );
+        // Query parameter: ?file=data.gml
+        assert_eq!(
+            extract_extension_from_url("https://example.com/download?file=data.gml&id=4").unwrap(),
+            "gml"
+        );
+        // Query parameter: ?f=data.zip (Estonia-style)
+        assert_eq!(
+            extract_extension_from_url(
+                "https://example.com/index.php?f=hooned_lod2-citygml.zip&page_id=837"
+            )
+            .unwrap(),
+            "zip"
+        );
+        // PHP with file= query param should prefer the file param extension
+        assert_eq!(
+            extract_extension_from_url("https://example.com/massen.php?file=LoD2_data.xml&id=4")
+                .unwrap(),
+            "xml"
+        );
     }
 
     #[test]
