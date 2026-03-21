@@ -1,5 +1,30 @@
 # Plan: STAC Extension Compliance + `stac` Crate Migration
 
+## Progress
+
+| Phase | Status | Commit | Notes |
+|-------|--------|--------|-------|
+| Phase 0: Add Dependencies | Pending | | |
+| **Phase 1: Fix Compliance** | **Done** | `b40f98c` | 8 issues fixed, all 402 tests pass |
+| Phase 2: Migrate to `stac` crate | Pending | | |
+| Phase 3: Migrate GeoParquet | Pending | | |
+| Phase 4: E2E Validation Tests | Pending | | |
+| Phase 5: Update Config System | Pending | | |
+| Phase 6: Final Cleanup | Pending | | |
+
+### Phase 1 Details (completed)
+
+- [x] Step 1.1: `proj:epsg` -> `proj:code` (string format per Projection Ext v2.0.0)
+- [x] Step 1.2: `datetime` defaults to null; extracts `referenceDate` from CityJSON metadata
+- [x] Step 1.3: Boolean summaries as arrays (`[true]`, `[true, false]`)
+- [x] Step 1.4: `file:size` moved to asset (not item properties)
+- [x] Step 1.5: `file:checksum` simplified to plain multihash string
+- [x] Step 1.6: `item_assets` auto-generated for collections + Item Assets Extension URL
+- [x] Step 1.7: `city3d:encoding` removed from accumulator, geoparquet, tests
+- [x] Step 1.8: `city-model` rel type added to items
+
+---
+
 ## Context
 
 The cityjson-stac project generates STAC metadata for 3D city model datasets. It currently uses custom STAC structs (`StacItem`, `StacCollection`, etc.) in `src/stac/models.rs`. This plan addresses two goals:
