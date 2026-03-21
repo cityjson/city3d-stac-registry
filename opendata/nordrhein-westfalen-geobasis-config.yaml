@@ -26,7 +26,7 @@ providers:
     description: State Office for Geoinformation and Surveying North Rhine-Westphalia
     # NOTE: Contact via geobasis@bezreg-koeln.nrw.de
 inputs:
-  - https://www.opengeodata.nrw.de/produkte/geobasis/3dg/lod2_gml/lod2_gml/ # NOTE: Direct HTTP directory listing containing the bulk data files (tiled downloads).
+  - https://www.opengeodata.nrw.de/produkte/geobasis/3dg/lod2_gml/lod2_gml/LoD2_32_280_5657_1_NW.gml
 extent:
   spatial:
     bbox: [5.8, 50.3, 9.5, 52.6] # [west, south, east, north]

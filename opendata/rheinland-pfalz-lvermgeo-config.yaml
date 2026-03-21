@@ -22,7 +22,7 @@ providers:
     description: State Office for Surveying and Geobasis Information Rhineland-Palatinate
     # NOTE: Contact via geodaten@vermkv.rlp.de
 inputs:
-  - https://geoshop.rlp.de/opendata-geb3dlo.html # NOTE: Area-based downloads
+  - https://geobasis-rlp.de/data/geb3dlo/current/gml/LoD2_32_388_5490_2_RP.gml
 extent:
   spatial:
     bbox: []

@@ -27,7 +27,7 @@ providers:
     description: State Office for Geoinformation and Land Surveying Lower Saxony
     # NOTE: Contact via Data_Access@lgln.niedersachsen.de
 inputs:
-  - https://arcgis-geojson.s3.eu-de.cloud-object-storage.appdomain.cloud/lod2/lgln-opengeodata-lod2.geojson # NOTE: GeoJSON file containing the mass download links.
+  - https://lod2.s3.eu-de.cloud-object-storage.appdomain.cloud/LoD2_32_598_5897_1_ni.gml
 extent:
   spatial:
     bbox: [

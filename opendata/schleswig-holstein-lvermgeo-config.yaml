@@ -26,7 +26,7 @@ providers:
     description: State Office for Surveying and Geoinformation Schleswig-Holstein
     #NOTE: Contact via Vertrieb.Geobasisdaten@LVermGeo.landsh.de.
 inputs:
-  - https://geodaten.schleswig-holstein.de/gaialight-sh/_apps/dladownload/single.php?file=LOD2_SH_Massendownload.geojson&id=4 # NOTE: GeoJSON file containing the mass download links for the entire state.
+  - https://geodaten.schleswig-holstein.de/gaialight-sh/_apps/dladownload/massen.php?file=LoD2_32_426_6004_1_SH.xml&id=4&live=2024&km=32420_6000
 extent:
   spatial:
     bbox: [7.87, 53.37, 11.32, 55.06] # [west, south, east, north]

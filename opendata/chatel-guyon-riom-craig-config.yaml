@@ -27,7 +27,7 @@ providers:
     description: Regional geographic information center for Auvergne-Rhône-Alpes.
     # NOTE: Contact via contact@craig.fr
 inputs:
-  - https://drive.opendata.craig.fr/s/opendata?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_Building%2FRiom_Chatel-Guyon # NOTE: Main repository folder for CityGML files.
+  - https://drive.opendata.craig.fr/public.php/webdav/3d/bati3d/02_CIM/CityGML/2024_Building/Riom_Chatel-Guyon/
   # - https://drive.opendata.craig.fr/s/opendata?path=%2F3d%2Fbati3d%2F02_CIM%2FCityJSON%2F2024_Building%2FRiom_Chatel-Guyon # NOTE: Main repository folder for CityJSON files.
 extent:
   spatial:

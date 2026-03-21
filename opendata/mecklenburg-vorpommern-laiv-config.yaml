@@ -25,7 +25,7 @@ providers:
     description: State Office for Internal Administration, Geoinformation and Surveying
     # NOTE: Contact via geodatenservice@laiv-mv.de
 inputs:
-  - https://www.geodaten-mv.de/dienste/gebaeude_atom?type=dataset&id=8397b554-5cb9-4274-8be8-c20490d9a6e8 # NOTE: ATOM feed providing direct download links for the dataset.
+  - https://www.geodaten-mv.de/dienste/gebaeude_download?index=0&dataset=8397b554-5cb9-4274-8be8-c20490d9a6e8&file=lod2_33_206_5920_2_gml.zip
 extent:
   spatial:
     bbox: []

@@ -23,7 +23,7 @@ providers:
     description: State operation for surveying and basic geographic information
     # NOTE: Contact via kundenservice@geobasis-bb.de
 inputs:
-  - https://data.geobasis-bb.de/geobasis/daten/3d_gebaeude/lod2_gml/ # NOTE: Direct HTTP directory listing.
+  - https://data.geobasis-bb.de/geobasis/daten/3d_gebaeude/lod2_gml/lod2_33250-5889.zip
 extent:
   spatial:
     bbox: [11.23, 51.36, 14.81, 53.56] # [west, south, east, north]
