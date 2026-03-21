@@ -4,13 +4,13 @@
 
 | Phase | Status | Commit | Notes |
 |-------|--------|--------|-------|
-| Phase 0: Add Dependencies | Pending | | |
+| Phase 0: Add Dependencies | **Done** | `c7cfffa` | stac 0.16, stac-validate 0.6, indexmap 2 |
 | **Phase 1: Fix Compliance** | **Done** | `b40f98c` | 8 issues fixed, all 402 tests pass |
-| Phase 2: Migrate to `stac` crate | Pending | | |
-| Phase 3: Migrate GeoParquet | Pending | | |
-| Phase 4: E2E Validation Tests | Pending | | |
-| Phase 5: Update Config System | Pending | | |
-| Phase 6: Final Cleanup | Pending | | |
+| Phase 2: Migrate to `stac` crate | **Done** | `fcab4ce` | 12 files, net -540 lines, 399 tests pass |
+| Phase 3: Migrate GeoParquet | **Done** | `787cbcc` | Replaced ~700 lines with stac::geoparquet, removed arrow/geozero deps |
+| Phase 4: E2E Validation Tests | **Done** | `e87164e` | 3 stac-validate tests, fixed item-assets URL, removed unused Stats ext |
+| Phase 5: Update Config System | **Done** | — | Datetime propagation already works via referenceDate; preview_url deferred |
+| Phase 6: Final Cleanup | **Done** | | All 399 tests pass, fmt/clippy clean |
 
 ### Phase 1 Details (completed)
 
