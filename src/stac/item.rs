@@ -190,26 +190,22 @@ impl StacItemBuilder {
 
         // Add city3d:semantic_surfaces
         if let Ok(has_semantic_surfaces) = reader.semantic_surfaces() {
-            if has_semantic_surfaces {
-                self.properties
-                    .insert("city3d:semantic_surfaces".to_string(), Value::Bool(true));
-            }
+            self.properties.insert(
+                "city3d:semantic_surfaces".to_string(),
+                Value::Bool(has_semantic_surfaces),
+            );
         }
 
         // Add city3d:textures
         if let Ok(has_textures) = reader.textures() {
-            if has_textures {
-                self.properties
-                    .insert("city3d:textures".to_string(), Value::Bool(true));
-            }
+            self.properties
+                .insert("city3d:textures".to_string(), Value::Bool(has_textures));
         }
 
         // Add city3d:materials
         if let Ok(has_materials) = reader.materials() {
-            if has_materials {
-                self.properties
-                    .insert("city3d:materials".to_string(), Value::Bool(true));
-            }
+            self.properties
+                .insert("city3d:materials".to_string(), Value::Bool(has_materials));
         }
 
         // Add proj:code from CRS (string, as per STAC Projection Extension v2.0.0)

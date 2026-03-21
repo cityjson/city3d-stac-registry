@@ -25,8 +25,8 @@ extent:
     bbox: []
     crs: EPSG:25833
   temporal:
-    start: '2018-01-01T00:00:00Z'
-    end: '2018-12-31T23:59:59Z'
+    start: '2011-01-01T00:00:00Z' # Laser scanning from 2011, dataset labeled "Potsdam 2012"
+    end: '2012-12-31T23:59:59Z'
 links:
 - rel: source 
   href: https://opendata.potsdam.de/pages/home/

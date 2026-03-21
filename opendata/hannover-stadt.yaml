@@ -1,5 +1,5 @@
 id: stadt-hannover-2024
-title: Digital 3D building Model (LoD2 Hannover)
+title: Digital 3D Building Model (LoD2 Hannover)
 description: |
   Digital 3D building model (LoD2) for the state capital Hannover, Germany.
   The dataset is based on a laser scanning flight from 2010 and contains
@@ -7,7 +7,7 @@ description: |
   Buildings with a footprint smaller than 15m² and allotment garden areas
   are excluded. The LoD2 models feature standardized roof shapes aligned
   with the actual ridge course, offering a height accuracy of approx. +/- 1m.
-license: CC-BY-4.0-DE
+license: CC-BY-4.0
 keywords:
   - 3d city model
   - germany
