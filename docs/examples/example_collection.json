@@ -52,12 +52,8 @@
     }
   },
   "summaries": {
-    "proj:epsg": [
-      7415
-    ],
-    "city3d:encoding": [
-      "CityJSON",
-      "FlatCityBuf"
+    "proj:code": [
+      "EPSG:7415"
     ],
     "city3d:version": [
       "2.0"
@@ -90,9 +86,9 @@
       "Bridge",
       "BridgePart"
     ],
-    "city3d:semantic_surfaces": true,
-    "city3d:textures": false,
-    "city3d:materials": true,
+    "city3d:semantic_surfaces": [true],
+    "city3d:textures": [false],
+    "city3d:materials": [true],
     "datetime": {
       "minimum": "2023-05-15T00:00:00Z",
       "maximum": "2023-05-15T00:00:00Z"

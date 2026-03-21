@@ -35,6 +35,8 @@ pub struct StacItemBuilder {
     links: Vec<stac::Link>,
     /// Track if File Extension is used (for stac_extensions list)
     uses_file_extension: bool,
+    /// Collection ID (set when item belongs to a collection)
+    collection_id: Option<String>,
 }
 
 impl StacItemBuilder {
@@ -53,6 +55,7 @@ impl StacItemBuilder {
             assets: IndexMap::new(),
             links: Vec::new(),
             uses_file_extension: false,
+            collection_id: None,
         }
     }
 
@@ -269,6 +272,12 @@ impl StacItemBuilder {
         self
     }
 
+    /// Set the collection ID this item belongs to
+    pub fn collection_id(mut self, id: impl Into<String>) -> Self {
+        self.collection_id = Some(id.into());
+        self
+    }
+
     /// Add a collection link
     pub fn collection_link(mut self, href: impl ToString) -> Self {
         self.links.push(stac::Link::collection(href));
@@ -301,6 +310,9 @@ impl StacItemBuilder {
 
         // Set assets
         item.assets = self.assets;
+
+        // Set collection
+        item.collection = self.collection_id;
 
         // Set links
         item.links = self.links;

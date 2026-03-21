@@ -290,15 +290,14 @@ The command aggregates the following 3D City Models extension properties from al
 
 | Property                   | Aggregation Method                      |
 | -------------------------- | --------------------------------------- |
-| `city3d:encoding`          | Unique list of all encodings            |
 | `city3d:version`           | Unique list of all versions             |
 | `city3d:lods`              | Merged, sorted list of all LODs         |
 | `city3d:co_types`          | Merged, sorted list of all object types |
 | `city3d:city_objects`      | Statistics: min, max, total             |
-| `city3d:semantic_surfaces` | True if any item has them               |
-| `city3d:textures`          | True if any item has them               |
-| `city3d:materials`         | True if any item has them               |
-| `proj:epsg`                | Unique list of all EPSG codes           |
+| `city3d:semantic_surfaces` | Array of unique observed values         |
+| `city3d:textures`          | Array of unique observed values         |
+| `city3d:materials`         | Array of unique observed values         |
+| `proj:code`                | Unique list of all projection codes     |
 | `bbox` (spatial)           | Merged bounding box of all items        |
 
 **Examples:**

@@ -506,9 +506,11 @@ async fn handle_item_command(
         builder = builder.description(d);
     }
 
-    // Add collection link if specified
+    // Add collection link and ID if specified
     if let Some(coll_id) = collection {
-        builder = builder.collection_link(format!("./{coll_id}.json"));
+        builder = builder
+            .collection_id(&coll_id)
+            .collection_link(format!("./{coll_id}.json"));
     }
 
     // Generate output path
@@ -961,7 +963,6 @@ struct CollectionConfig {
     skip_errors: bool,
     base_url: Option<String>,
     pretty: bool,
-    #[allow(dead_code)]
     dry_run: bool,
     overwrite_items: bool,
     overwrite_collection: bool,
@@ -1069,6 +1070,15 @@ async fn process_collection_logic(
         .and_then(|e| e.spatial.as_ref())
         .and_then(|s| s.crs.as_ref())
         .and_then(|crs_str| CRS::from_citygml_srs_name(crs_str));
+
+    // Determine collection ID early so items can reference it
+    let collection_id = merged_config.id.clone().unwrap_or_else(|| {
+        final_inputs
+            .first()
+            .and_then(|p| p.file_name().and_then(|n| n.to_str()))
+            .unwrap_or("collection")
+            .to_string()
+    });
 
     // Check for remote URLs vs local files
     let mut sources: Vec<InputSource> = Vec::new();
@@ -1274,7 +1284,11 @@ async fn process_collection_logic(
         };
 
         match builder_result {
-            Ok(builder) => match builder.collection_link("../collection.json").build() {
+            Ok(builder) => match builder
+                .collection_id(&collection_id)
+                .collection_link("../collection.json")
+                .build()
+            {
                 Ok(item) => {
                     // Buffer item for GeoParquet if enabled
                     if config.geoparquet {
@@ -1447,14 +1461,6 @@ async fn process_collection_logic(
         }
 
         // Return info about existing collection
-        let collection_id = merged_config.id.unwrap_or_else(|| {
-            final_inputs
-                .first()
-                .and_then(|p| p.file_name().and_then(|n| n.to_str()))
-                .unwrap_or("collection")
-                .to_string()
-        });
-
         return Ok((collection_path, collection_id, merged_config.title));
     }
 
@@ -1477,16 +1483,6 @@ async fn process_collection_logic(
     }
 
     // Build collection from accumulated metadata
-    let collection_id = merged_config.id.unwrap_or_else(|| {
-        // For multiple inputs, try to use the first input's name
-        // or fall back to "collection"
-        final_inputs
-            .first()
-            .and_then(|p| p.file_name().and_then(|n| n.to_str()))
-            .unwrap_or("collection")
-            .to_string()
-    });
-
     let license = merged_config
         .license
         .clone()
@@ -1615,7 +1611,6 @@ struct UpdateCollectionConfig {
     items_base_url: Option<String>,
     skip_errors: bool,
     pretty: bool,
-    #[allow(dead_code)]
     dry_run: bool,
     geoparquet: bool,
 }
