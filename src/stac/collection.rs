@@ -3,9 +3,9 @@
 use crate::error::{CityJsonStacError, Result};
 use crate::metadata::BBox3D;
 use crate::reader::CityModelMetadataReader;
-use crate::stac::models::{Asset, Extent, Link, Provider, StacCollection, TemporalExtent};
 use chrono::{DateTime, Utc};
-use serde_json::Value;
+use indexmap::IndexMap;
+use serde_json::{Map, Value};
 use std::collections::{HashMap, HashSet};
 
 /// Builder for STAC Collections
@@ -15,12 +15,14 @@ pub struct StacCollectionBuilder {
     description: Option<String>,
     license: String,
     keywords: Option<Vec<String>>,
-    providers: Option<Vec<Provider>>,
-    extent: Extent,
+    providers: Option<Vec<stac::Provider>>,
+    spatial_bboxes: Vec<stac::Bbox>,
+    temporal_start: Option<DateTime<Utc>>,
+    temporal_end: Option<DateTime<Utc>>,
     summaries: HashMap<String, Value>,
-    links: Vec<Link>,
-    assets: HashMap<String, Asset>,
-    item_assets: Option<HashMap<String, Value>>,
+    links: Vec<stac::Link>,
+    assets: IndexMap<String, stac::Asset>,
+    item_assets: IndexMap<String, stac::ItemAsset>,
 }
 
 impl StacCollectionBuilder {
@@ -33,11 +35,13 @@ impl StacCollectionBuilder {
             license: "proprietary".to_string(),
             keywords: None,
             providers: None,
-            extent: Extent::default(),
+            spatial_bboxes: Vec::new(),
+            temporal_start: None,
+            temporal_end: None,
             summaries: HashMap::new(),
             links: Vec::new(),
-            assets: HashMap::new(),
-            item_assets: None,
+            assets: IndexMap::new(),
+            item_assets: IndexMap::new(),
         }
     }
 
@@ -66,14 +70,17 @@ impl StacCollectionBuilder {
     }
 
     /// Add a provider
-    pub fn provider(mut self, provider: Provider) -> Self {
+    pub fn provider(mut self, provider: stac::Provider) -> Self {
         self.providers.get_or_insert_with(Vec::new).push(provider);
         self
     }
 
     /// Set spatial extent from bounding box
     pub fn spatial_extent(mut self, bbox: BBox3D) -> Self {
-        self.extent.spatial.bbox.push(bbox.to_array().to_vec());
+        let arr = bbox.to_array();
+        let stac_bbox =
+            stac::Bbox::ThreeDimensional([arr[0], arr[1], arr[2], arr[3], arr[4], arr[5]]);
+        self.spatial_bboxes.push(stac_bbox);
         self
     }
 
@@ -83,13 +90,8 @@ impl StacCollectionBuilder {
         start: Option<DateTime<Utc>>,
         end: Option<DateTime<Utc>>,
     ) -> Self {
-        let start_str = start.map(|dt| dt.to_rfc3339());
-        let end_str = end.map(|dt| dt.to_rfc3339());
-
-        // Replace the default temporal with the specified one
-        self.extent.temporal = TemporalExtent {
-            interval: vec![vec![start_str, end_str]],
-        };
+        self.temporal_start = start;
+        self.temporal_end = end;
         self
     }
 
@@ -100,40 +102,32 @@ impl StacCollectionBuilder {
     }
 
     /// Add a link
-    pub fn link(mut self, link: Link) -> Self {
+    pub fn link(mut self, link: stac::Link) -> Self {
         self.links.push(link);
         self
     }
 
     /// Add a self link
-    pub fn self_link(mut self, href: impl Into<String>) -> Self {
-        self.links
-            .push(Link::new("self", href).with_type("application/json"));
+    pub fn self_link(mut self, href: impl ToString) -> Self {
+        self.links.push(stac::Link::self_(href));
         self
     }
 
     /// Add an item link
-    pub fn item_link(mut self, href: impl Into<String>, title: Option<String>) -> Self {
-        let mut link = Link::new("item", href).with_type("application/json");
-
-        if let Some(t) = title {
-            link = link.with_title(t);
-        }
-
+    pub fn item_link(mut self, href: impl ToString, title: Option<String>) -> Self {
+        let mut link = stac::Link::item(href);
+        link.title = title;
         self.links.push(link);
         self
     }
 
     /// Add an asset
-    pub fn asset(mut self, key: impl Into<String>, asset: Asset) -> Self {
+    pub fn asset(mut self, key: impl Into<String>, asset: stac::Asset) -> Self {
         self.assets.insert(key.into(), asset);
         self
     }
 
     /// Aggregate CityJSON metadata from multiple readers
-    ///
-    /// Uses the STAC 3D City Models Extension (city3d: prefix)
-    /// https://cityjson.github.io/stac-city3d/v0.1.0/schema.json
     pub fn aggregate_cityjson_metadata(
         mut self,
         readers: &[Box<dyn CityModelMetadataReader>],
@@ -211,7 +205,6 @@ impl StacCollectionBuilder {
         }
 
         // Aggregate boolean fields as arrays of unique observed values
-        // e.g., [true], [false], or [true, false] per the STAC extension spec
         let semantic_values: HashSet<bool> = readers
             .iter()
             .filter_map(|r| r.semantic_surfaces().ok())
@@ -243,7 +236,7 @@ impl StacCollectionBuilder {
                 .insert("city3d:materials".to_string(), serde_json::to_value(vals)?);
         }
 
-        // Aggregate proj:code (array of strings, e.g. ["EPSG:7415", "EPSG:28992"])
+        // Aggregate proj:code
         let unique_proj_codes: HashSet<String> = readers
             .iter()
             .filter_map(|r| r.crs().ok())
@@ -278,13 +271,7 @@ impl StacCollectionBuilder {
         Ok(self)
     }
 
-    /// Aggregate 3D City Models metadata from ItemMetadata
-    ///
-    /// This is the streaming-friendly version that accepts pre-extracted ItemMetadata
-    /// instead of full StacItem objects, reducing memory usage during collection generation.
-    ///
-    /// Uses the STAC 3D City Models Extension (city3d: prefix)
-    /// https://cityjson.github.io/stac-city3d/v0.1.0/schema.json
+    /// Aggregate 3D City Models metadata from ItemMetadata (streaming-friendly)
     pub fn aggregate_from_metadata(
         mut self,
         items_metadata: &[crate::stac::ItemMetadata],
@@ -304,7 +291,7 @@ impl StacCollectionBuilder {
             );
         }
 
-        // Aggregate LODs (preserve as Values to handle both string and numeric)
+        // Aggregate LODs
         let mut unique_lods: HashSet<String> = HashSet::new();
         let mut lod_values: Vec<Value> = Vec::new();
 
@@ -313,7 +300,6 @@ impl StacCollectionBuilder {
                 for lod in lods {
                     if !unique_lods.contains(lod) {
                         unique_lods.insert(lod.clone());
-                        // Try to parse as number, fall back to string
                         if let Ok(num) = lod.parse::<f64>() {
                             if let Some(n) = serde_json::Number::from_f64(num) {
                                 lod_values.push(Value::Number(n));
@@ -371,7 +357,7 @@ impl StacCollectionBuilder {
                 .insert("city3d:city_objects".to_string(), stats);
         }
 
-        // Aggregate boolean fields as arrays of unique observed values
+        // Aggregate boolean fields as arrays
         let semantic_values: HashSet<bool> = items_metadata
             .iter()
             .filter_map(|m| m.city3d_semantic_surfaces)
@@ -408,68 +394,48 @@ impl StacCollectionBuilder {
         }
 
         // Merge spatial extents from item bboxes
-        let bboxes: Vec<&Vec<f64>> = items_metadata
+        let parsed_bboxes: Vec<BBox3D> = items_metadata
             .iter()
             .filter_map(|m| m.bbox.as_ref())
+            .filter_map(|bbox| {
+                if bbox.len() == 6 {
+                    Some(BBox3D::new(
+                        bbox[0], bbox[1], bbox[2], bbox[3], bbox[4], bbox[5],
+                    ))
+                } else if bbox.len() >= 4 {
+                    Some(BBox3D::new(bbox[0], bbox[1], 0.0, bbox[2], bbox[3], 0.0))
+                } else {
+                    None
+                }
+            })
             .collect();
 
-        if !bboxes.is_empty() {
-            // Parse bbox into BBox3D (handle both 4-element and 6-element bboxes)
-            let parsed_bboxes: Vec<BBox3D> = bboxes
-                .iter()
-                .filter_map(|bbox| {
-                    if bbox.len() == 6 {
-                        Some(BBox3D::new(
-                            (*bbox)[0],
-                            (*bbox)[1],
-                            (*bbox)[2],
-                            (*bbox)[3],
-                            (*bbox)[4],
-                            (*bbox)[5],
-                        ))
-                    } else if bbox.len() >= 4 {
-                        // 2D bbox - use 0.0 for z values
-                        Some(BBox3D::new(
-                            (*bbox)[0],
-                            (*bbox)[1],
-                            0.0,
-                            (*bbox)[2],
-                            (*bbox)[3],
-                            0.0,
-                        ))
-                    } else {
-                        None
-                    }
-                })
-                .collect();
-
-            if !parsed_bboxes.is_empty() {
-                let mut merged = parsed_bboxes[0].clone();
-                for bbox in &parsed_bboxes[1..] {
-                    merged = merged.merge(bbox);
-                }
-                self = self.spatial_extent(merged);
+        if !parsed_bboxes.is_empty() {
+            let mut merged = parsed_bboxes[0].clone();
+            for bbox in &parsed_bboxes[1..] {
+                merged = merged.merge(bbox);
             }
+            self = self.spatial_extent(merged);
         }
 
         Ok(self)
     }
 
-    /// Aggregate 3D City Models metadata from pre-parsed STAC items
-    ///
-    /// This method is useful when STAC items were generated separately (e.g., for assets
-    /// stored in Object Storage) and need to be aggregated into a collection.
-    /// It extracts 3D City Models extension properties (city3d:*) from item properties and merges them.
-    ///
-    /// Uses the STAC 3D City Models Extension (city3d: prefix)
-    /// https://cityjson.github.io/stac-city3d/v0.1.0/schema.json
-    pub fn aggregate_from_items(mut self, items: &[crate::stac::models::StacItem]) -> Result<Self> {
-        use crate::stac::models::StacItem;
-        use serde_json::Value;
+    /// Aggregate metadata from pre-parsed STAC items
+    pub fn aggregate_from_items(mut self, items: &[stac::Item]) -> Result<Self> {
+        // Helper to extract string from item properties
+        fn get_string(item: &stac::Item, key: &str) -> Option<String> {
+            item.properties
+                .additional_fields
+                .get(key)
+                .and_then(|v| v.as_str())
+                .map(String::from)
+        }
 
         // Helper to extract string array from item properties
-        fn get_string_array(item: &StacItem, key: &str) -> Vec<String> {
+        fn get_string_array(item: &stac::Item, key: &str) -> Vec<String> {
             item.properties
+                .additional_fields
                 .get(key)
                 .and_then(|v| v.as_array())
                 .map(|arr| {
@@ -480,10 +446,10 @@ impl StacCollectionBuilder {
                 .unwrap_or_default()
         }
 
-        // Helper to extract number array/mixed array from items
-        fn get_lod_array(item: &StacItem) -> Vec<Value> {
+        fn get_lod_array(item: &stac::Item) -> Vec<Value> {
             if let Some(arr) = item
                 .properties
+                .additional_fields
                 .get("city3d:lods")
                 .and_then(|v| v.as_array())
             {
@@ -493,17 +459,11 @@ impl StacCollectionBuilder {
             }
         }
 
-        // Helper to extract string from item properties
-        fn get_string(item: &StacItem, key: &str) -> Option<String> {
+        fn get_int(item: &stac::Item, key: &str) -> Option<i64> {
             item.properties
+                .additional_fields
                 .get(key)
-                .and_then(|v| v.as_str())
-                .map(String::from)
-        }
-
-        // Helper to extract integer from item properties
-        fn get_int(item: &StacItem, key: &str) -> Option<i64> {
-            item.properties.get(key).and_then(|v| v.as_i64())
+                .and_then(|v| v.as_i64())
         }
 
         // Collect all versions
@@ -520,7 +480,6 @@ impl StacCollectionBuilder {
         }
 
         // Aggregate LODs
-        // Since they are now Values (Numbers), we collect unique Values by stringifying them first
         let mut unique_lods: HashSet<String> = HashSet::new();
         let mut lod_values: Vec<Value> = Vec::new();
 
@@ -571,11 +530,12 @@ impl StacCollectionBuilder {
                 .insert("city3d:city_objects".to_string(), stats);
         }
 
-        // Aggregate boolean fields as arrays of unique observed values
+        // Aggregate boolean fields as arrays
         let semantic_values: HashSet<bool> = items
             .iter()
             .filter_map(|item| {
                 item.properties
+                    .additional_fields
                     .get("city3d:semantic_surfaces")
                     .and_then(|v| v.as_bool())
             })
@@ -593,6 +553,7 @@ impl StacCollectionBuilder {
             .iter()
             .filter_map(|item| {
                 item.properties
+                    .additional_fields
                     .get("city3d:textures")
                     .and_then(|v| v.as_bool())
             })
@@ -608,6 +569,7 @@ impl StacCollectionBuilder {
             .iter()
             .filter_map(|item| {
                 item.properties
+                    .additional_fields
                     .get("city3d:materials")
                     .and_then(|v| v.as_bool())
             })
@@ -619,7 +581,7 @@ impl StacCollectionBuilder {
                 .insert("city3d:materials".to_string(), serde_json::to_value(vals)?);
         }
 
-        // Aggregate proj:code (array of strings)
+        // Aggregate proj:code
         let unique_proj_codes: HashSet<String> = items
             .iter()
             .filter_map(|item| get_string(item, "proj:code"))
@@ -633,116 +595,127 @@ impl StacCollectionBuilder {
         }
 
         // Merge spatial extents from item bboxes
-        let bboxes: Vec<Vec<f64>> = items.iter().filter_map(|item| item.bbox.clone()).collect();
-
-        if !bboxes.is_empty() {
-            // Parse bbox into BBox3D (handle both 4-element and 6-element bboxes)
-            let parsed_bboxes: Vec<BBox3D> = bboxes
-                .iter()
-                .filter_map(|bbox| {
-                    if bbox.len() == 6 {
-                        Some(BBox3D::new(
-                            bbox[0], bbox[1], bbox[2], bbox[3], bbox[4], bbox[5],
-                        ))
-                    } else if bbox.len() >= 4 {
-                        // 2D bbox - use 0.0 for z values
-                        Some(BBox3D::new(bbox[0], bbox[1], 0.0, bbox[2], bbox[3], 0.0))
-                    } else {
-                        None
-                    }
-                })
-                .collect();
-
-            if !parsed_bboxes.is_empty() {
-                let mut merged = parsed_bboxes[0].clone();
-                for bbox in &parsed_bboxes[1..] {
-                    merged = merged.merge(bbox);
+        let parsed_bboxes: Vec<BBox3D> = items
+            .iter()
+            .filter_map(|item| {
+                let bbox_vec: Vec<f64> = item.bbox?.into();
+                if bbox_vec.len() == 6 {
+                    Some(BBox3D::new(
+                        bbox_vec[0],
+                        bbox_vec[1],
+                        bbox_vec[2],
+                        bbox_vec[3],
+                        bbox_vec[4],
+                        bbox_vec[5],
+                    ))
+                } else if bbox_vec.len() >= 4 {
+                    Some(BBox3D::new(
+                        bbox_vec[0],
+                        bbox_vec[1],
+                        0.0,
+                        bbox_vec[2],
+                        bbox_vec[3],
+                        0.0,
+                    ))
+                } else {
+                    None
                 }
-                self = self.spatial_extent(merged);
+            })
+            .collect();
+
+        if !parsed_bboxes.is_empty() {
+            let mut merged = parsed_bboxes[0].clone();
+            for bbox in &parsed_bboxes[1..] {
+                merged = merged.merge(bbox);
             }
+            self = self.spatial_extent(merged);
         }
 
         Ok(self)
     }
 
     /// Build the STAC Collection
-    pub fn build(self) -> Result<StacCollection> {
+    pub fn build(self) -> Result<stac::Collection> {
         // Validate spatial extent
-        if self.extent.spatial.bbox.is_empty() {
+        if self.spatial_bboxes.is_empty() {
             return Err(CityJsonStacError::StacError(
                 "Spatial extent bbox is required".to_string(),
             ));
         }
 
-        // Build stac_extensions list dynamically based on which extensions are used
+        let description = self
+            .description
+            .unwrap_or_else(|| "3D City Model collection".to_string());
+
+        let mut collection = stac::Collection::new(&self.id, &description);
+        collection.title = self.title;
+        collection.license = self.license;
+        collection.keywords = self.keywords;
+        collection.providers = self.providers;
+
+        // Set extent
+        collection.extent.spatial.bbox = self.spatial_bboxes;
+        collection.extent.temporal.interval = vec![[self.temporal_start, self.temporal_end]];
+
+        // Set summaries
+        if !self.summaries.is_empty() {
+            let mut map = Map::new();
+            for (k, v) in self.summaries.iter() {
+                map.insert(k.clone(), v.clone());
+            }
+            collection.summaries = Some(map);
+        }
+
+        // Set links
+        collection.links = self.links;
+
+        // Set assets
+        collection.assets = self.assets;
+
+        // Build stac_extensions list
         let mut stac_extensions =
             vec!["https://cityjson.github.io/stac-city3d/v0.1.0/schema.json".to_string()];
 
-        // Add Projection Extension if proj:code is in summaries
         if self.summaries.contains_key("proj:code") {
             stac_extensions.push(
                 "https://stac-extensions.github.io/projection/v2.0.0/schema.json".to_string(),
             );
         }
 
-        // Add Stats Extension if we have statistics (min/max for city_objects)
         if self.summaries.contains_key("city3d:city_objects") {
             stac_extensions
                 .push("https://stac-extensions.github.io/stats/v0.2.0/schema.json".to_string());
         }
 
-        // Auto-generate item_assets if not explicitly set and we have city3d summaries
-        let item_assets = if self.item_assets.is_some() {
+        // Auto-generate item_assets if not explicitly set
+        if self.item_assets.is_empty() && self.summaries.contains_key("city3d:version") {
+            let item_asset = stac::ItemAsset {
+                title: Some("3D City Model data file".to_string()),
+                description: None,
+                r#type: None,
+                roles: vec!["data".to_string()],
+                additional_fields: Map::new(),
+            };
+            collection
+                .item_assets
+                .insert("data".to_string(), item_asset);
             stac_extensions.push(
                 "https://stac-extensions.github.io/item-assets/v1.1.0/schema.json".to_string(),
             );
-            self.item_assets
-        } else if self.summaries.contains_key("city3d:version") {
-            // Auto-populate a default data asset template for city model collections
-            let mut assets = HashMap::new();
-            assets.insert(
-                "data".to_string(),
-                serde_json::json!({
-                    "title": "3D City Model data file",
-                    "roles": ["data"]
-                }),
-            );
+        } else if !self.item_assets.is_empty() {
+            collection.item_assets = self.item_assets;
             stac_extensions.push(
                 "https://stac-extensions.github.io/item-assets/v1.1.0/schema.json".to_string(),
             );
-            Some(assets)
-        } else {
-            None
-        };
+        }
 
-        // Add File Extension if any item_assets or assets reference file:size
+        // Always add File Extension
         stac_extensions
             .push("https://stac-extensions.github.io/file/v2.1.0/schema.json".to_string());
 
-        Ok(StacCollection {
-            stac_version: "1.1.0".to_string(),
-            stac_extensions,
-            collection_type: "Collection".to_string(),
-            id: self.id,
-            title: self.title,
-            description: self.description,
-            license: self.license,
-            keywords: self.keywords,
-            providers: self.providers,
-            extent: self.extent,
-            summaries: if self.summaries.is_empty() {
-                None
-            } else {
-                Some(self.summaries)
-            },
-            links: self.links,
-            assets: if self.assets.is_empty() {
-                None
-            } else {
-                Some(self.assets)
-            },
-            item_assets,
-        })
+        collection.extensions = stac_extensions;
+
+        Ok(collection)
     }
 }
 

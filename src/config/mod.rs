@@ -149,12 +149,11 @@ pub struct ProviderConfig {
 
 impl From<ProviderConfig> for Provider {
     fn from(config: ProviderConfig) -> Self {
-        Provider {
-            name: config.name,
-            description: config.description,
-            roles: config.roles,
-            url: config.url,
-        }
+        let mut provider = Provider::new(config.name);
+        provider.description = config.description;
+        provider.roles = config.roles;
+        provider.url = config.url;
+        provider
     }
 }
 

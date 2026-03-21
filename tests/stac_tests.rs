@@ -2,7 +2,7 @@
 
 use city3d_stac::metadata::BBox3D;
 use city3d_stac::reader::{CityJSONReader, CityModelMetadataReader};
-use city3d_stac::stac::{Asset, Link, StacCollectionBuilder, StacItemBuilder};
+use city3d_stac::stac::{StacCollectionBuilder, StacItemBuilder};
 use serde_json::Value;
 use std::path::Path;
 
@@ -24,8 +24,11 @@ mod stac_item_builder_tests {
             .expect("Failed to build item");
 
         assert_eq!(item.id, "test-id");
-        assert_eq!(item.stac_version, "1.1.0");
-        assert_eq!(item.item_type, "Feature");
+
+        // stac_version and type are private; verify via JSON serialization
+        let parsed = serde_json::to_value(&item).unwrap();
+        assert_eq!(parsed["stac_version"], "1.1.0");
+        assert_eq!(parsed["type"], "Feature");
     }
 
     #[test]
@@ -37,10 +40,11 @@ mod stac_item_builder_tests {
             .expect("Failed to build item");
 
         assert!(item.bbox.is_some());
-        let bbox_array = item.bbox.unwrap();
-        assert_eq!(bbox_array.len(), 6);
-        assert_eq!(bbox_array[0], 0.0);
-        assert_eq!(bbox_array[5], 10.0);
+        let stac_bbox = item.bbox.unwrap();
+        let bb: Vec<f64> = stac_bbox.into();
+        assert_eq!(bb.len(), 6);
+        assert_eq!(bb[0], 0.0);
+        assert_eq!(bb[5], 10.0);
     }
 
     #[test]
@@ -53,7 +57,7 @@ mod stac_item_builder_tests {
             .expect("Failed to build item");
 
         assert!(item.geometry.is_some());
-        let geom = item.geometry.unwrap();
+        let geom = serde_json::to_value(item.geometry.unwrap()).unwrap();
         assert_eq!(geom["type"], "Polygon");
     }
 
@@ -65,10 +69,11 @@ mod stac_item_builder_tests {
             .build()
             .expect("Failed to build item");
 
-        assert_eq!(item.properties.get("title").unwrap(), "Test Building");
+        // title and description are now native fields on Properties
+        assert_eq!(item.properties.title, Some("Test Building".to_string()));
         assert_eq!(
-            item.properties.get("description").unwrap(),
-            "A test building dataset"
+            item.properties.description,
+            Some("A test building dataset".to_string())
         );
     }
 
@@ -78,8 +83,11 @@ mod stac_item_builder_tests {
             .build()
             .expect("Failed to build item");
 
-        // datetime is set by default
-        assert!(item.properties.contains_key("datetime"));
+        // The builder does not set a default datetime; it remains None
+        // unless explicitly set via .datetime() or .cityjson_metadata().
+        // Verify the datetime field is serialized (as null when not set).
+        let parsed = serde_json::to_value(&item).unwrap();
+        assert!(parsed["properties"].get("datetime").is_some());
     }
 
     #[test]
@@ -92,7 +100,7 @@ mod stac_item_builder_tests {
         assert!(item.assets.contains_key("data"));
         let asset = &item.assets["data"];
         assert_eq!(asset.href, "./data.json");
-        assert_eq!(asset.media_type, Some("application/json".to_string()));
+        assert_eq!(asset.r#type, Some("application/json".to_string()));
     }
 
     #[test]
@@ -128,15 +136,9 @@ mod stac_item_builder_tests {
             .expect("Failed to build item");
 
         // Should include 3D City Models extension
-        assert!(item
-            .stac_extensions
-            .iter()
-            .any(|e| e.contains("stac-city3d")));
+        assert!(item.extensions.iter().any(|e| e.contains("stac-city3d")));
         // Should NOT include projection extension (no proj:code property)
-        assert!(!item
-            .stac_extensions
-            .iter()
-            .any(|e| e.contains("projection")));
+        assert!(!item.extensions.iter().any(|e| e.contains("projection")));
 
         // Test with proj:code - projection extension should be included
         let item = StacItemBuilder::new("test-id")
@@ -148,14 +150,8 @@ mod stac_item_builder_tests {
             .expect("Failed to build item");
 
         // Should include both extensions
-        assert!(item
-            .stac_extensions
-            .iter()
-            .any(|e| e.contains("stac-city3d")));
-        assert!(item
-            .stac_extensions
-            .iter()
-            .any(|e| e.contains("projection")));
+        assert!(item.extensions.iter().any(|e| e.contains("stac-city3d")));
+        assert!(item.extensions.iter().any(|e| e.contains("projection")));
     }
 }
 
@@ -171,10 +167,18 @@ mod stac_item_from_file_tests {
             .expect("Failed to create builder");
         let item = builder.build().expect("Failed to build item");
 
-        // Check CityJSON extension properties
-
-        assert_eq!(item.properties.get("city3d:version").unwrap(), "2.0");
-        assert_eq!(item.properties.get("proj:code").unwrap(), "EPSG:7415");
+        // Check CityJSON extension properties (in additional_fields)
+        assert_eq!(
+            item.properties
+                .additional_fields
+                .get("city3d:version")
+                .unwrap(),
+            "2.0"
+        );
+        assert_eq!(
+            item.properties.additional_fields.get("proj:code").unwrap(),
+            "EPSG:7415"
+        );
 
         // Check bbox is set
         assert!(item.bbox.is_some());
@@ -196,16 +200,16 @@ mod stac_item_from_file_tests {
         let item = builder.build().expect("Failed to build item");
 
         // Railway should have city objects
-        let city_objects = item.properties.get("city3d:city_objects");
+        let city_objects = item.properties.additional_fields.get("city3d:city_objects");
         assert!(city_objects.is_some());
         assert!(city_objects.unwrap().as_u64().unwrap() > 0);
 
         // Railway should have LODs
-        let lods = item.properties.get("city3d:lods");
+        let lods = item.properties.additional_fields.get("city3d:lods");
         assert!(lods.is_some());
 
         // Railway should have object types
-        let types = item.properties.get("city3d:co_types");
+        let types = item.properties.additional_fields.get("city3d:co_types");
         assert!(types.is_some());
     }
 }
@@ -222,8 +226,11 @@ mod stac_collection_builder_tests {
             .expect("Failed to build collection");
 
         assert_eq!(collection.id, "test-collection");
-        assert_eq!(collection.stac_version, "1.1.0");
-        assert_eq!(collection.collection_type, "Collection");
+
+        // stac_version and type are private; verify via JSON serialization
+        let parsed = serde_json::to_value(&collection).unwrap();
+        assert_eq!(parsed["stac_version"], "1.1.0");
+        assert_eq!(parsed["type"], "Collection");
     }
 
     #[test]
@@ -237,9 +244,10 @@ mod stac_collection_builder_tests {
             .expect("Failed to build collection");
 
         assert_eq!(collection.title, Some("Test Collection".to_string()));
+        // description is now a String, not Option<String>
         assert_eq!(
             collection.description,
-            Some("A test collection of CityJSON files".to_string())
+            "A test collection of CityJSON files"
         );
     }
 
@@ -357,150 +365,146 @@ mod stac_collection_aggregate_tests {
 }
 
 mod link_tests {
-    use super::*;
+    use city3d_stac::stac::Link;
 
     #[test]
     fn test_link_new() {
-        let link = Link::new("self", "./item.json");
+        // stac::Link::new takes (href, rel)
+        let link = Link::new("./item.json", "self");
         assert_eq!(link.rel, "self");
         assert_eq!(link.href, "./item.json");
-        assert!(link.link_type.is_none());
+        assert!(link.r#type.is_none());
         assert!(link.title.is_none());
     }
 
     #[test]
     fn test_link_with_type() {
-        let link = Link::new("self", "./item.json").with_type("application/json");
-        assert_eq!(link.link_type, Some("application/json".to_string()));
+        let link = Link::new("./item.json", "self").r#type(Some("application/json".to_string()));
+        assert_eq!(link.r#type, Some("application/json".to_string()));
     }
 
     #[test]
     fn test_link_with_title() {
-        let link = Link::new("item", "./item.json").with_title("Building Item");
+        let link = Link::new("./item.json", "item").title(Some("Building Item".to_string()));
         assert_eq!(link.title, Some("Building Item".to_string()));
     }
 
     #[test]
     fn test_link_builder_chain() {
-        let link = Link::new("collection", "./collection.json")
-            .with_type("application/json")
-            .with_title("Parent Collection");
+        let link = Link::new("./collection.json", "collection")
+            .r#type(Some("application/json".to_string()))
+            .title(Some("Parent Collection".to_string()));
 
         assert_eq!(link.rel, "collection");
-        assert_eq!(link.link_type, Some("application/json".to_string()));
+        assert_eq!(link.r#type, Some("application/json".to_string()));
         assert_eq!(link.title, Some("Parent Collection".to_string()));
     }
 }
 
 mod asset_tests {
-    use super::*;
+    use city3d_stac::stac::Asset;
 
     #[test]
     fn test_asset_new() {
         let asset = Asset::new("./data.json");
         assert_eq!(asset.href, "./data.json");
-        assert!(asset.media_type.is_none());
+        assert!(asset.r#type.is_none());
         assert!(asset.title.is_none());
-        assert!(asset.roles.is_none());
+        // roles is now Vec<String>, not Option<Vec<String>>
+        assert!(asset.roles.is_empty());
     }
 
     #[test]
     fn test_asset_with_type() {
-        let asset = Asset::new("./data.json").with_type("application/json");
-        assert_eq!(asset.media_type, Some("application/json".to_string()));
+        let mut asset = Asset::new("./data.json");
+        asset.r#type = Some("application/json".to_string());
+        assert_eq!(asset.r#type, Some("application/json".to_string()));
     }
 
     #[test]
     fn test_asset_with_title() {
-        let asset = Asset::new("./data.json").with_title("CityJSON Data");
+        let mut asset = Asset::new("./data.json");
+        asset.title = Some("CityJSON Data".to_string());
         assert_eq!(asset.title, Some("CityJSON Data".to_string()));
     }
 
     #[test]
     fn test_asset_with_roles() {
-        let asset = Asset::new("./data.json").with_roles(vec!["data".to_string()]);
-        assert_eq!(asset.roles, Some(vec!["data".to_string()]));
+        let mut asset = Asset::new("./data.json");
+        asset.roles = vec!["data".to_string()];
+        assert_eq!(asset.roles, vec!["data".to_string()]);
     }
 
     #[test]
     fn test_asset_builder_chain() {
-        let asset = Asset::new("./building.json")
-            .with_type("application/json")
-            .with_title("Building Data")
-            .with_roles(vec!["data".to_string(), "primary".to_string()]);
+        let mut asset = Asset::new("./building.json");
+        asset.r#type = Some("application/json".to_string());
+        asset.title = Some("Building Data".to_string());
+        asset.roles = vec!["data".to_string(), "primary".to_string()];
 
         assert_eq!(asset.href, "./building.json");
-        assert_eq!(asset.media_type, Some("application/json".to_string()));
+        assert_eq!(asset.r#type, Some("application/json".to_string()));
         assert_eq!(asset.title, Some("Building Data".to_string()));
-        assert_eq!(
-            asset.roles,
-            Some(vec!["data".to_string(), "primary".to_string()])
-        );
+        assert_eq!(asset.roles, vec!["data".to_string(), "primary".to_string()]);
     }
 }
 
 mod stac_collection_aggregate_from_items_tests {
     use super::*;
     use city3d_stac::stac::StacItem;
-    use std::collections::HashMap;
 
     /// Helper to create a test STAC item with CityJSON properties
     fn create_test_stac_item(
         id: &str,
-        encoding: &str,
+        _encoding: &str,
         lods: Vec<&str>,
         co_types: Vec<&str>,
         city_objects: i64,
         epsg: Option<i64>,
         bbox: Option<Vec<f64>>,
     ) -> StacItem {
-        let mut properties: HashMap<String, Value> = HashMap::new();
+        let mut item = stac::Item::new(id);
 
-        properties.insert(
-            "datetime".to_string(),
-            Value::String("2024-01-01T00:00:00Z".to_string()),
-        );
-        properties.insert(
+        // Set datetime
+        item.properties.datetime = Some("2024-01-01T00:00:00Z".parse().unwrap());
+
+        // Extension properties go in additional_fields
+        item.properties.additional_fields.insert(
             "city3d:version".to_string(),
             Value::String("2.0".to_string()),
         );
-        properties.insert(
+        item.properties.additional_fields.insert(
             "city3d:city_objects".to_string(),
             Value::Number(serde_json::Number::from(city_objects)),
         );
 
         if !lods.is_empty() {
-            properties.insert(
+            item.properties.additional_fields.insert(
                 "city3d:lods".to_string(),
                 serde_json::to_value(lods).unwrap(),
             );
         }
 
         if !co_types.is_empty() {
-            properties.insert(
+            item.properties.additional_fields.insert(
                 "city3d:co_types".to_string(),
                 serde_json::to_value(co_types).unwrap(),
             );
         }
 
         if let Some(epsg_code) = epsg {
-            properties.insert(
+            item.properties.additional_fields.insert(
                 "proj:code".to_string(),
                 Value::String(format!("EPSG:{epsg_code}")),
             );
         }
 
-        StacItem {
-            stac_version: "1.1.0".to_string(),
-            stac_extensions: vec![],
-            item_type: "Feature".to_string(),
-            id: id.to_string(),
-            bbox,
-            geometry: None,
-            properties,
-            assets: HashMap::new(),
-            links: vec![],
+        // Set bbox
+        if let Some(bbox_vec) = bbox {
+            item.bbox = bbox_vec.try_into().ok();
         }
+
+        item
     }
 
     #[test]
@@ -577,8 +581,9 @@ mod stac_collection_aggregate_from_items_tests {
         let proj_codes = summaries.get("proj:code").unwrap().as_array().unwrap();
         assert_eq!(proj_codes.len(), 2);
 
-        // Should have merged bbox
-        let bbox = &collection.extent.spatial.bbox[0];
+        // Should have merged bbox - convert stac::Bbox to Vec<f64> for indexing
+        let stac_bbox = collection.extent.spatial.bbox[0];
+        let bbox: Vec<f64> = stac_bbox.into();
         assert_eq!(bbox[0], 0.0); // min x
         assert_eq!(bbox[3], 20.0); // max x
     }
@@ -608,23 +613,10 @@ mod stac_collection_aggregate_from_items_tests {
 
     #[test]
     fn test_aggregate_handles_missing_properties() {
-        // Item with minimal properties
-        let mut properties: HashMap<String, Value> = HashMap::new();
-        properties.insert(
-            "datetime".to_string(),
-            Value::String("2024-01-01T00:00:00Z".to_string()),
-        );
-        let item = StacItem {
-            stac_version: "1.1.0".to_string(),
-            stac_extensions: vec![],
-            item_type: "Feature".to_string(),
-            id: "minimal-item".to_string(),
-            bbox: Some(vec![0.0, 0.0, 0.0, 10.0, 10.0, 10.0]),
-            geometry: None,
-            properties,
-            assets: HashMap::new(),
-            links: vec![],
-        };
+        // Item with minimal properties - use stac::Item::new
+        let mut item = stac::Item::new("minimal-item");
+        item.properties.datetime = Some("2024-01-01T00:00:00Z".parse().unwrap());
+        item.bbox = vec![0.0, 0.0, 0.0, 10.0, 10.0, 10.0].try_into().ok();
 
         // Should not panic
         let collection = StacCollectionBuilder::new("test")

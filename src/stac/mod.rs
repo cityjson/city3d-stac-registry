@@ -1,18 +1,8 @@
 //! STAC generation module
 //!
-//! This module exports STAC types derived from STAC v1.0.0 JSON schemas.
-//!
-//! The types match the official STAC specification structure with serde
-//! annotations for proper JSON serialization/deserialization.
-//!
-//! ## Type Generation
-//!
-//! STAC types are manually maintained in `models.rs` and are derived from
-//! the official STAC v1.0.0 JSON schemas located in `stac-spec/`:
-//! - item-spec/json-schema/item.json
-//! - collection-spec/json-schema/collection.json
-//!
-//! To modify STAC types, edit `src/stac/models.rs` and run `cargo build`.
+//! This module uses the upstream `stac` crate for core STAC types
+//! (Item, Collection, Catalog, Asset, Link, etc.) and provides
+//! builder patterns specific to 3D city model metadata.
 
 mod accumulator;
 mod catalog;
@@ -22,10 +12,21 @@ mod item;
 mod models;
 
 pub use accumulator::{CollectionAccumulator, ItemMetadata};
-pub use catalog::{StacCatalog, StacCatalogBuilder};
+pub use catalog::StacCatalogBuilder;
 pub use collection::StacCollectionBuilder;
 pub use item::StacItemBuilder;
-pub use models::{
-    Asset, CityObjectsCount, Extent, Link, Provider, SpatialExtent, StacCollection, StacItem,
-    TemporalExtent,
-};
+pub use models::CityObjectsCount;
+
+// Re-export upstream stac crate types used throughout the codebase.
+// Type aliases preserve backward compatibility with existing code.
+pub type StacItem = stac::Item;
+pub type StacCollection = stac::Collection;
+pub type StacCatalog = stac::Catalog;
+pub type Asset = stac::Asset;
+pub type Link = stac::Link;
+pub type Provider = stac::Provider;
+pub type Extent = stac::Extent;
+pub type SpatialExtent = stac::SpatialExtent;
+pub type TemporalExtent = stac::TemporalExtent;
+pub type Bbox = stac::Bbox;
+pub type ItemAsset = stac::ItemAsset;

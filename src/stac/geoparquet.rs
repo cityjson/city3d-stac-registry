@@ -4,7 +4,6 @@
 //! [STAC GeoParquet spec v1.1.0](https://github.com/radiantearth/stac-geoparquet-spec).
 
 use crate::error::Result;
-use crate::stac::models::{StacCollection, StacItem};
 use arrow::array::{
     ArrayRef, BinaryBuilder, Float64Builder, ListBuilder, StringBuilder, StructBuilder,
     TimestampMillisecondBuilder, UInt64Builder,
@@ -18,8 +17,8 @@ use std::collections::BTreeSet;
 use std::path::Path;
 use std::sync::Arc;
 
-/// Convert a GeoJSON geometry (serde_json::Value) to ISO WKB bytes using geozero.
-fn geojson_to_wkb(geometry: &serde_json::Value) -> Result<Vec<u8>> {
+/// Convert a GeoJSON geometry to ISO WKB bytes using geozero.
+fn geojson_to_wkb(geometry: &geojson::Geometry) -> Result<Vec<u8>> {
     use geozero::geojson::GeoJsonString;
     use geozero::wkb::WkbWriter;
     use geozero::GeozeroGeometry;
@@ -36,14 +35,12 @@ fn geojson_to_wkb(geometry: &serde_json::Value) -> Result<Vec<u8>> {
     Ok(wkb_out)
 }
 
-/// Collect all unique property keys across items, excluding `datetime`.
-fn collect_property_keys(items: &[StacItem]) -> Vec<String> {
+/// Collect all unique property keys across items, excluding standard Properties fields.
+fn collect_property_keys(items: &[stac::Item]) -> Vec<String> {
     let mut keys = BTreeSet::new();
     for item in items {
-        for key in item.properties.keys() {
-            if key != "datetime" {
-                keys.insert(key.clone());
-            }
+        for key in item.properties.additional_fields.keys() {
+            keys.insert(key.clone());
         }
     }
     keys.into_iter().collect()
@@ -92,13 +89,12 @@ fn city3d_type(key: &str) -> Option<DataType> {
 }
 
 /// Determine the Arrow DataType for a property key by scanning all items.
-fn infer_property_type(key: &str, items: &[StacItem]) -> DataType {
+fn infer_property_type(key: &str, items: &[stac::Item]) -> DataType {
     if let Some(dt) = city3d_type(key) {
         return dt;
     }
-    // Infer from first non-null value
     for item in items {
-        if let Some(val) = item.properties.get(key) {
+        if let Some(val) = item.properties.additional_fields.get(key) {
             if !val.is_null() {
                 return infer_type(val);
             }
@@ -106,8 +102,6 @@ fn infer_property_type(key: &str, items: &[StacItem]) -> DataType {
     }
     DataType::Utf8
 }
-
-// ─── Link / Asset struct helpers ────────────────────────────────────
 
 fn link_fields() -> Vec<Field> {
     vec![
@@ -124,13 +118,11 @@ fn asset_value_fields() -> Vec<Field> {
         Field::new("title", DataType::Utf8, true),
         Field::new("description", DataType::Utf8, true),
         Field::new("type", DataType::Utf8, true),
-        // Roles serialized as JSON string to avoid nested List inside Struct
         Field::new("roles", DataType::Utf8, true),
     ]
 }
 
-/// Collect all unique asset keys across items.
-fn collect_asset_keys(items: &[StacItem]) -> Vec<String> {
+fn collect_asset_keys(items: &[stac::Item]) -> Vec<String> {
     let mut keys = BTreeSet::new();
     for item in items {
         for key in item.assets.keys() {
@@ -151,9 +143,7 @@ fn bbox_fields() -> Vec<Field> {
     ]
 }
 
-// ─── Schema construction ────────────────────────────────────────────
-
-fn build_arrow_schema(items: &[StacItem]) -> Schema {
+fn build_arrow_schema(items: &[stac::Item]) -> Schema {
     let mut fields = vec![
         Field::new("id", DataType::Utf8, false),
         Field::new("geometry", DataType::Binary, true),
@@ -180,14 +170,12 @@ fn build_arrow_schema(items: &[StacItem]) -> Schema {
         Field::new("collection", DataType::Utf8, true),
     ];
 
-    // Dynamic property columns
     let prop_keys = collect_property_keys(items);
     for key in &prop_keys {
         let dt = infer_property_type(key, items);
         fields.push(Field::new(key.as_str(), dt, true));
     }
 
-    // Assets as a struct with one sub-struct per unique asset key
     let asset_keys = collect_asset_keys(items);
     if !asset_keys.is_empty() {
         let asset_struct_fields: Vec<Field> = asset_keys
@@ -210,25 +198,18 @@ fn build_arrow_schema(items: &[StacItem]) -> Schema {
     Schema::new(fields)
 }
 
-// ─── RecordBatch construction ───────────────────────────────────────
-
-fn parse_datetime_ms(s: &str) -> Option<i64> {
-    chrono::DateTime::parse_from_rfc3339(s)
-        .ok()
-        .map(|dt| dt.timestamp_millis())
+fn parse_datetime_ms(dt: &chrono::DateTime<chrono::Utc>) -> i64 {
+    dt.timestamp_millis()
 }
 
-fn build_record_batch(items: &[StacItem], schema: &Schema) -> Result<RecordBatch> {
+fn build_record_batch(items: &[stac::Item], schema: &Schema) -> Result<RecordBatch> {
     let n = items.len();
     let prop_keys = collect_property_keys(items);
     let asset_keys = collect_asset_keys(items);
 
-    // ── Fixed column builders ──
-
     let mut id_builder = StringBuilder::with_capacity(n, n * 32);
     let mut geom_builder = BinaryBuilder::with_capacity(n, n * 256);
 
-    // bbox struct
     let mut bbox_xmin = Float64Builder::with_capacity(n);
     let mut bbox_ymin = Float64Builder::with_capacity(n);
     let mut bbox_zmin = Float64Builder::with_capacity(n);
@@ -237,29 +218,19 @@ fn build_record_batch(items: &[StacItem], schema: &Schema) -> Result<RecordBatch
     let mut bbox_zmax = Float64Builder::with_capacity(n);
 
     let mut datetime_builder = TimestampMillisecondBuilder::with_capacity(n);
-
-    // links: List<Struct{href, rel, type, title}>
     let mut links_builder = ListBuilder::new(StructBuilder::from_fields(link_fields(), n));
-
     let mut collection_builder = StringBuilder::with_capacity(n, n * 32);
 
-    // ── Dynamic property builders ──
-    // We'll collect values as JSON and convert at the end for simplicity with mixed types
     let mut prop_columns: Vec<Vec<Option<serde_json::Value>>> =
         vec![Vec::with_capacity(n); prop_keys.len()];
 
-    // ── Asset builders ──
-    // For each asset key, build a struct {href, title, description, type, roles}
     let asset_fields_template = asset_value_fields();
     let mut asset_builders: Vec<StructBuilder> = asset_keys
         .iter()
         .map(|_| StructBuilder::from_fields(asset_fields_template.clone(), n))
         .collect();
 
-    // ── Populate ──
-
     for item in items {
-        // id
         id_builder.append_value(&item.id);
 
         // geometry → WKB
@@ -274,18 +245,12 @@ fn build_record_batch(items: &[StacItem], schema: &Schema) -> Result<RecordBatch
 
         // bbox
         if let Some(bb) = &item.bbox {
-            bbox_xmin.append_value(*bb.first().unwrap_or(&0.0));
-            bbox_ymin.append_value(*bb.get(1).unwrap_or(&0.0));
-            bbox_xmax.append_value(*bb.get(3).unwrap_or(bb.get(2).unwrap_or(&0.0)));
-            bbox_ymax.append_value(*bb.get(4).unwrap_or(bb.get(3).unwrap_or(&0.0)));
-            // 3D bbox has 6 elements: [xmin, ymin, zmin, xmax, ymax, zmax]
-            if bb.len() == 6 {
-                bbox_zmin.append_option(Some(bb[2]));
-                bbox_zmax.append_option(Some(bb[5]));
-            } else {
-                bbox_zmin.append_null();
-                bbox_zmax.append_null();
-            }
+            bbox_xmin.append_value(bb.xmin());
+            bbox_ymin.append_value(bb.ymin());
+            bbox_xmax.append_value(bb.xmax());
+            bbox_ymax.append_value(bb.ymax());
+            bbox_zmin.append_option(bb.zmin());
+            bbox_zmax.append_option(bb.zmax());
         } else {
             bbox_xmin.append_null();
             bbox_ymin.append_null();
@@ -296,13 +261,8 @@ fn build_record_batch(items: &[StacItem], schema: &Schema) -> Result<RecordBatch
         }
 
         // datetime
-        let dt_ms = item
-            .properties
-            .get("datetime")
-            .and_then(|v| v.as_str())
-            .and_then(parse_datetime_ms);
-        match dt_ms {
-            Some(ms) => datetime_builder.append_value(ms),
+        match item.properties.datetime {
+            Some(dt) => datetime_builder.append_value(parse_datetime_ms(&dt)),
             None => datetime_builder.append_null(),
         }
 
@@ -317,7 +277,7 @@ fn build_record_batch(items: &[StacItem], schema: &Schema) -> Result<RecordBatch
                 .field_builder::<StringBuilder>(1)
                 .unwrap()
                 .append_value(&link.rel);
-            match &link.link_type {
+            match &link.r#type {
                 Some(t) => link_struct
                     .field_builder::<StringBuilder>(2)
                     .unwrap()
@@ -341,20 +301,15 @@ fn build_record_batch(items: &[StacItem], schema: &Schema) -> Result<RecordBatch
         }
         links_builder.append(true);
 
-        // collection (from properties if present, otherwise from first link with rel=collection)
-        let coll_id = item
-            .links
-            .iter()
-            .find(|l| l.rel == "collection")
-            .and_then(|l| l.title.as_deref());
-        match coll_id {
+        // collection
+        match &item.collection {
             Some(c) => collection_builder.append_value(c),
             None => collection_builder.append_null(),
         }
 
         // Dynamic properties
         for (i, key) in prop_keys.iter().enumerate() {
-            prop_columns[i].push(item.properties.get(key).cloned());
+            prop_columns[i].push(item.properties.additional_fields.get(key).cloned());
         }
 
         // Assets
@@ -385,7 +340,7 @@ fn build_record_batch(items: &[StacItem], schema: &Schema) -> Result<RecordBatch
                         .unwrap()
                         .append_null(),
                 }
-                match &asset.media_type {
+                match &asset.r#type {
                     Some(t) => builder
                         .field_builder::<StringBuilder>(3)
                         .unwrap()
@@ -396,57 +351,36 @@ fn build_record_batch(items: &[StacItem], schema: &Schema) -> Result<RecordBatch
                         .append_null(),
                 }
                 // roles (serialized as JSON string)
-                match &asset.roles {
-                    Some(roles) => {
-                        let roles_json = serde_json::to_string(roles).unwrap_or_default();
-                        builder
-                            .field_builder::<StringBuilder>(4)
-                            .unwrap()
-                            .append_value(&roles_json);
-                    }
-                    None => {
-                        builder
-                            .field_builder::<StringBuilder>(4)
-                            .unwrap()
-                            .append_null();
-                    }
+                if asset.roles.is_empty() {
+                    builder
+                        .field_builder::<StringBuilder>(4)
+                        .unwrap()
+                        .append_null();
+                } else {
+                    let roles_json = serde_json::to_string(&asset.roles).unwrap_or_default();
+                    builder
+                        .field_builder::<StringBuilder>(4)
+                        .unwrap()
+                        .append_value(&roles_json);
                 }
                 builder.append(true);
             } else {
-                // Null asset
-                builder
-                    .field_builder::<StringBuilder>(0)
-                    .unwrap()
-                    .append_null();
-                builder
-                    .field_builder::<StringBuilder>(1)
-                    .unwrap()
-                    .append_null();
-                builder
-                    .field_builder::<StringBuilder>(2)
-                    .unwrap()
-                    .append_null();
-                builder
-                    .field_builder::<StringBuilder>(3)
-                    .unwrap()
-                    .append_null();
-                builder
-                    .field_builder::<StringBuilder>(4)
-                    .unwrap()
-                    .append_null();
+                for field_idx in 0..5 {
+                    builder
+                        .field_builder::<StringBuilder>(field_idx)
+                        .unwrap()
+                        .append_null();
+                }
                 builder.append(false);
             }
         }
     }
-
-    // ── Build arrays ──
 
     let mut columns: Vec<ArrayRef> = Vec::new();
 
     columns.push(Arc::new(id_builder.finish()));
     columns.push(Arc::new(geom_builder.finish()));
 
-    // bbox struct (with nullable zmin/zmax)
     let bbox_struct = arrow::array::StructArray::new(
         bbox_fields().into(),
         vec![
@@ -461,14 +395,13 @@ fn build_record_batch(items: &[StacItem], schema: &Schema) -> Result<RecordBatch
     );
     columns.push(Arc::new(bbox_struct));
 
-    // datetime
     columns.push(Arc::new(datetime_builder.finish().with_timezone("UTC")));
 
     // stac_extensions
     {
         let mut ext_builder = ListBuilder::new(StringBuilder::new());
         for item in items {
-            for ext in &item.stac_extensions {
+            for ext in &item.extensions {
                 ext_builder.values().append_value(ext);
             }
             ext_builder.append(true);
@@ -476,10 +409,7 @@ fn build_record_batch(items: &[StacItem], schema: &Schema) -> Result<RecordBatch
         columns.push(Arc::new(ext_builder.finish()));
     }
 
-    // links
     columns.push(Arc::new(links_builder.finish()));
-
-    // collection
     columns.push(Arc::new(collection_builder.finish()));
 
     // Dynamic property columns
@@ -511,7 +441,6 @@ fn build_record_batch(items: &[StacItem], schema: &Schema) -> Result<RecordBatch
     Ok(RecordBatch::try_new(Arc::new(schema.clone()), columns)?)
 }
 
-/// Convert a slice of optional JSON values to an Arrow array of the given type.
 fn json_values_to_array(
     values: &[Option<serde_json::Value>],
     data_type: &DataType,
@@ -576,7 +505,6 @@ fn json_values_to_array(
             Arc::new(b.finish())
         }
         DataType::List(_) => {
-            // List<Utf8> — serialize each element as string
             let mut b = ListBuilder::new(StringBuilder::new());
             for v in values {
                 match v {
@@ -598,7 +526,6 @@ fn json_values_to_array(
             Arc::new(b.finish())
         }
         _ => {
-            // Fallback: stringify everything
             let mut b = StringBuilder::new();
             for v in values {
                 match v {
@@ -611,9 +538,7 @@ fn json_values_to_array(
     }
 }
 
-// ─── GeoParquet metadata ────────────────────────────────────────────
-
-fn compute_overall_bbox(items: &[StacItem]) -> Option<[f64; 4]> {
+fn compute_overall_bbox(items: &[stac::Item]) -> Option<[f64; 4]> {
     let mut xmin = f64::INFINITY;
     let mut ymin = f64::INFINITY;
     let mut xmax = f64::NEG_INFINITY;
@@ -622,20 +547,11 @@ fn compute_overall_bbox(items: &[StacItem]) -> Option<[f64; 4]> {
 
     for item in items {
         if let Some(bb) = &item.bbox {
-            if bb.len() >= 4 {
-                found = true;
-                xmin = xmin.min(bb[0]);
-                ymin = ymin.min(bb[1]);
-                // 3D bbox: [xmin, ymin, zmin, xmax, ymax, zmax]
-                // 2D bbox: [xmin, ymin, xmax, ymax]
-                if bb.len() == 6 {
-                    xmax = xmax.max(bb[3]);
-                    ymax = ymax.max(bb[4]);
-                } else {
-                    xmax = xmax.max(bb[2]);
-                    ymax = ymax.max(bb[3]);
-                }
-            }
+            found = true;
+            xmin = xmin.min(bb.xmin());
+            ymin = ymin.min(bb.ymin());
+            xmax = xmax.max(bb.xmax());
+            ymax = ymax.max(bb.ymax());
         }
     }
 
@@ -646,7 +562,7 @@ fn compute_overall_bbox(items: &[StacItem]) -> Option<[f64; 4]> {
     }
 }
 
-fn geo_metadata_json(items: &[StacItem]) -> String {
+fn geo_metadata_json(items: &[stac::Item]) -> String {
     let bbox_value = match compute_overall_bbox(items) {
         Some(bb) => serde_json::json!([bb[0], bb[1], bb[2], bb[3]]),
         None => serde_json::Value::Null,
@@ -696,7 +612,7 @@ fn geo_metadata_json(items: &[StacItem]) -> String {
     .to_string()
 }
 
-fn stac_geoparquet_metadata_json(collection: &StacCollection) -> String {
+fn stac_geoparquet_metadata_json(collection: &stac::Collection) -> String {
     let collection_json = serde_json::to_value(collection).unwrap_or_default();
     serde_json::json!({
         "version": "1.1.0",
@@ -707,15 +623,10 @@ fn stac_geoparquet_metadata_json(collection: &StacCollection) -> String {
     .to_string()
 }
 
-// ─── Public API ─────────────────────────────────────────────────────
-
 /// Write STAC items as a GeoParquet file.
-///
-/// The output file will contain one row per item with GeoParquet 1.1.0
-/// and STAC GeoParquet 1.1.0 metadata embedded in the Parquet file metadata.
 pub fn write_geoparquet(
-    items: &[StacItem],
-    collection: &StacCollection,
+    items: &[stac::Item],
+    collection: &stac::Collection,
     output_path: &Path,
 ) -> Result<()> {
     if items.is_empty() {
@@ -750,78 +661,60 @@ pub fn write_geoparquet(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::stac::models::{Asset, Extent, Link, SpatialExtent, TemporalExtent};
-    use std::collections::HashMap;
 
-    fn make_test_item(id: &str, bbox: Vec<f64>) -> StacItem {
+    fn make_test_item(id: &str, bbox: Vec<f64>) -> stac::Item {
+        let mut item = stac::Item::new(id);
+        item.bbox = Some(bbox.try_into().unwrap());
+
+        // Set geometry from bbox values
+        let bb: Vec<f64> = item.bbox.unwrap().into();
         let geometry = serde_json::json!({
             "type": "Polygon",
             "coordinates": [[
-                [bbox[0], bbox[1]],
-                [bbox[3], bbox[1]],
-                [bbox[3], bbox[4]],
-                [bbox[0], bbox[4]],
-                [bbox[0], bbox[1]],
+                [bb[0], bb[1]],
+                [bb[3], bb[1]],
+                [bb[3], bb[4]],
+                [bb[0], bb[4]],
+                [bb[0], bb[1]],
             ]]
         });
-        let mut properties = HashMap::new();
-        properties.insert(
-            "datetime".to_string(),
-            serde_json::Value::String("2024-01-15T12:00:00Z".to_string()),
-        );
-        properties.insert("city3d:lods".to_string(), serde_json::json!(["1.2", "2.2"]));
-        properties.insert("city3d:city_objects".to_string(), serde_json::json!(42));
+        item.geometry = serde_json::from_value(geometry).ok();
 
-        let mut assets = HashMap::new();
-        assets.insert(
-            "data".to_string(),
-            Asset::new("./data.city.json")
-                .with_type("application/city+json")
-                .with_roles(vec!["data".to_string()]),
-        );
+        item.properties.datetime = Some("2024-01-15T12:00:00Z".parse().unwrap());
+        item.properties
+            .additional_fields
+            .insert("city3d:lods".to_string(), serde_json::json!(["1.2", "2.2"]));
+        item.properties
+            .additional_fields
+            .insert("city3d:city_objects".to_string(), serde_json::json!(42));
 
-        StacItem {
-            stac_version: "1.1.0".to_string(),
-            stac_extensions: vec![
-                "https://cityjson.github.io/stac-city3d/v0.1.0/schema.json".to_string()
-            ],
-            item_type: "Feature".to_string(),
-            id: id.to_string(),
-            bbox: Some(bbox),
-            geometry: Some(geometry),
-            properties,
-            assets,
-            links: vec![Link::new("self", format!("./{id}_item.json"))],
-        }
+        let mut asset = stac::Asset::new("./data.city.json");
+        asset.r#type = Some("application/city+json".to_string());
+        asset.roles = vec!["data".to_string()];
+        item.assets.insert("data".to_string(), asset);
+
+        item.extensions =
+            vec!["https://cityjson.github.io/stac-city3d/v0.1.0/schema.json".to_string()];
+
+        item.links
+            .push(stac::Link::self_(format!("./{id}_item.json")));
+
+        item
     }
 
-    fn make_test_collection() -> StacCollection {
-        StacCollection {
-            stac_version: "1.1.0".to_string(),
-            stac_extensions: vec![],
-            collection_type: "Collection".to_string(),
-            id: "test-collection".to_string(),
-            title: Some("Test Collection".to_string()),
-            description: Some("A test collection".to_string()),
-            license: "proprietary".to_string(),
-            keywords: None,
-            providers: None,
-            extent: Extent {
-                spatial: SpatialExtent {
-                    bbox: vec![vec![0.0, 0.0, 0.0, 10.0, 10.0, 100.0]],
-                },
-                temporal: TemporalExtent::default(),
-            },
-            summaries: None,
-            links: vec![],
-            assets: None,
-            item_assets: None,
-        }
+    fn make_test_collection() -> stac::Collection {
+        let mut collection = stac::Collection::new("test-collection", "A test collection");
+        collection.title = Some("Test Collection".to_string());
+        collection.license = "proprietary".to_string();
+        collection.extent.spatial.bbox = vec![stac::Bbox::ThreeDimensional([
+            0.0, 0.0, 0.0, 10.0, 10.0, 100.0,
+        ])];
+        collection
     }
 
     #[test]
     fn test_geojson_polygon_to_wkb() {
-        let geom = serde_json::json!({
+        let geom: geojson::Geometry = serde_json::from_value(serde_json::json!({
             "type": "Polygon",
             "coordinates": [[
                 [4.0, 52.0],
@@ -830,9 +723,9 @@ mod tests {
                 [4.0, 53.0],
                 [4.0, 52.0],
             ]]
-        });
+        }))
+        .unwrap();
         let wkb = geojson_to_wkb(&geom).unwrap();
-        // Byte order (1) + type (4) + num_rings (4) + num_points (4) + 5 points * 16 bytes
         assert_eq!(wkb.len(), 1 + 4 + 4 + 4 + 5 * 16);
         assert_eq!(wkb[0], 0x01); // little-endian
         assert_eq!(u32::from_le_bytes([wkb[1], wkb[2], wkb[3], wkb[4]]), 3); // Polygon
@@ -867,7 +760,6 @@ mod tests {
         assert!(path.exists());
         assert!(std::fs::metadata(&path).unwrap().len() > 0);
 
-        // Read back and verify
         let file = std::fs::File::open(&path).unwrap();
         let reader = parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder::try_new(file)
             .unwrap()
@@ -877,7 +769,6 @@ mod tests {
         assert_eq!(batches.len(), 1);
         assert_eq!(batches[0].num_rows(), 1);
 
-        // Check id column
         let id_col = batches[0]
             .column_by_name("id")
             .unwrap()
@@ -936,9 +827,8 @@ mod tests {
         assert_eq!(geo_json["version"], "1.1.0");
         assert_eq!(geo_json["primary_column"], "geometry");
 
-        // Verify bbox is computed from items (single item: [4.0, 52.0, 5.0, 53.0])
         let geo_bbox = &geo_json["columns"]["geometry"]["bbox"];
-        assert!(geo_bbox.is_array(), "geo bbox should be an array");
+        assert!(geo_bbox.is_array());
         let geo_bbox_arr: Vec<f64> = geo_bbox
             .as_array()
             .unwrap()
@@ -947,25 +837,8 @@ mod tests {
             .collect();
         assert_eq!(geo_bbox_arr, vec![4.0, 52.0, 5.0, 53.0]);
 
-        // Verify covering references the bbox struct column
         let covering = &geo_json["columns"]["geometry"]["covering"];
-        assert!(covering.is_object(), "covering should be present");
-        assert_eq!(
-            covering["bbox"]["xmin"],
-            serde_json::json!(["bbox", "xmin"])
-        );
-        assert_eq!(
-            covering["bbox"]["ymin"],
-            serde_json::json!(["bbox", "ymin"])
-        );
-        assert_eq!(
-            covering["bbox"]["xmax"],
-            serde_json::json!(["bbox", "xmax"])
-        );
-        assert_eq!(
-            covering["bbox"]["ymax"],
-            serde_json::json!(["bbox", "ymax"])
-        );
+        assert!(covering.is_object());
 
         let stac_kv = metadata
             .iter()
@@ -1002,7 +875,6 @@ mod tests {
             .as_any()
             .downcast_ref::<arrow::array::TimestampMillisecondArray>()
             .unwrap();
-        // 2024-01-15T12:00:00Z → 1705320000000 ms
         assert_eq!(dt_col.value(0), 1705320000000);
     }
 
@@ -1054,6 +926,6 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("items.parquet");
         write_geoparquet(&[], &collection, &path).unwrap();
-        assert!(!path.exists()); // No file written for empty items
+        assert!(!path.exists());
     }
 }

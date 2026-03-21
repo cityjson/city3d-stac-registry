@@ -257,6 +257,14 @@ enum Commands {
     },
 }
 
+/// Helper to create a GeoParquet asset
+fn make_geoparquet_asset() -> crate::stac::Asset {
+    let mut asset = crate::stac::Asset::new("./items.parquet");
+    asset.r#type = Some("application/vnd.apache.parquet".to_string());
+    asset.roles = vec!["collection-mirror".to_string()];
+    asset
+}
+
 /// Run the CLI application
 pub async fn run() -> Result<()> {
     let cli = Cli::parse();
@@ -1395,14 +1403,10 @@ async fn process_collection_logic(
                     serde_json::from_str(&collection_content)?;
 
                 // Add items-geoparquet asset if not already present
-                let assets = collection.assets.get_or_insert_with(Default::default);
-                assets
+                collection
+                    .assets
                     .entry("items-geoparquet".to_string())
-                    .or_insert_with(|| {
-                        crate::stac::Asset::new("./items.parquet")
-                            .with_type("application/vnd.apache.parquet")
-                            .with_roles(vec!["collection-mirror".to_string()])
-                    });
+                    .or_insert_with(make_geoparquet_asset);
 
                 // Write updated collection back
                 let updated_json = if config.pretty {
@@ -1531,12 +1535,7 @@ async fn process_collection_logic(
 
     // Add GeoParquet asset if enabled
     if config.geoparquet && !geoparquet_items.is_empty() {
-        collection_builder = collection_builder.asset(
-            "items-geoparquet",
-            crate::stac::Asset::new("./items.parquet")
-                .with_type("application/vnd.apache.parquet")
-                .with_roles(vec!["collection-mirror".to_string()]),
-        );
+        collection_builder = collection_builder.asset("items-geoparquet", make_geoparquet_asset());
     }
 
     // Build and write collection
@@ -1811,12 +1810,7 @@ fn handle_update_collection_command(config: UpdateCollectionConfig) -> Result<()
 
     // Add GeoParquet asset if enabled
     if config.geoparquet && !parsed_items.is_empty() {
-        collection_builder = collection_builder.asset(
-            "items-geoparquet",
-            crate::stac::Asset::new("./items.parquet")
-                .with_type("application/vnd.apache.parquet")
-                .with_roles(vec!["collection-mirror".to_string()]),
-        );
+        collection_builder = collection_builder.asset("items-geoparquet", make_geoparquet_asset());
     }
 
     // Build and write collection
