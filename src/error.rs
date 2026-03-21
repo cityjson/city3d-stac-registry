@@ -61,14 +61,6 @@ pub enum CityJsonStacError {
     #[error("Storage/network error: {0}")]
     StorageError(String),
 
-    /// Parquet write error
-    #[error("Parquet write error: {0}")]
-    ParquetError(#[from] parquet::errors::ParquetError),
-
-    /// Arrow error
-    #[error("Arrow error: {0}")]
-    ArrowError(#[from] arrow::error::ArrowError),
-
     /// Generic error with custom message
     #[error("{0}")]
     Other(String),

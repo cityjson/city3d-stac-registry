@@ -70,10 +70,8 @@ stac = { version = "0.16", features = ["geoparquet"] }
 stac-validate = "0.6"
 indexmap = { version = "2", features = ["serde"] }
 
-# GeoParquet output
-arrow = { version = "54", default-features = false, features = ["prettyprint"] }
-parquet = { version = "54", features = ["arrow"] }
-geozero = { version = "0.15", default-features = false, features = ["with-geojson", "with-wkb"] }
+# GeoParquet output is handled by stac crate's geoparquet feature
+# parquet is only needed in dev for metadata verification tests
 
 # Optional: for parallel processing
 rayon = { version = "1.10", optional = true }
@@ -89,6 +87,7 @@ predicates = "3.1"
 pretty_assertions = "1.4"
 typify = "0.6.1"
 jsonschema = "0.26"
+parquet = { version = "54", features = ["arrow"] }
 
 
 [features]
