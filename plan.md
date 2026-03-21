@@ -1,36 +1,5 @@
 # Plan: STAC Extension Compliance + `stac` Crate Migration
 
-## Progress
-
-| Phase | Status | Commit | Notes |
-|-------|--------|--------|-------|
-| Phase 0: Add Dependencies | **Done** | `c7cfffa` | stac 0.16, stac-validate 0.6, indexmap 2 |
-| **Phase 1: Fix Compliance** | **Done** | `b40f98c` | 8 issues fixed, all 402 tests pass |
-| Phase 2: Migrate to `stac` crate | **Done** | `fcab4ce` | 12 files, net -540 lines, 399 tests pass |
-| Phase 3: Migrate GeoParquet | **Done** | `787cbcc` | Replaced ~700 lines with stac::geoparquet, removed arrow/geozero deps |
-| Phase 4: E2E Validation Tests | **Done** | `e87164e` | 3 stac-validate tests, fixed item-assets URL, removed unused Stats ext |
-| Phase 5: Update Config System | **Done** | — | Datetime propagation already works via referenceDate; preview_url deferred |
-| Phase 6: Final Cleanup | **Done** | | All 399 tests pass, fmt/clippy clean |
-| Post: Media types + links | **Done** | `02b3fb0` | Proper IANA media types; STAC link hierarchy (parent/root/collection) |
-
-### Phase 1 Details (completed)
-
-- [x] Step 1.1: `proj:epsg` -> `proj:code` (string format per Projection Ext v2.0.0)
-- [x] Step 1.2: `datetime` defaults to null; extracts `referenceDate` from CityJSON metadata
-- [x] Step 1.3: Boolean summaries as arrays (`[true]`, `[true, false]`)
-- [x] Step 1.4: `file:size` moved to asset (not item properties)
-- [x] Step 1.5: `file:checksum` simplified to plain multihash string
-- [x] Step 1.6: `item_assets` auto-generated for collections + Item Assets Extension URL
-- [x] Step 1.7: `city3d:encoding` removed from accumulator, geoparquet, tests
-- [x] Step 1.8: `city-model` rel type added to items
-
-### Post-plan fixes
-
-- [x] Media types: CityJSON=`application/city+json`, CityJSONSeq=`application/city+json-seq`, CityGML=`application/gml+xml`, FlatCityBuf=`application/vnd.flatcitybuf`
-- [x] Link hierarchy: Items get `collection` rel; Collections get `parent`/`root` rel (when under catalog); Catalogs get `root` rel
-
----
-
 ## Context
 
 The cityjson-stac project generates STAC metadata for 3D city model datasets. It currently uses custom STAC structs (`StacItem`, `StacCollection`, etc.) in `src/stac/models.rs`. This plan addresses two goals:
