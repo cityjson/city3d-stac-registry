@@ -11,6 +11,7 @@
 | Phase 4: E2E Validation Tests | **Done** | `e87164e` | 3 stac-validate tests, fixed item-assets URL, removed unused Stats ext |
 | Phase 5: Update Config System | **Done** | — | Datetime propagation already works via referenceDate; preview_url deferred |
 | Phase 6: Final Cleanup | **Done** | | All 399 tests pass, fmt/clippy clean |
+| Post: Media types + links | **Done** | `02b3fb0` | Proper IANA media types; STAC link hierarchy (parent/root/collection) |
 
 ### Phase 1 Details (completed)
 
@@ -22,6 +23,11 @@
 - [x] Step 1.6: `item_assets` auto-generated for collections + Item Assets Extension URL
 - [x] Step 1.7: `city3d:encoding` removed from accumulator, geoparquet, tests
 - [x] Step 1.8: `city-model` rel type added to items
+
+### Post-plan fixes
+
+- [x] Media types: CityJSON=`application/city+json`, CityJSONSeq=`application/city+json-seq`, CityGML=`application/gml+xml`, FlatCityBuf=`application/vnd.flatcitybuf`
+- [x] Link hierarchy: Items get `collection` rel; Collections get `parent`/`root` rel (when under catalog); Catalogs get `root` rel
 
 ---
 
