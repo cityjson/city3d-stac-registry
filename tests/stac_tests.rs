@@ -20,10 +20,6 @@ mod stac_item_builder_tests {
     #[test]
     fn test_item_builder_new() {
         let item = StacItemBuilder::new("test-id")
-            .property(
-                "city3d:encoding".to_string(),
-                Value::String("CityJSON".to_string()),
-            )
             .build()
             .expect("Failed to build item");
 
@@ -37,10 +33,6 @@ mod stac_item_builder_tests {
         let bbox = BBox3D::new(0.0, 0.0, 0.0, 10.0, 10.0, 10.0);
         let item = StacItemBuilder::new("test-id")
             .bbox(bbox)
-            .property(
-                "city3d:encoding".to_string(),
-                Value::String("CityJSON".to_string()),
-            )
             .build()
             .expect("Failed to build item");
 
@@ -57,10 +49,6 @@ mod stac_item_builder_tests {
         let item = StacItemBuilder::new("test-id")
             .bbox(bbox)
             .geometry_from_bbox()
-            .property(
-                "city3d:encoding".to_string(),
-                Value::String("CityJSON".to_string()),
-            )
             .build()
             .expect("Failed to build item");
 
@@ -74,10 +62,6 @@ mod stac_item_builder_tests {
         let item = StacItemBuilder::new("test-id")
             .title("Test Building")
             .description("A test building dataset")
-            .property(
-                "city3d:encoding".to_string(),
-                Value::String("CityJSON".to_string()),
-            )
             .build()
             .expect("Failed to build item");
 
@@ -91,10 +75,6 @@ mod stac_item_builder_tests {
     #[test]
     fn test_item_builder_has_datetime() {
         let item = StacItemBuilder::new("test-id")
-            .property(
-                "city3d:encoding".to_string(),
-                Value::String("CityJSON".to_string()),
-            )
             .build()
             .expect("Failed to build item");
 
@@ -105,11 +85,7 @@ mod stac_item_builder_tests {
     #[test]
     fn test_item_builder_with_data_asset() {
         let item = StacItemBuilder::new("test-id")
-            .property(
-                "city3d:encoding".to_string(),
-                Value::String("CityJSON".to_string()),
-            )
-            .data_asset("./data.json", "application/json")
+            .data_asset("./data.json", "application/json", None)
             .build()
             .expect("Failed to build item");
 
@@ -122,10 +98,6 @@ mod stac_item_builder_tests {
     #[test]
     fn test_item_builder_with_links() {
         let item = StacItemBuilder::new("test-id")
-            .property(
-                "city3d:encoding".to_string(),
-                Value::String("CityJSON".to_string()),
-            )
             .self_link("./item.json")
             .parent_link("../collection.json")
             .build()
@@ -143,19 +115,15 @@ mod stac_item_builder_tests {
     #[test]
     fn test_item_builder_without_cityjson_metadata() {
         // Without cityjson_metadata(), build should still succeed
-        // (city3d:encoding is set by cityjson_metadata, not required at the raw builder level)
+        // Without cityjson_metadata(), build should still succeed
         let result = StacItemBuilder::new("test-id").build();
         assert!(result.is_ok());
     }
 
     #[test]
     fn test_item_builder_stac_extensions() {
-        // Test with only city3d:encoding - no projection extension
+        // Test without proj:code - no projection extension
         let item = StacItemBuilder::new("test-id")
-            .property(
-                "city3d:encoding".to_string(),
-                Value::String("CityJSON".to_string()),
-            )
             .build()
             .expect("Failed to build item");
 
@@ -164,21 +132,17 @@ mod stac_item_builder_tests {
             .stac_extensions
             .iter()
             .any(|e| e.contains("stac-city3d")));
-        // Should NOT include projection extension (no proj:epsg property)
+        // Should NOT include projection extension (no proj:code property)
         assert!(!item
             .stac_extensions
             .iter()
             .any(|e| e.contains("projection")));
 
-        // Test with proj:epsg - projection extension should be included
+        // Test with proj:code - projection extension should be included
         let item = StacItemBuilder::new("test-id")
             .property(
-                "city3d:encoding".to_string(),
-                Value::String("CityJSON".to_string()),
-            )
-            .property(
-                "proj:epsg".to_string(),
-                Value::Number(serde_json::Number::from(4326)),
+                "proj:code".to_string(),
+                Value::String("EPSG:4326".to_string()),
             )
             .build()
             .expect("Failed to build item");
@@ -210,7 +174,7 @@ mod stac_item_from_file_tests {
         // Check CityJSON extension properties
 
         assert_eq!(item.properties.get("city3d:version").unwrap(), "2.0");
-        assert_eq!(item.properties.get("proj:epsg").unwrap(), 7415);
+        assert_eq!(item.properties.get("proj:code").unwrap(), "EPSG:7415");
 
         // Check bbox is set
         assert!(item.bbox.is_some());
@@ -497,10 +461,6 @@ mod stac_collection_aggregate_from_items_tests {
             Value::String("2024-01-01T00:00:00Z".to_string()),
         );
         properties.insert(
-            "city3d:encoding".to_string(),
-            Value::String(encoding.to_string()),
-        );
-        properties.insert(
             "city3d:version".to_string(),
             Value::String("2.0".to_string()),
         );
@@ -525,8 +485,8 @@ mod stac_collection_aggregate_from_items_tests {
 
         if let Some(epsg_code) = epsg {
             properties.insert(
-                "proj:epsg".to_string(),
-                Value::Number(serde_json::Number::from(epsg_code)),
+                "proj:code".to_string(),
+                Value::String(format!("EPSG:{epsg_code}")),
             );
         }
 
@@ -613,9 +573,9 @@ mod stac_collection_aggregate_from_items_tests {
         assert_eq!(stats["max"], 150);
         assert_eq!(stats["total"], 200);
 
-        // Should have both EPSG codes
-        let epsg = summaries.get("proj:epsg").unwrap().as_array().unwrap();
-        assert_eq!(epsg.len(), 2);
+        // Should have both proj:code entries
+        let proj_codes = summaries.get("proj:code").unwrap().as_array().unwrap();
+        assert_eq!(proj_codes.len(), 2);
 
         // Should have merged bbox
         let bbox = &collection.extent.spatial.bbox[0];
@@ -654,11 +614,6 @@ mod stac_collection_aggregate_from_items_tests {
             "datetime".to_string(),
             Value::String("2024-01-01T00:00:00Z".to_string()),
         );
-        properties.insert(
-            "city3d:encoding".to_string(),
-            Value::String("CityJSON".to_string()),
-        );
-
         let item = StacItem {
             stac_version: "1.1.0".to_string(),
             stac_extensions: vec![],

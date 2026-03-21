@@ -20,9 +20,6 @@ pub struct ItemMetadata {
     /// Bounding box [min_x, min_y, min_z, max_x, max_y, max_z] or 2D variant
     pub bbox: Option<Vec<f64>>,
 
-    /// Format encoding (e.g., "CityJSON", "CityGML")
-    pub city3d_encoding: Option<String>,
-
     /// Specification version (e.g., "2.0")
     pub city3d_version: Option<String>,
 
@@ -98,7 +95,6 @@ impl ItemMetadata {
         Self {
             id: item.id.clone(),
             bbox: item.bbox.clone(),
-            city3d_encoding: get_string("city3d:encoding"),
             city3d_version: get_string("city3d:version"),
             city3d_city_objects: city_objects,
             city3d_lods: get_string_vec("city3d:lods"),
@@ -185,10 +181,6 @@ mod tests {
             Value::String("2023-01-01T00:00:00Z".to_string()),
         );
         properties.insert(
-            "city3d:encoding".to_string(),
-            Value::String("CityJSON".to_string()),
-        );
-        properties.insert(
             "city3d:version".to_string(),
             Value::String("2.0".to_string()),
         );
@@ -231,7 +223,6 @@ mod tests {
 
         assert_eq!(metadata.id, "test-item");
         assert_eq!(metadata.bbox, Some(vec![0.0, 0.0, 0.0, 10.0, 10.0, 10.0]));
-        assert_eq!(metadata.city3d_encoding, Some("CityJSON".to_string()));
         assert_eq!(metadata.city3d_version, Some("2.0".to_string()));
         assert_eq!(
             metadata.city3d_city_objects,

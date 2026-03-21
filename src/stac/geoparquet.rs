@@ -82,7 +82,8 @@ fn city3d_type(key: &str) -> Option<DataType> {
             true,
         )))),
         "city3d:city_objects" => Some(DataType::UInt64),
-        "city3d:version" | "city3d:encoding" | "city3d:encoding_version" => Some(DataType::Utf8),
+        "city3d:version" | "city3d:encoding_version" => Some(DataType::Utf8),
+        "proj:code" => Some(DataType::Utf8),
         "city3d:semantic_surfaces" | "city3d:textures" | "city3d:materials" => {
             Some(DataType::Boolean)
         }
@@ -612,7 +613,45 @@ fn json_values_to_array(
 
 // ─── GeoParquet metadata ────────────────────────────────────────────
 
-fn geo_metadata_json() -> String {
+fn compute_overall_bbox(items: &[StacItem]) -> Option<[f64; 4]> {
+    let mut xmin = f64::INFINITY;
+    let mut ymin = f64::INFINITY;
+    let mut xmax = f64::NEG_INFINITY;
+    let mut ymax = f64::NEG_INFINITY;
+    let mut found = false;
+
+    for item in items {
+        if let Some(bb) = &item.bbox {
+            if bb.len() >= 4 {
+                found = true;
+                xmin = xmin.min(bb[0]);
+                ymin = ymin.min(bb[1]);
+                // 3D bbox: [xmin, ymin, zmin, xmax, ymax, zmax]
+                // 2D bbox: [xmin, ymin, xmax, ymax]
+                if bb.len() == 6 {
+                    xmax = xmax.max(bb[3]);
+                    ymax = ymax.max(bb[4]);
+                } else {
+                    xmax = xmax.max(bb[2]);
+                    ymax = ymax.max(bb[3]);
+                }
+            }
+        }
+    }
+
+    if found {
+        Some([xmin, ymin, xmax, ymax])
+    } else {
+        None
+    }
+}
+
+fn geo_metadata_json(items: &[StacItem]) -> String {
+    let bbox_value = match compute_overall_bbox(items) {
+        Some(bb) => serde_json::json!([bb[0], bb[1], bb[2], bb[3]]),
+        None => serde_json::Value::Null,
+    };
+
     serde_json::json!({
         "version": "1.1.0",
         "primary_column": "geometry",
@@ -642,7 +681,15 @@ fn geo_metadata_json() -> String {
                     },
                     "id": {"authority": "EPSG", "code": 4326}
                 },
-                "bbox": null
+                "bbox": bbox_value,
+                "covering": {
+                    "bbox": {
+                        "xmin": ["bbox", "xmin"],
+                        "ymin": ["bbox", "ymin"],
+                        "xmax": ["bbox", "xmax"],
+                        "ymax": ["bbox", "ymax"]
+                    }
+                }
             }
         }
     })
@@ -683,7 +730,7 @@ pub fn write_geoparquet(
         .set_key_value_metadata(Some(vec![
             parquet::format::KeyValue {
                 key: "geo".to_string(),
-                value: Some(geo_metadata_json()),
+                value: Some(geo_metadata_json(items)),
             },
             parquet::format::KeyValue {
                 key: "stac-geoparquet".to_string(),
@@ -721,10 +768,6 @@ mod tests {
         properties.insert(
             "datetime".to_string(),
             serde_json::Value::String("2024-01-15T12:00:00Z".to_string()),
-        );
-        properties.insert(
-            "city3d:encoding".to_string(),
-            serde_json::Value::String("CityJSON".to_string()),
         );
         properties.insert("city3d:lods".to_string(), serde_json::json!(["1.2", "2.2"]));
         properties.insert("city3d:city_objects".to_string(), serde_json::json!(42));
@@ -772,6 +815,7 @@ mod tests {
             summaries: None,
             links: vec![],
             assets: None,
+            item_assets: None,
         }
     }
 
@@ -804,7 +848,6 @@ mod tests {
         assert!(field_names.contains(&"geometry"));
         assert!(field_names.contains(&"bbox"));
         assert!(field_names.contains(&"datetime"));
-        assert!(field_names.contains(&"city3d:encoding"));
         assert!(field_names.contains(&"city3d:lods"));
         assert!(field_names.contains(&"assets"));
     }
@@ -892,6 +935,37 @@ mod tests {
             serde_json::from_str(geo_kv.value.as_deref().unwrap()).unwrap();
         assert_eq!(geo_json["version"], "1.1.0");
         assert_eq!(geo_json["primary_column"], "geometry");
+
+        // Verify bbox is computed from items (single item: [4.0, 52.0, 5.0, 53.0])
+        let geo_bbox = &geo_json["columns"]["geometry"]["bbox"];
+        assert!(geo_bbox.is_array(), "geo bbox should be an array");
+        let geo_bbox_arr: Vec<f64> = geo_bbox
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|v| v.as_f64().unwrap())
+            .collect();
+        assert_eq!(geo_bbox_arr, vec![4.0, 52.0, 5.0, 53.0]);
+
+        // Verify covering references the bbox struct column
+        let covering = &geo_json["columns"]["geometry"]["covering"];
+        assert!(covering.is_object(), "covering should be present");
+        assert_eq!(
+            covering["bbox"]["xmin"],
+            serde_json::json!(["bbox", "xmin"])
+        );
+        assert_eq!(
+            covering["bbox"]["ymin"],
+            serde_json::json!(["bbox", "ymin"])
+        );
+        assert_eq!(
+            covering["bbox"]["xmax"],
+            serde_json::json!(["bbox", "xmax"])
+        );
+        assert_eq!(
+            covering["bbox"]["ymax"],
+            serde_json::json!(["bbox", "ymax"])
+        );
 
         let stac_kv = metadata
             .iter()

@@ -263,9 +263,9 @@ fn test_config_with_summaries() {
     let yaml_content = r#"
 id: test-with-summaries
 summaries:
-  city3d:encoding:
-    - CityJSON
-    - CityGML
+  city3d:version:
+    - "2.0"
+    - "1.1"
   custom:field: custom value
   eo:cloud_cover: 5
 "#;
@@ -280,7 +280,7 @@ summaries:
     assert!(config.summaries.is_some());
     let summaries = config.summaries.unwrap();
     assert_eq!(summaries.len(), 3);
-    assert!(summaries.contains_key("city3d:encoding"));
+    assert!(summaries.contains_key("city3d:version"));
     assert!(summaries.contains_key("custom:field"));
     assert!(summaries.contains_key("eo:cloud_cover"));
 }

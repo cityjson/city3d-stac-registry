@@ -5,7 +5,6 @@ use crate::metadata::BBox3D;
 use crate::metadata::CRS;
 use crate::reader::CityModelMetadataReader;
 use crate::stac::models::{Asset, Link, StacItem};
-use chrono::{DateTime, Utc};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::path::Path;
@@ -27,11 +26,9 @@ impl StacItemBuilder {
     pub fn new(id: impl Into<String>) -> Self {
         let mut properties = HashMap::new();
 
-        // Set default datetime to now
-        properties.insert(
-            "datetime".to_string(),
-            Value::String(Utc::now().to_rfc3339()),
-        );
+        // Default datetime to null (STAC requires datetime or start/end_datetime)
+        // The actual value should come from the data's temporal extent, not generation time
+        properties.insert("datetime".to_string(), Value::Null);
 
         Self {
             id: id.into(),
@@ -68,10 +65,31 @@ impl StacItemBuilder {
         self
     }
 
-    /// Set datetime
-    pub fn datetime(mut self, dt: DateTime<Utc>) -> Self {
+    /// Set datetime as an RFC3339 string, or null if None
+    pub fn datetime(mut self, dt: Option<String>) -> Self {
+        match dt {
+            Some(s) => {
+                self.properties
+                    .insert("datetime".to_string(), Value::String(s));
+            }
+            None => {
+                self.properties.insert("datetime".to_string(), Value::Null);
+            }
+        }
+        self
+    }
+
+    /// Set start_datetime (used when datetime is null and a date range is specified)
+    pub fn start_datetime(mut self, dt: impl Into<String>) -> Self {
         self.properties
-            .insert("datetime".to_string(), Value::String(dt.to_rfc3339()));
+            .insert("start_datetime".to_string(), Value::String(dt.into()));
+        self
+    }
+
+    /// Set end_datetime (used when datetime is null and a date range is specified)
+    pub fn end_datetime(mut self, dt: impl Into<String>) -> Self {
+        self.properties
+            .insert("end_datetime".to_string(), Value::String(dt.into()));
         self
     }
 
@@ -104,6 +122,20 @@ impl StacItemBuilder {
     /// Uses the STAC 3D City Models Extension (city3d: prefix)
     /// https://cityjson.github.io/stac-city3d/v0.1.0/schema.json
     pub fn cityjson_metadata(mut self, reader: &dyn CityModelMetadataReader) -> Result<Self> {
+        // Extract referenceDate from CityJSON metadata → set as datetime
+        if let Ok(Some(metadata)) = reader.metadata() {
+            if let Some(ref_date) = metadata.get("referenceDate").and_then(|v| v.as_str()) {
+                // referenceDate is typically "YYYY-MM-DD"; convert to RFC3339
+                let datetime_str = if ref_date.contains('T') {
+                    ref_date.to_string()
+                } else {
+                    format!("{ref_date}T00:00:00Z")
+                };
+                self.properties
+                    .insert("datetime".to_string(), Value::String(datetime_str));
+            }
+        }
+
         // Add city3d:version
         if let Ok(version) = reader.version() {
             self.properties
@@ -188,35 +220,36 @@ impl StacItemBuilder {
             }
         }
 
-        // Add proj:epsg from CRS (integer, as per STAC Projection Extension v1)
+        // Add proj:code from CRS (string, as per STAC Projection Extension v2.0.0)
         if let Ok(crs) = reader.crs() {
-            if let Some(epsg) = crs.to_stac_epsg() {
-                self.properties.insert(
-                    "proj:epsg".to_string(),
-                    Value::Number(serde_json::Number::from(epsg)),
-                );
+            if let Some(proj_code) = crs.to_stac_proj_code() {
+                self.properties
+                    .insert("proj:code".to_string(), Value::String(proj_code));
             }
         }
 
         Ok(self)
     }
 
-    /// Add file size property (File Extension)
-    pub fn file_size(mut self, size: u64) -> Self {
-        self.properties.insert(
-            "file:size".to_string(),
-            Value::Number(serde_json::Number::from(size)),
-        );
-        self.uses_file_extension = true;
-        self
-    }
-
     /// Add a data asset pointing to the source file
-    pub fn data_asset(mut self, href: impl Into<String>, media_type: &str) -> Self {
-        let asset = Asset::new(href)
+    ///
+    /// Optionally accepts a file size which is placed on the asset as `file:size`
+    /// per the STAC File Extension spec (file extension fields belong on assets, not item properties).
+    pub fn data_asset(
+        mut self,
+        href: impl Into<String>,
+        media_type: &str,
+        file_size: Option<u64>,
+    ) -> Self {
+        let mut asset = Asset::new(href)
             .with_type(media_type)
             .with_title("CityJSON data file")
             .with_roles(vec!["data".to_string()]);
+
+        if let Some(size) = file_size {
+            asset = asset.with_file_size(size);
+            self.uses_file_extension = true;
+        }
 
         self.assets.insert("data".to_string(), asset);
         self
@@ -257,17 +290,13 @@ impl StacItemBuilder {
 
     /// Build the STAC Item
     pub fn build(self) -> Result<StacItem> {
-        // city3d:encoding check removed
-
         // Build stac_extensions list dynamically based on which extensions are used
         // IMPORTANT: We do NOT rely on schema dependencies anymore, so we must add explicit extension URLs
         let mut stac_extensions =
             vec!["https://cityjson.github.io/stac-city3d/v0.1.0/schema.json".to_string()];
 
-        // Add Projection Extension if proj:epsg is present
-        if self.properties.contains_key("proj:epsg") {
-            // We can check for legacy proj:epsg just in case, but we write proj:code now
-            // Using v2.0.0 projection extension as it removed proj:epsg but we use proper proj:code
+        // Add Projection Extension if proj:code is present
+        if self.properties.contains_key("proj:code") {
             stac_extensions.push(
                 "https://stac-extensions.github.io/projection/v2.0.0/schema.json".to_string(),
             );
@@ -369,10 +398,8 @@ impl StacItemBuilder {
         // Add CityJSON metadata
         builder = builder.cityjson_metadata(reader)?;
 
-        // Add file size (File Extension)
-        if let Ok(metadata) = std::fs::metadata(file_path) {
-            builder = builder.file_size(metadata.len());
-        }
+        // Get file size for the asset (File Extension)
+        let file_size = std::fs::metadata(file_path).ok().map(|m| m.len());
 
         // Add data asset - detect ZIP files for proper media type
         let is_zip = file_path
@@ -414,7 +441,10 @@ impl StacItemBuilder {
             },
         };
 
-        builder = builder.data_asset(href, media_type);
+        builder = builder.data_asset(href.clone(), media_type, file_size);
+
+        // Add city-model relation link (per STAC 3D City Models Extension)
+        builder = builder.link(Link::new("city-model", &href).with_type(media_type));
 
         Ok(builder)
     }
@@ -476,10 +506,8 @@ impl StacItemBuilder {
         // Add CityJSON metadata
         builder = builder.cityjson_metadata(reader)?;
 
-        // Add file size (File Extension)
-        if let Ok(metadata) = std::fs::metadata(file_path) {
-            builder = builder.file_size(metadata.len());
-        }
+        // Get file size for the asset (File Extension)
+        let file_size = std::fs::metadata(file_path).ok().map(|m| m.len());
 
         // Add data asset - detect ZIP files for proper media type
         let is_zip = file_path
@@ -521,7 +549,10 @@ impl StacItemBuilder {
             },
         };
 
-        builder = builder.data_asset(href, media_type);
+        builder = builder.data_asset(href.clone(), media_type, file_size);
+
+        // Add city-model relation link (per STAC 3D City Models Extension)
+        builder = builder.link(Link::new("city-model", &href).with_type(media_type));
 
         Ok(builder)
     }
@@ -595,7 +626,7 @@ mod tests {
 
         assert_eq!(item.properties.get("city3d:version").unwrap(), "2.0");
         assert_eq!(item.properties.get("city3d:city_objects").unwrap(), 1);
-        assert_eq!(item.properties.get("proj:epsg").unwrap(), 7415);
+        assert_eq!(item.properties.get("proj:code").unwrap(), "EPSG:7415");
     }
 
     #[test]

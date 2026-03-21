@@ -50,7 +50,7 @@ mod e2e_single_file_tests {
         assert_eq!(item.properties["city3d:version"], "2.0");
 
         // Validate projection extension
-        assert_eq!(item.properties["proj:epsg"], 7415);
+        assert_eq!(item.properties["proj:code"], "EPSG:7415");
 
         // Validate required STAC extensions
         assert!(item
@@ -186,9 +186,9 @@ mod e2e_collection_tests {
 
         // Summaries should contain merged metadata
         let summaries = collection.summaries.as_ref().unwrap();
-        // Check proj:epsg
-        let epsg_codes = summaries["proj:epsg"].as_array().unwrap();
-        assert!(epsg_codes.iter().any(|c| c == 7415));
+        // Check proj:code
+        let proj_codes = summaries["proj:code"].as_array().unwrap();
+        assert!(proj_codes.iter().any(|c| c == "EPSG:7415"));
     }
 
     #[test]
@@ -366,8 +366,8 @@ mod e2e_workflow_tests {
             "zmax should be preserved"
         );
 
-        // Verify the native CRS is preserved in proj:epsg
-        assert!(item.properties.contains_key("proj:epsg"));
+        // Verify the native CRS is preserved in proj:code
+        assert!(item.properties.contains_key("proj:code"));
     }
 }
 
@@ -488,7 +488,7 @@ mod e2e_zip_file_tests {
 
         // Validate metadata from inner CityJSON
         assert_eq!(item.properties["city3d:version"], "2.0");
-        assert_eq!(item.properties["proj:epsg"], 7415);
+        assert_eq!(item.properties["proj:code"], "EPSG:7415");
 
         // Validate asset has application/zip media type
         assert!(item.assets.contains_key("data"));

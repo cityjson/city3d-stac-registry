@@ -100,6 +100,10 @@ pub struct StacCollection {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub assets: Option<HashMap<String, Asset>>,
+
+    /// Item Assets Extension: defines expected assets for items in this collection
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub item_assets: Option<HashMap<String, Value>>,
 }
 
 /// STAC Link
@@ -160,20 +164,9 @@ pub struct Asset {
     #[serde(skip_serializing_if = "Option::is_none", rename = "file:size")]
     pub file_size: Option<u64>,
 
-    /// File Extension: checksum of the file
+    /// File Extension: checksum of the file (multihash string, e.g. "1220{sha256hex}")
     #[serde(skip_serializing_if = "Option::is_none", rename = "file:checksum")]
-    pub file_checksum: Option<Checksum>,
-}
-
-/// File checksum (File Extension)
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Checksum {
-    /// The multihash checksum value
-    pub value: String,
-
-    /// The checksum algorithm namespace (e.g., "md5", "sha256")
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub namespace: Option<String>,
+    pub file_checksum: Option<String>,
 }
 
 impl Asset {
@@ -210,9 +203,9 @@ impl Asset {
         self
     }
 
-    /// Set the file checksum (File Extension)
-    pub fn with_file_checksum(mut self, checksum: Checksum) -> Self {
-        self.file_checksum = Some(checksum);
+    /// Set the file checksum as a multihash string (File Extension)
+    pub fn with_file_checksum(mut self, checksum: impl Into<String>) -> Self {
+        self.file_checksum = Some(checksum.into());
         self
     }
 }

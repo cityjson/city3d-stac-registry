@@ -20,6 +20,7 @@ pub struct StacCollectionBuilder {
     summaries: HashMap<String, Value>,
     links: Vec<Link>,
     assets: HashMap<String, Asset>,
+    item_assets: Option<HashMap<String, Value>>,
 }
 
 impl StacCollectionBuilder {
@@ -36,6 +37,7 @@ impl StacCollectionBuilder {
             summaries: HashMap::new(),
             links: Vec::new(),
             assets: HashMap::new(),
+            item_assets: None,
         }
     }
 
@@ -136,8 +138,6 @@ impl StacCollectionBuilder {
         mut self,
         readers: &[Box<dyn CityModelMetadataReader>],
     ) -> Result<Self> {
-        // city3d:encoding is removed in favor of asset media type
-
         // Collect all versions
         let versions: HashSet<String> = readers.iter().filter_map(|r| r.version().ok()).collect();
         if !versions.is_empty() {
@@ -210,44 +210,51 @@ impl StacCollectionBuilder {
                 .insert("city3d:city_objects".to_string(), stats);
         }
 
-        // Aggregate semantic surfaces presence
-        let has_semantic_surfaces: bool = readers
+        // Aggregate boolean fields as arrays of unique observed values
+        // e.g., [true], [false], or [true, false] per the STAC extension spec
+        let semantic_values: HashSet<bool> = readers
             .iter()
             .filter_map(|r| r.semantic_surfaces().ok())
-            .any(|x| x);
-        if has_semantic_surfaces {
+            .collect();
+        if !semantic_values.is_empty() {
+            let mut vals: Vec<bool> = semantic_values.into_iter().collect();
+            vals.sort();
             self.summaries.insert(
                 "city3d:semantic_surfaces".to_string(),
-                serde_json::to_value(true)?,
+                serde_json::to_value(vals)?,
             );
         }
 
-        // Aggregate textures presence
-        let has_textures: bool = readers.iter().filter_map(|r| r.textures().ok()).any(|x| x);
-        if has_textures {
+        let texture_values: HashSet<bool> =
+            readers.iter().filter_map(|r| r.textures().ok()).collect();
+        if !texture_values.is_empty() {
+            let mut vals: Vec<bool> = texture_values.into_iter().collect();
+            vals.sort();
             self.summaries
-                .insert("city3d:textures".to_string(), serde_json::to_value(true)?);
+                .insert("city3d:textures".to_string(), serde_json::to_value(vals)?);
         }
 
-        // Aggregate materials presence
-        let has_materials: bool = readers.iter().filter_map(|r| r.materials().ok()).any(|x| x);
-        if has_materials {
+        let material_values: HashSet<bool> =
+            readers.iter().filter_map(|r| r.materials().ok()).collect();
+        if !material_values.is_empty() {
+            let mut vals: Vec<bool> = material_values.into_iter().collect();
+            vals.sort();
             self.summaries
-                .insert("city3d:materials".to_string(), serde_json::to_value(true)?);
+                .insert("city3d:materials".to_string(), serde_json::to_value(vals)?);
         }
 
-        // Aggregate EPSG codes -> proj:epsg (array of integers)
-        let unique_epsg: HashSet<u32> = readers
+        // Aggregate proj:code (array of strings, e.g. ["EPSG:7415", "EPSG:28992"])
+        let unique_proj_codes: HashSet<String> = readers
             .iter()
             .filter_map(|r| r.crs().ok())
-            .filter_map(|crs| crs.to_stac_epsg())
+            .filter_map(|crs| crs.to_stac_proj_code())
             .collect();
 
-        if !unique_epsg.is_empty() {
-            let mut epsg_vec: Vec<u32> = unique_epsg.into_iter().collect();
-            epsg_vec.sort();
+        if !unique_proj_codes.is_empty() {
+            let mut codes: Vec<String> = unique_proj_codes.into_iter().collect();
+            codes.sort();
             self.summaries
-                .insert("proj:epsg".to_string(), serde_json::to_value(epsg_vec)?);
+                .insert("proj:code".to_string(), serde_json::to_value(codes)?);
         }
 
         // Merge all bounding boxes for spatial extent (transformed to WGS84)
@@ -364,33 +371,40 @@ impl StacCollectionBuilder {
                 .insert("city3d:city_objects".to_string(), stats);
         }
 
-        // Aggregate semantic surfaces presence
-        let has_semantic_surfaces = items_metadata
+        // Aggregate boolean fields as arrays of unique observed values
+        let semantic_values: HashSet<bool> = items_metadata
             .iter()
-            .any(|m| m.city3d_semantic_surfaces == Some(true));
-        if has_semantic_surfaces {
+            .filter_map(|m| m.city3d_semantic_surfaces)
+            .collect();
+        if !semantic_values.is_empty() {
+            let mut vals: Vec<bool> = semantic_values.into_iter().collect();
+            vals.sort();
             self.summaries.insert(
                 "city3d:semantic_surfaces".to_string(),
-                serde_json::to_value(true)?,
+                serde_json::to_value(vals)?,
             );
         }
 
-        // Aggregate textures presence
-        let has_textures = items_metadata
+        let texture_values: HashSet<bool> = items_metadata
             .iter()
-            .any(|m| m.city3d_textures == Some(true));
-        if has_textures {
+            .filter_map(|m| m.city3d_textures)
+            .collect();
+        if !texture_values.is_empty() {
+            let mut vals: Vec<bool> = texture_values.into_iter().collect();
+            vals.sort();
             self.summaries
-                .insert("city3d:textures".to_string(), serde_json::to_value(true)?);
+                .insert("city3d:textures".to_string(), serde_json::to_value(vals)?);
         }
 
-        // Aggregate materials presence
-        let has_materials = items_metadata
+        let material_values: HashSet<bool> = items_metadata
             .iter()
-            .any(|m| m.city3d_materials == Some(true));
-        if has_materials {
+            .filter_map(|m| m.city3d_materials)
+            .collect();
+        if !material_values.is_empty() {
+            let mut vals: Vec<bool> = material_values.into_iter().collect();
+            vals.sort();
             self.summaries
-                .insert("city3d:materials".to_string(), serde_json::to_value(true)?);
+                .insert("city3d:materials".to_string(), serde_json::to_value(vals)?);
         }
 
         // Merge spatial extents from item bboxes
@@ -492,14 +506,6 @@ impl StacCollectionBuilder {
             item.properties.get(key).and_then(|v| v.as_i64())
         }
 
-        // Helper to extract boolean from item properties
-        fn get_bool(item: &StacItem, key: &str) -> bool {
-            item.properties
-                .get(key)
-                .and_then(|v| v.as_bool())
-                .unwrap_or(false)
-        }
-
         // Collect all versions
         let versions: HashSet<String> = items
             .iter()
@@ -565,42 +571,65 @@ impl StacCollectionBuilder {
                 .insert("city3d:city_objects".to_string(), stats);
         }
 
-        // Aggregate semantic surfaces presence
-        let has_semantic_surfaces = items
+        // Aggregate boolean fields as arrays of unique observed values
+        let semantic_values: HashSet<bool> = items
             .iter()
-            .any(|item| get_bool(item, "city3d:semantic_surfaces"));
-        if has_semantic_surfaces {
+            .filter_map(|item| {
+                item.properties
+                    .get("city3d:semantic_surfaces")
+                    .and_then(|v| v.as_bool())
+            })
+            .collect();
+        if !semantic_values.is_empty() {
+            let mut vals: Vec<bool> = semantic_values.into_iter().collect();
+            vals.sort();
             self.summaries.insert(
                 "city3d:semantic_surfaces".to_string(),
-                serde_json::to_value(true)?,
+                serde_json::to_value(vals)?,
             );
         }
 
-        // Aggregate textures presence
-        let has_textures = items.iter().any(|item| get_bool(item, "city3d:textures"));
-        if has_textures {
-            self.summaries
-                .insert("city3d:textures".to_string(), serde_json::to_value(true)?);
-        }
-
-        // Aggregate materials presence
-        let has_materials = items.iter().any(|item| get_bool(item, "city3d:materials"));
-        if has_materials {
-            self.summaries
-                .insert("city3d:materials".to_string(), serde_json::to_value(true)?);
-        }
-
-        // Aggregate proj:epsg (array of integers)
-        let unique_epsg: HashSet<u64> = items
+        let texture_values: HashSet<bool> = items
             .iter()
-            .filter_map(|item| get_int(item, "proj:epsg").map(|v| v as u64))
+            .filter_map(|item| {
+                item.properties
+                    .get("city3d:textures")
+                    .and_then(|v| v.as_bool())
+            })
+            .collect();
+        if !texture_values.is_empty() {
+            let mut vals: Vec<bool> = texture_values.into_iter().collect();
+            vals.sort();
+            self.summaries
+                .insert("city3d:textures".to_string(), serde_json::to_value(vals)?);
+        }
+
+        let material_values: HashSet<bool> = items
+            .iter()
+            .filter_map(|item| {
+                item.properties
+                    .get("city3d:materials")
+                    .and_then(|v| v.as_bool())
+            })
+            .collect();
+        if !material_values.is_empty() {
+            let mut vals: Vec<bool> = material_values.into_iter().collect();
+            vals.sort();
+            self.summaries
+                .insert("city3d:materials".to_string(), serde_json::to_value(vals)?);
+        }
+
+        // Aggregate proj:code (array of strings)
+        let unique_proj_codes: HashSet<String> = items
+            .iter()
+            .filter_map(|item| get_string(item, "proj:code"))
             .collect();
 
-        if !unique_epsg.is_empty() {
-            let mut epsg_vec: Vec<u64> = unique_epsg.into_iter().collect();
-            epsg_vec.sort();
+        if !unique_proj_codes.is_empty() {
+            let mut codes: Vec<String> = unique_proj_codes.into_iter().collect();
+            codes.sort();
             self.summaries
-                .insert("proj:epsg".to_string(), serde_json::to_value(epsg_vec)?);
+                .insert("proj:code".to_string(), serde_json::to_value(codes)?);
         }
 
         // Merge spatial extents from item bboxes
@@ -649,8 +678,8 @@ impl StacCollectionBuilder {
         let mut stac_extensions =
             vec!["https://cityjson.github.io/stac-city3d/v0.1.0/schema.json".to_string()];
 
-        // Add Projection Extension if proj:epsg is in summaries
-        if self.summaries.contains_key("proj:epsg") {
+        // Add Projection Extension if proj:code is in summaries
+        if self.summaries.contains_key("proj:code") {
             stac_extensions.push(
                 "https://stac-extensions.github.io/projection/v2.0.0/schema.json".to_string(),
             );
@@ -661,6 +690,34 @@ impl StacCollectionBuilder {
             stac_extensions
                 .push("https://stac-extensions.github.io/stats/v0.2.0/schema.json".to_string());
         }
+
+        // Auto-generate item_assets if not explicitly set and we have city3d summaries
+        let item_assets = if self.item_assets.is_some() {
+            stac_extensions.push(
+                "https://stac-extensions.github.io/item-assets/v1.1.0/schema.json".to_string(),
+            );
+            self.item_assets
+        } else if self.summaries.contains_key("city3d:version") {
+            // Auto-populate a default data asset template for city model collections
+            let mut assets = HashMap::new();
+            assets.insert(
+                "data".to_string(),
+                serde_json::json!({
+                    "title": "3D City Model data file",
+                    "roles": ["data"]
+                }),
+            );
+            stac_extensions.push(
+                "https://stac-extensions.github.io/item-assets/v1.1.0/schema.json".to_string(),
+            );
+            Some(assets)
+        } else {
+            None
+        };
+
+        // Add File Extension if any item_assets or assets reference file:size
+        stac_extensions
+            .push("https://stac-extensions.github.io/file/v2.1.0/schema.json".to_string());
 
         Ok(StacCollection {
             stac_version: "1.1.0".to_string(),
@@ -684,6 +741,7 @@ impl StacCollectionBuilder {
             } else {
                 Some(self.assets)
             },
+            item_assets,
         })
     }
 }
