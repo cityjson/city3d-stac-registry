@@ -1264,13 +1264,19 @@ async fn process_collection_logic(
             continue;
         }
 
+        // For remote sources, preserve the original URL as the asset href fallback
+        let original_url = match source {
+            InputSource::Remote(url) => Some(url.as_str()),
+            InputSource::Local(_) => None,
+        };
+
         // Process and generate item
         let builder_result = if has_collision {
             StacItemBuilder::from_file_with_format_suffix_and_crs(
                 file_path,
                 reader.as_ref(),
                 config.base_url.as_deref(),
-                None,
+                original_url,
                 crs_override.as_ref(),
             )
         } else {
@@ -1278,7 +1284,7 @@ async fn process_collection_logic(
                 file_path,
                 reader.as_ref(),
                 config.base_url.as_deref(),
-                None,
+                original_url,
                 crs_override.as_ref(),
             )
         };
