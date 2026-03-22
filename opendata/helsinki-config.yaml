@@ -1,35 +1,33 @@
-# Helsinki 3D City Model - Data available via WFS API and direct download
-# WFS endpoint: https://kartta.hel.fi/3d/citydb-wfs/wfs
-# CityGML downloads: http://3d.hel.ninja/data/citygml/
+# Helsinki 3D City Model
+# Collection-only config: no downloadable files, metadata + viewer link only
+# Data is accessed via interactive web viewer (users select extent to download)
 id: helsinki-3d
-title: Helsinki 3D City Model (LoD2)
+title: Helsinki 3D City Model (LoD1/LoD2)
 description: |
-  3D LoD2 city model of Helsinki, Finland, with textures.
-  Available in multiple formats: CityGML, 2D Shape, 3D Shape (PolygonZ),
-  3D Shape (Multipatch), KMZ, DXF, DWG, 3DS, and ESRI File Geodatabase.
+  3D city model of Helsinki, Finland, covering the entire municipality including
+  outer islands. Available in CityGML 2.0 format with two levels of detail:
+  LoD1 (flat roofs) and LoD2 (detailed roof shapes, textured and non-textured).
 
-  Data Access:
-  - WFS API: https://kartta.hel.fi/3d/citydb-wfs/wfs (OGC WFS 2.0.0)
-  - CityGML Downloads: http://3d.hel.ninja/data/citygml/
-  - Interactive Viewer: https://kartta.hel.fi/3d/
+  The urban data model is divided into map sheets of four square kilometres each.
+  Data access is through an interactive web viewer where users can select a
+  specific extent to download.
 
   Technical Details:
-  - Data Model: CityGML 2.0 with 3DCityDB schema
-  - CRS: ETRS-GK25 (EPSG:3879) plane coordinates, N2000 height system
+  - Data Model: CityGML 2.0
+  - CRS: ETRS-GK25 (EPSG:3879) + N2000 height system
+  - City Object Types: Buildings, Terrain
   - Database: PostgreSQL/PostGIS with 3DCityDB
 license: CC-BY-4.0
 keywords:
 - 3d city model
 - buildings
+- terrain
+- LOD1
 - LOD2
 - Finland
 - Helsinki
 - CityGML
 - textured
-- capital
-- multi-format
-- WFS
-- 3DCityDB
 providers:
 - name: City of Helsinki
   url: https://www.hel.fi/
@@ -37,43 +35,38 @@ providers:
   - producer
   - licensor
   description: Helsinki city government - Urban Environment Division
-- name: Helsinki Region Infoshare
-  url: https://hri.fi/
-  roles:
-  - host
-  description: Helsinki metropolitan area open data portal
-inputs:
-  - https://kartta.hel.fi/3d/citydb-wfs/wfs # NOTE: URL is for a Web Feature Service (WFS) API
 extent:
   spatial:
-    bbox: []
-    crs: EPSG:3067
+    # Helsinki municipality bounds (WGS84)
+    bbox: [24.83, 60.14, 25.25, 60.30]
+    crs: EPSG:4326
   temporal:
-    start: '2016-01-01T00:00:00Z'
-    end: '2016-12-31T23:59:59Z'
+    start: '2017-01-01T00:00:00Z'
+summaries:
+  city3d:version:
+  - '2.0'
+  city3d:lods:
+  - 1
+  - 2
+  city3d:co_types:
+  - Building
+  - TINRelief
+  proj:code:
+  - EPSG:3879
 links:
+- rel: about
+  href: https://www.hel.fi/en/decision-making/information-on-helsinki/maps-and-geospatial-data/helsinki-3d
+  type: text/html
+  title: Helsinki 3D City Model Information
 - rel: about
   href: https://hri.fi/data/en_GB/dataset/helsingin-3d-kaupunkimalli
   type: text/html
   title: Helsinki 3D City Model on HRI Portal
-- rel: alternate
-  href: https://kartta.hel.fi/3d/
-  type: text/html
-  title: Helsinki 3D Web Viewer and Download Portal
-- rel: about
-  href: https://www.hel.fi/fi/paatoksenteko-ja-hallinto/tietoa-helsingista/kartat-ja-paikkatieto/helsinki-3d
-  type: text/html
-  title: City of Helsinki 3D City Model Information
-- rel: service
-  href: https://kartta.hel.fi/3d/citydb-wfs/wfs
-  type: application/xml
-  title: WFS API Endpoint
-  wfs:version: '2.0.0'
-- rel: enclosure
-  href: http://3d.hel.ninja/data/citygml/
-  type: text/html
-  title: CityGML Download Directory
-- rel: about
-  href: https://3d.bk.tudelft.nl/opendata/opencities/
-  type: text/html
-  title: TU Delft 3D Open Cities Portal
+assets:
+  viewer:
+    href: https://kartta.hel.fi/3d/
+    type: text/html
+    title: Helsinki 3D Interactive Viewer and Download Portal
+    description: Web-based 3D viewer where users can browse the city model and select specific areas to download in various formats (CityGML, KMZ, DXF, etc.)
+    roles:
+    - preview
