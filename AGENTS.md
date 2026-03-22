@@ -249,7 +249,7 @@ The `update-collection` command (alias: `aggregate`) is useful for Object Storag
 
 ## STAC Extension Properties (city3d: prefix)
 
-The tool uses the [STAC 3D City Models Extension](https://cityjson.github.io/stac-city3d/v0.1.0/schema.json).
+The tool uses the [STAC 3D City Models Extension](https://cityjson.github.io/stac-city3d/v0.2.0/schema.json).
 
 | Property                   | Type          | Description               |
 | -------------------------- | ------------- | ------------------------- |

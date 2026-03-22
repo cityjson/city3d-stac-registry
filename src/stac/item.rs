@@ -122,7 +122,7 @@ impl StacItemBuilder {
     /// Add 3D City Models extension properties from metadata reader
     ///
     /// Uses the STAC 3D City Models Extension (city3d: prefix)
-    /// https://cityjson.github.io/stac-city3d/v0.1.0/schema.json
+    /// https://cityjson.github.io/stac-city3d/v0.2.0/schema.json
     pub fn cityjson_metadata(mut self, reader: &dyn CityModelMetadataReader) -> Result<Self> {
         // Extract referenceDate from CityJSON metadata → set as datetime
         if let Ok(Some(metadata)) = reader.metadata() {
@@ -151,25 +151,11 @@ impl StacItemBuilder {
             );
         }
 
-        // Add city3d:lods ensuring they are numbers
+        // Add city3d:lods as strings to avoid floating-point precision issues
         if let Ok(lods) = reader.lods() {
             if !lods.is_empty() {
-                let numeric_lods: Vec<Value> = lods
-                    .iter()
-                    .map(|lod| {
-                        if let Ok(num) = lod.parse::<f64>() {
-                            if let Some(n) = serde_json::Number::from_f64(num) {
-                                Value::Number(n)
-                            } else {
-                                Value::String(lod.clone())
-                            }
-                        } else {
-                            Value::String(lod.clone())
-                        }
-                    })
-                    .collect();
                 self.properties
-                    .insert("city3d:lods".to_string(), Value::Array(numeric_lods));
+                    .insert("city3d:lods".to_string(), serde_json::to_value(lods)?);
             }
         }
 
@@ -319,7 +305,7 @@ impl StacItemBuilder {
 
         // Build stac_extensions list dynamically
         let mut stac_extensions =
-            vec!["https://cityjson.github.io/stac-city3d/v0.1.0/schema.json".to_string()];
+            vec!["https://cityjson.github.io/stac-city3d/v0.2.0/schema.json".to_string()];
 
         if item.properties.additional_fields.contains_key("proj:code") {
             stac_extensions.push(

@@ -160,7 +160,7 @@ impl StacCollectionBuilder {
             );
         }
 
-        // Aggregate LODs
+        // Aggregate LODs as strings to avoid floating-point precision issues
         let all_lods: HashSet<String> = readers
             .iter()
             .filter_map(|r| r.lods().ok())
@@ -168,23 +168,10 @@ impl StacCollectionBuilder {
             .collect();
 
         if !all_lods.is_empty() {
-            let numeric_lods: Vec<Value> = all_lods
-                .iter()
-                .map(|lod| {
-                    if let Ok(num) = lod.parse::<f64>() {
-                        if let Some(n) = serde_json::Number::from_f64(num) {
-                            Value::Number(n)
-                        } else {
-                            Value::String(lod.clone())
-                        }
-                    } else {
-                        Value::String(lod.clone())
-                    }
-                })
-                .collect();
-
+            let mut lods: Vec<String> = all_lods.into_iter().collect();
+            lods.sort();
             self.summaries
-                .insert("city3d:lods".to_string(), Value::Array(numeric_lods));
+                .insert("city3d:lods".to_string(), serde_json::to_value(lods)?);
         }
 
         // Aggregate city object types
@@ -312,32 +299,19 @@ impl StacCollectionBuilder {
             );
         }
 
-        // Aggregate LODs
-        let mut unique_lods: HashSet<String> = HashSet::new();
-        let mut lod_values: Vec<Value> = Vec::new();
+        // Aggregate LODs as strings to avoid floating-point precision issues
+        let all_lods: HashSet<String> = items_metadata
+            .iter()
+            .filter_map(|m| m.city3d_lods.as_ref())
+            .flatten()
+            .cloned()
+            .collect();
 
-        for metadata in items_metadata {
-            if let Some(lods) = &metadata.city3d_lods {
-                for lod in lods {
-                    if !unique_lods.contains(lod) {
-                        unique_lods.insert(lod.clone());
-                        if let Ok(num) = lod.parse::<f64>() {
-                            if let Some(n) = serde_json::Number::from_f64(num) {
-                                lod_values.push(Value::Number(n));
-                            } else {
-                                lod_values.push(Value::String(lod.clone()));
-                            }
-                        } else {
-                            lod_values.push(Value::String(lod.clone()));
-                        }
-                    }
-                }
-            }
-        }
-
-        if !lod_values.is_empty() {
+        if !all_lods.is_empty() {
+            let mut lods: Vec<String> = all_lods.into_iter().collect();
+            lods.sort();
             self.summaries
-                .insert("city3d:lods".to_string(), Value::Array(lod_values));
+                .insert("city3d:lods".to_string(), serde_json::to_value(lods)?);
         }
 
         // Aggregate city object types
@@ -482,19 +456,6 @@ impl StacCollectionBuilder {
                 .unwrap_or_default()
         }
 
-        fn get_lod_array(item: &stac::Item) -> Vec<Value> {
-            if let Some(arr) = item
-                .properties
-                .additional_fields
-                .get("city3d:lods")
-                .and_then(|v| v.as_array())
-            {
-                arr.clone()
-            } else {
-                Vec::new()
-            }
-        }
-
         fn get_int(item: &stac::Item, key: &str) -> Option<i64> {
             item.properties
                 .additional_fields
@@ -515,23 +476,17 @@ impl StacCollectionBuilder {
             );
         }
 
-        // Aggregate LODs
-        let mut unique_lods: HashSet<String> = HashSet::new();
-        let mut lod_values: Vec<Value> = Vec::new();
+        // Aggregate LODs as strings to avoid floating-point precision issues
+        let all_lods: HashSet<String> = items
+            .iter()
+            .flat_map(|item| get_string_array(item, "city3d:lods"))
+            .collect();
 
-        for item in items {
-            for lod in get_lod_array(item) {
-                let s = lod.to_string();
-                if !unique_lods.contains(&s) {
-                    unique_lods.insert(s);
-                    lod_values.push(lod);
-                }
-            }
-        }
-
-        if !lod_values.is_empty() {
+        if !all_lods.is_empty() {
+            let mut lods: Vec<String> = all_lods.into_iter().collect();
+            lods.sort();
             self.summaries
-                .insert("city3d:lods".to_string(), Value::Array(lod_values));
+                .insert("city3d:lods".to_string(), serde_json::to_value(lods)?);
         }
 
         // Aggregate city object types
@@ -710,7 +665,7 @@ impl StacCollectionBuilder {
 
         // Build stac_extensions list
         let mut stac_extensions =
-            vec!["https://cityjson.github.io/stac-city3d/v0.1.0/schema.json".to_string()];
+            vec!["https://cityjson.github.io/stac-city3d/v0.2.0/schema.json".to_string()];
 
         if self.summaries.contains_key("proj:code") {
             stac_extensions.push(

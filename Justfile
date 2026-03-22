@@ -137,7 +137,7 @@ example-collection:
 
 # Generate example STAC catalog from config
 example-catalog:
-    cargo run -- catalog --config examples/full-catalog-config.toml -o target/example_catalog --pretty --geoparquet
+    cargo run -- catalog --config examples/full-catalog-config.toml -o target/example_catalog --pretty --geoparquet --overwrite
     @echo "Generated: target/example_catalog/"
 
 # ============================================================================

@@ -15,12 +15,6 @@ keywords:
 - Kadaster
 - tiled
 providers:
-- name: Kadaster
-  url: https://www.kadaster.nl/
-  roles:
-  - producer
-  - licensor
-  description: Dutch Land Registry Office - maintains the BAG registry (Basisregistratie Adressen en Gebouwen)
 - name: 3D Geoinformation Group (TU Delft)
   url: https://3d.bk.tudelft.nl/
   roles:
@@ -32,6 +26,10 @@ providers:
   roles:
   - host
   description: Official 3D BAG distribution platform (data.3dbag.nl)
+- name: 3DGI
+  description: A software development and consulting company with a focus on 3D geoinformation and open source technologies
+  roles: ["processor", "host"]
+  url: https://3dgi.xyz/
 inputs:
   from_file: data/3dbag_urls.txt
 extent:

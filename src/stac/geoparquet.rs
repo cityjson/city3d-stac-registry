@@ -77,7 +77,7 @@ mod tests {
         item.assets.insert("data".to_string(), asset);
 
         item.extensions =
-            vec!["https://cityjson.github.io/stac-city3d/v0.1.0/schema.json".to_string()];
+            vec!["https://cityjson.github.io/stac-city3d/v0.2.0/schema.json".to_string()];
 
         item.links
             .push(stac::Link::self_(format!("./{id}_item.json")));
