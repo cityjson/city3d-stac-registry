@@ -737,6 +737,22 @@ impl StacCollectionBuilder {
                 }
             }
 
+            // Add city3d extension properties to item_assets
+            if let Some(lods) = self.summaries.get("city3d:lods") {
+                additional_fields.insert("city3d:lods".to_string(), lods.clone());
+            }
+            if let Some(co_types) = self.summaries.get("city3d:co_types") {
+                additional_fields.insert("city3d:co_types".to_string(), co_types.clone());
+            }
+            if let Some(version) = self.summaries.get("city3d:version") {
+                // For item_assets, use a single version string if only one exists
+                if let Some(arr) = version.as_array() {
+                    if arr.len() == 1 {
+                        additional_fields.insert("city3d:version".to_string(), arr[0].clone());
+                    }
+                }
+            }
+
             let item_asset = stac::ItemAsset {
                 title: Some("3D city model data".to_string()),
                 description: None,
