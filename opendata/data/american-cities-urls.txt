@@ -1,1 +1,1 @@
-https://s3.dualstack.us-east-1.amazonaws.com/opencitymodel/2019-jun/json/Alabama/01001/Alabama-01001-000.json
+https://s3.dualstack.us-east-1.amazonaws.com/opencitymodel/2019-jun/gml/Alabama/01001/Alabama-01001-000.zip
