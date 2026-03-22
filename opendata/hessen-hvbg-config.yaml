@@ -25,12 +25,10 @@ providers:
       - licensor
     description: State Office for Land Management and Geoinformation Hessen
     # NOTE: Contact via vertrieb-geobasisdaten@hvbg.hessen.de
-inputs:
-  - https://gds.hessen.de/INTERSHOP/web/WFS/HLBG-Geodaten-Site/de_DE/-/EUR/ViewDownloadcenter-Start?path=3D-Daten/3D-Geb%C3%A4udemodelle/3D-Geb%C3%A4udemodelle%20LoD2/Hochtaunuskreis
-  # NOTE: Direct link to the download portal page, as the direct .zip download URLs for Hessen are dynamic and expire daily.
+inputs: [] # NOTE: Direct download URLs are dynamic and expire daily. See links for the portal.
 extent:
   spatial:
-    bbox: []
+    bbox: [7.77, 49.39, 10.24, 51.66] # [west, south, east, north] Hessen state boundaries
     crs: EPSG:25832
   temporal:
     start: "2007-01-01T00:00:00Z" # NOTE: Airborne Laser Scanning (ALS) baseline acquisition started in 2007.

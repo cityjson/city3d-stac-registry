@@ -23,11 +23,10 @@ providers:
       - host
     description: Surveying and Cadastral Board of the City of Poznań
     # NOTE: Contact via michal.michalowski@geopoz.poznan.pl
-inputs:
-  - https://sip.poznan.pl/model3d/ # NOTE: Area-based downloads.
+inputs: [] # NOTE: Area-based downloads only via interactive web interface.
 extent:
   spatial:
-    bbox: [] # NOTE: Bounding box to be auto-detected or configured manually according to the user-defined area-of-interest
+    bbox: [16.73, 52.29, 17.07, 52.51] # [west, south, east, north] Poznań city boundaries
     crs: EPSG:2177
 links:
   - rel: source

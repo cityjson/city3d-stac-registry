@@ -13,11 +13,11 @@ keywords:
 - 125M buildings
 providers:
 - name: BuildZero.Org
-  url: https://buildzero.org/
+  url: https://github.com/opencitymodel/opencitymodel
   roles:
   - producer
   - licensor
-  description: Non-profit organization that created the OpenCityModel data pipeline combining Microsoft USBuildingFootprints, OpenStreetMap, and other open datasets
+  description: Non-profit 501(c)3 that created the OpenCityModel data pipeline combining Microsoft USBuildingFootprints, OpenStreetMap, and other open datasets (original website buildzero.org is defunct)
 - name: Microsoft
   url: https://github.com/microsoft/USBuildingFootprints
   roles:

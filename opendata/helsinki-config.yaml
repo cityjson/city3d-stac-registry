@@ -56,7 +56,7 @@ links:
   href: https://hri.fi/data/en_GB/dataset/helsingin-3d-kaupunkimalli
   type: text/html
   title: Helsinki 3D City Model on HRI Portal
-- rel: alternate # update
+- rel: alternate
   href: https://kartta.hel.fi/3d/
   type: text/html
   title: Helsinki 3D Web Viewer and Download Portal

@@ -23,8 +23,7 @@ providers:
       - licensor
     description: State Office for Geoinformation and Land Development
     # NOTE: Contact via geodaten@lgl.bwl.de (+49 711 95980-200)
-inputs:
-  - https://opengeodata.lgl-bw.de/#/(sidenav:product/lod2) # NOTE: Manual download via map interface is required (max 10 tiles at a time).
+inputs: [] # NOTE: Manual download via map interface is required (max 10 tiles at a time). See links below.
 extent:
   spatial:
     bbox: [7.20, 47.40, 10.70, 50.00]

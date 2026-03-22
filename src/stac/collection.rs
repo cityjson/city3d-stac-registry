@@ -405,6 +405,18 @@ impl StacCollectionBuilder {
                 .insert("city3d:materials".to_string(), serde_json::to_value(vals)?);
         }
 
+        // Aggregate proj:code from items
+        let unique_proj_codes: HashSet<String> = items_metadata
+            .iter()
+            .filter_map(|m| m.proj_code.clone())
+            .collect();
+        if !unique_proj_codes.is_empty() {
+            let mut codes: Vec<String> = unique_proj_codes.into_iter().collect();
+            codes.sort();
+            self.summaries
+                .insert("proj:code".to_string(), serde_json::to_value(codes)?);
+        }
+
         // Merge spatial extents from item bboxes
         let parsed_bboxes: Vec<BBox3D> = items_metadata
             .iter()

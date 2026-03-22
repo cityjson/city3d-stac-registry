@@ -46,7 +46,7 @@ links:
   type: text/html
   title: 3D BAG Official Website
 - rel: about
-  href: https://3d.bk.tudelft.nl/projects/3d-bag
+  href: https://3d.bk.tudelft.nl/projects/3dbag
   type: text/html
   title: 3D BAG Project at TU Delft
 - rel: cite-as

@@ -21,6 +21,8 @@ pub struct ItemMetadata {
     pub city3d_semantic_surfaces: Option<bool>,
     pub city3d_textures: Option<bool>,
     pub city3d_materials: Option<bool>,
+    /// Projection code (e.g., "EPSG:7415")
+    pub proj_code: Option<String>,
 }
 
 impl ItemMetadata {
@@ -38,7 +40,11 @@ impl ItemMetadata {
             props.get(key).and_then(|v| {
                 v.as_array().map(|arr| {
                     arr.iter()
-                        .filter_map(|v| v.as_str().map(String::from))
+                        .filter_map(|v| match v {
+                            serde_json::Value::String(s) => Some(s.clone()),
+                            serde_json::Value::Number(n) => Some(n.to_string()),
+                            _ => None,
+                        })
                         .collect()
                 })
             })
@@ -82,6 +88,7 @@ impl ItemMetadata {
             city3d_semantic_surfaces: get_bool("city3d:semantic_surfaces"),
             city3d_textures: get_bool("city3d:textures"),
             city3d_materials: get_bool("city3d:materials"),
+            proj_code: get_string("proj:code"),
         }
     }
 

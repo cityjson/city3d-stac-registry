@@ -25,12 +25,10 @@ providers:
   roles:
   - host
   description: Official open data portal of the City of Namur
-inputs:
-  - https://carto.ville.namur.be/data/3D_Ponts_Citadelle/3D_Ponts.ZIP
-  # - https://carto.ville.namur.be/data/3D_Ponts_Citadelle/3D_Citadelle.ZIP
+inputs: [] # NOTE: Server unreachable (carto.ville.namur.be timeout). SketchUp format not supported.
 extent:
   spatial:
-    bbox: []
+    bbox: [4.82, 50.43, 4.90, 50.48] # [west, south, east, north] Namur city center
     crs: EPSG:31370
   temporal:
     start: '2018-01-01T00:00:00Z'

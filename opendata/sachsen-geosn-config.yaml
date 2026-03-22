@@ -27,8 +27,7 @@ providers:
       - host
     description: State Office for Geobasis Information Saxony.
     # NOTE: Contact via servicedesk@geosn.sachsen.de
-inputs:
-  - https://geocloud.landesvermessung.sachsen.de/public.php/dav/files/AyJqXpJAZJXomCb/lod2_33292_5638_2_sn_citygml.zip
+inputs: [] # NOTE: Nextcloud share link requires authentication (possibly expired). See links for the data portal.
 extent:
   spatial:
     bbox: [11.67, 50.00, 15.05, 51.80] # [west, south, east, north]
