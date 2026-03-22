@@ -23,6 +23,8 @@ pub struct StacCollectionBuilder {
     links: Vec<stac::Link>,
     assets: IndexMap<String, stac::Asset>,
     item_assets: IndexMap<String, stac::ItemAsset>,
+    /// Whether this collection has processed items (affects extension declarations)
+    has_items: bool,
 }
 
 impl StacCollectionBuilder {
@@ -42,6 +44,7 @@ impl StacCollectionBuilder {
             links: Vec::new(),
             assets: IndexMap::new(),
             item_assets: IndexMap::new(),
+            has_items: false,
         }
     }
 
@@ -144,6 +147,9 @@ impl StacCollectionBuilder {
         mut self,
         readers: &[Box<dyn CityModelMetadataReader>],
     ) -> Result<Self> {
+        if !readers.is_empty() {
+            self.has_items = true;
+        }
         // Collect all versions
         let versions: HashSet<String> = readers.iter().filter_map(|r| r.version().ok()).collect();
         if !versions.is_empty() {
@@ -288,6 +294,9 @@ impl StacCollectionBuilder {
         mut self,
         items_metadata: &[crate::stac::ItemMetadata],
     ) -> Result<Self> {
+        if !items_metadata.is_empty() {
+            self.has_items = true;
+        }
         use crate::stac::CityObjectsCount;
 
         // Collect all versions
@@ -447,6 +456,9 @@ impl StacCollectionBuilder {
 
     /// Aggregate metadata from pre-parsed STAC items
     pub fn aggregate_from_items(mut self, items: &[stac::Item]) -> Result<Self> {
+        if !items.is_empty() {
+            self.has_items = true;
+        }
         // Helper to extract string from item properties
         fn get_string(item: &stac::Item, key: &str) -> Option<String> {
             item.properties
@@ -731,9 +743,17 @@ impl StacCollectionBuilder {
             );
         }
 
-        // Always add File Extension
-        stac_extensions
-            .push("https://stac-extensions.github.io/file/v2.1.0/schema.json".to_string());
+        // Add File Extension if file:size or file:checksum is used on any
+        // collection-level asset, or if the collection has items (items carry
+        // file:size on their data assets when built from local files)
+        let has_file_props_on_assets = collection.assets.values().any(|a| {
+            a.additional_fields.contains_key("file:size")
+                || a.additional_fields.contains_key("file:checksum")
+        });
+        if has_file_props_on_assets || self.has_items {
+            stac_extensions
+                .push("https://stac-extensions.github.io/file/v2.1.0/schema.json".to_string());
+        }
 
         collection.extensions = stac_extensions;
 
