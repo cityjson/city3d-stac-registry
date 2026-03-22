@@ -117,6 +117,13 @@ pub struct CollectionConfigFile {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<LinkConfig>>,
 
+    /// Collection-level assets (keyed by asset name)
+    ///
+    /// Useful for linking to external viewers, download portals, or documentation.
+    /// Example: a "preview" asset pointing to a web-based 3D data viewer.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub assets: Option<HashMap<String, AssetConfig>>,
+
     /// Input paths (files, directories, or glob patterns)
     /// Can be either an inline list or a reference to a file containing URLs
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -212,6 +219,33 @@ pub struct LinkConfig {
     pub title: Option<String>,
 }
 
+/// Asset configuration from YAML
+///
+/// Allows specifying collection-level assets in the config file.
+/// Useful for linking to external viewers, download portals, or documentation.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct AssetConfig {
+    /// Asset URL
+    pub href: String,
+
+    /// Media type (e.g., "text/html", "application/json")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "type")]
+    pub media_type: Option<String>,
+
+    /// Display title
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub title: Option<String>,
+
+    /// Description
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+
+    /// Semantic roles (e.g., ["data"], ["preview"], ["metadata"])
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub roles: Option<Vec<String>>,
+}
+
 impl CollectionConfigFile {
     /// Load config from YAML or TOML file
     pub fn from_file(path: &Path) -> Result<Self> {
@@ -243,6 +277,7 @@ impl CollectionConfigFile {
             extent: self.extent,
             summaries: self.summaries,
             links: self.links,
+            assets: self.assets,
             inputs: self.inputs,
             base_url: cli_args.base_url.clone().or(self.base_url),
         }
@@ -355,6 +390,7 @@ mod tests {
             extent: None,
             summaries: None,
             links: None,
+            assets: None,
             inputs: None,
             base_url: Some("https://file.example.com/".to_string()),
         };

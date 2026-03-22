@@ -270,6 +270,19 @@ pub(crate) fn parse_cityjson(content: &str) -> std::result::Result<::cjseq::City
             normalize_lod_fields(city_objects);
         }
 
+        // Normalize referenceSystem: URN -> URL
+        // CityJSON 1.0 allowed "urn:ogc:def:crs:EPSG::3414" but cjseq requires
+        // "https://www.opengis.net/def/crs/EPSG/0/3414"
+        if let Some(metadata) = obj.get_mut("metadata") {
+            if let Some(rs) = metadata.get_mut("referenceSystem") {
+                if let Some(urn) = rs.as_str() {
+                    if let Some(url) = normalize_crs_urn_to_url(urn) {
+                        *rs = Value::String(url);
+                    }
+                }
+            }
+        }
+
         // Normalize float vertices to i64, adjusting the transform accordingly.
         // Some non-conforming CityJSON files store vertices as floats (e.g. geographic
         // coordinates in degrees) rather than the required integers. We pick a scale
@@ -419,6 +432,30 @@ fn normalize_float_vertices(obj: &mut serde_json::Map<String, Value>) {
             "translate": translate
         }),
     );
+}
+
+/// Convert CRS URN to OGC URL format.
+///
+/// Handles patterns like:
+/// - `urn:ogc:def:crs:EPSG::3414` → `https://www.opengis.net/def/crs/EPSG/0/3414`
+/// - `urn:ogc:def:crs:EPSG:0:3414` → `https://www.opengis.net/def/crs/EPSG/0/3414`
+///
+/// Returns `None` if the input is not a recognized URN pattern.
+fn normalize_crs_urn_to_url(urn: &str) -> Option<String> {
+    let stripped = urn.strip_prefix("urn:ogc:def:crs:")?;
+    // Format: AUTHORITY:VERSION:CODE (e.g., "EPSG::3414" or "EPSG:0:3414")
+    let parts: Vec<&str> = stripped.splitn(3, ':').collect();
+    if parts.len() == 3 {
+        let authority = parts[0];
+        let version = if parts[1].is_empty() { "0" } else { parts[1] };
+        let code = parts[2];
+        if !code.is_empty() {
+            return Some(format!(
+                "https://www.opengis.net/def/crs/{authority}/{version}/{code}"
+            ));
+        }
+    }
+    None
 }
 
 /// Quick check if file is CityGML by looking for namespace in first few KB
@@ -608,5 +645,46 @@ mod tests {
         // The exact values depend on implementation rounding, so we only sanity-check.
         let scale = &cj.transform.scale;
         assert!(scale[0] <= 0.00001, "Scale should be ≤ 1e-5, got {scale:?}");
+    }
+
+    #[test]
+    fn test_normalize_crs_urn_to_url() {
+        assert_eq!(
+            normalize_crs_urn_to_url("urn:ogc:def:crs:EPSG::3414"),
+            Some("https://www.opengis.net/def/crs/EPSG/0/3414".to_string())
+        );
+        assert_eq!(
+            normalize_crs_urn_to_url("urn:ogc:def:crs:EPSG:0:7415"),
+            Some("https://www.opengis.net/def/crs/EPSG/0/7415".to_string())
+        );
+        // Already URL format - not a URN
+        assert_eq!(
+            normalize_crs_urn_to_url("https://www.opengis.net/def/crs/EPSG/0/3414"),
+            None
+        );
+    }
+
+    /// Regression test: CityJSON 1.0 files with URN-style referenceSystem
+    /// (e.g. "urn:ogc:def:crs:EPSG::3414") must be normalized to URL format.
+    #[test]
+    fn test_parse_cityjson_urn_reference_system_normalized() {
+        let cityjson = r#"{
+            "type": "CityJSON",
+            "version": "1.0",
+            "transform": {"scale": [0.01, 0.01, 0.01], "translate": [0, 0, 0]},
+            "metadata": {
+                "referenceSystem": "urn:ogc:def:crs:EPSG::3414",
+                "geographicalExtent": [0, 0, 0, 100, 100, 50]
+            },
+            "CityObjects": {},
+            "vertices": []
+        }"#;
+
+        let result = parse_cityjson(cityjson);
+        assert!(
+            result.is_ok(),
+            "Expected URN referenceSystem to be normalized, got: {:?}",
+            result.err()
+        );
     }
 }

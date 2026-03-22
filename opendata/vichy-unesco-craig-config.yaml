@@ -28,7 +28,7 @@ providers:
     description: Regional geographic information center for Auvergne-Rhône-Alpes.
     # NOTE: Contact via contact@craig.fr
 inputs:
-  - https://drive.opendata.craig.fr/public.php/webdav/3d/bati3d/02_CIM/CityGML/2024_Building/Vichy_UNESCO/2024_BC1_Vichy_UNESCO_2021_LoD3.gml
+  - https://drive.opendata.craig.fr/s/opendata/download?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_Building%2FVichy_UNESCO&files=2024_BC1_Vichy_UNESCO_2021_LoD3.gml
   # - https://drive.opendata.craig.fr/s/opendata?path=%2F3d%2Fbati3d%2F02_CIM%2FCityJSON%2F2024_Building%2FVichy_UNESCO # NOTE: Main repository folder for CityJSON files.
 extent:
   spatial:

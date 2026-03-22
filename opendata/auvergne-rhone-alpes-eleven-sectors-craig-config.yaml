@@ -41,7 +41,7 @@ providers:
     description: Regional geographic information center for Auvergne-Rhône-Alpes.
     # NOTE: Contact via contact@craig.fr
 inputs:
-  - https://drive.opendata.craig.fr/public.php/webdav/3d/2021_aura_3d/02_Bati3D/CityGML/Secteur_05_Clermont/Secteur_5_Textured_L93.gml
+  - https://drive.opendata.craig.fr/s/opendata/download?path=%2F3d%2F2021_aura_3d%2F02_Bati3D%2FCityGML%2FSecteur_05_Clermont&files=Secteur_5_Textured_L93.gml
   # - https://drive.opendata.craig.fr/s/opendata?path=%2F3d%2F2021_aura_3d%2F02_Bati3D%2FCityJSON # NOTE: Main repository folder for CityJSON files.
 extent:
   spatial:

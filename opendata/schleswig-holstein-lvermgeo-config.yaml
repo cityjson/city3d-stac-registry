@@ -25,8 +25,7 @@ providers:
       - host
     description: State Office for Surveying and Geoinformation Schleswig-Holstein
     #NOTE: Contact via Vertrieb.Geobasisdaten@LVermGeo.landsh.de.
-inputs:
-  - https://geodaten.schleswig-holstein.de/gaialight-sh/_apps/dladownload/massen.php?file=LoD2_32_426_6004_1_SH.xml&id=4&live=2024&km=32420_6000
+inputs: [] # NOTE: Server has SSL certificate issue (missing intermediate CA). See links for the portal.
 extent:
   spatial:
     bbox: [7.87, 53.37, 11.32, 55.06] # [west, south, east, north]

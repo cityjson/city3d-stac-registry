@@ -27,7 +27,36 @@ providers:
     description: Regional geographic information center for Auvergne-Rhône-Alpes.
     # NOTE: Contact via contact@craig.fr
 inputs:
-  - https://drive.opendata.craig.fr/public.php/webdav/3d/bati3d/02_CIM/CityGML/2024_ZAE/
+  # 01_CA_Pays_Gex
+  - https://drive.opendata.craig.fr/s/opendata/download?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_ZAE%2F01_CA_Pays_Gex&files=12_Pays_de_gex_LOD3.gml
+  # 03_Montlucon_Communaute
+  - https://drive.opendata.craig.fr/s/opendata/download?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_ZAE%2F03_Montlucon_Communaute&files=09_Montlucon.gml
+  # 03_Vichy_Communaute
+  - https://drive.opendata.craig.fr/s/opendata/download?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_ZAE%2F03_Vichy_Communaute&files=08_Allier_LOD3.gml
+  - https://drive.opendata.craig.fr/s/opendata/download?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_ZAE%2F03_Vichy_Communaute&files=10_Vichy_2016_LOD3.gml
+  - https://drive.opendata.craig.fr/s/opendata/download?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_ZAE%2F03_Vichy_Communaute&files=2024_BC1_Vichy_ZAE_2021_LoD3.gml
+  # 26_Valence_Romans_Agglo
+  - https://drive.opendata.craig.fr/s/opendata/download?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_ZAE%2F26_Valence_Romans_Agglo&files=02_Valence_LOD3_1.gml
+  - https://drive.opendata.craig.fr/s/opendata/download?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_ZAE%2F26_Valence_Romans_Agglo&files=02_Valence_LOD3_2.gml
+  - https://drive.opendata.craig.fr/s/opendata/download?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_ZAE%2F26_Valence_Romans_Agglo&files=02_Valence_LOD3_3.gml
+  - https://drive.opendata.craig.fr/s/opendata/download?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_ZAE%2F26_Valence_Romans_Agglo&files=02_Valence_LOD3_4.gml
+  - https://drive.opendata.craig.fr/s/opendata/download?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_ZAE%2F26_Valence_Romans_Agglo&files=02_Valence_LOD3_5.gml
+  - https://drive.opendata.craig.fr/s/opendata/download?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_ZAE%2F26_Valence_Romans_Agglo&files=02_Valence_LOD3_6.gml
+  # 42_Loire_Forez_Agglomeration
+  - https://drive.opendata.craig.fr/s/opendata/download?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_ZAE%2F42_Loire_Forez_Agglomeration&files=05_Loire_forez.gml
+  - https://drive.opendata.craig.fr/s/opendata/download?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_ZAE%2F42_Loire_Forez_Agglomeration&files=06_Livradois_forez.gml
+  # 42_Roannais_Agglomeration
+  - https://drive.opendata.craig.fr/s/opendata/download?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_ZAE%2F42_Roannais_Agglomeration&files=01_Roannais_LOD3.gml
+  # 43_CA_Puy-en-Velay
+  - https://drive.opendata.craig.fr/s/opendata/download?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_ZAE%2F43_CA_Puy-en-Velay&files=04_Le_puy_LOD3.gml
+  - https://drive.opendata.craig.fr/s/opendata/download?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_ZAE%2F43_CA_Puy-en-Velay&files=07_Haute_Loire_LOD3.gml
+  # 63_CA_Riom_Limagne_Volcans
+  - https://drive.opendata.craig.fr/s/opendata/download?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_ZAE%2F63_CA_Riom_Limagne_Volcans&files=13_riom_limagne_volcans_2018_LOD3.gml
+  # 63_Clermont_Auvergne_Metropole
+  - https://drive.opendata.craig.fr/s/opendata/download?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_ZAE%2F63_Clermont_Auvergne_Metropole&files=03_Clermont_LOD3_1.gml
+  - https://drive.opendata.craig.fr/s/opendata/download?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_ZAE%2F63_Clermont_Auvergne_Metropole&files=03_Clermont_LOD3_2.gml
+  - https://drive.opendata.craig.fr/s/opendata/download?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_ZAE%2F63_Clermont_Auvergne_Metropole&files=03_Clermont_LOD3_3.gml
+  - https://drive.opendata.craig.fr/s/opendata/download?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_ZAE%2F63_Clermont_Auvergne_Metropole&files=03_Clermont_LOD3_4.gml
   # - https://drive.opendata.craig.fr/s/opendata?path=%2F3d%2Fbati3d%2F02_CIM%2FCityJSON%2F2024_ZAE # NOTE: Main repository folder for CityJSON files.
 extent:
   spatial:

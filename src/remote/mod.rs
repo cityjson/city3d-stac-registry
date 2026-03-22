@@ -182,11 +182,12 @@ pub fn extract_extension_from_url(url: &str) -> Result<String> {
         }
     }
 
-    // Fallback: check query parameters for a filename (e.g., ?file=data.gml&id=4)
+    // Fallback: check query parameters for a filename (e.g., ?file=data.gml&id=4 or ?files=data.gml)
     if let Some(query) = url.split('?').nth(1) {
         for param in query.split('&') {
             if let Some(value) = param
                 .strip_prefix("file=")
+                .or_else(|| param.strip_prefix("files="))
                 .or_else(|| param.strip_prefix("f="))
             {
                 // URL-decode the value and extract extension
@@ -242,11 +243,12 @@ pub fn is_remote_url(input: &str) -> bool {
 /// # Returns
 /// Filename extracted from URL path
 pub fn url_filename(url: &str) -> String {
-    // First check query parameters for a filename (e.g., ?file=data.gml or ?f=data.zip)
+    // First check query parameters for a filename (e.g., ?file=data.gml, ?files=data.gml, or ?f=data.zip)
     if let Some(query) = url.split('?').nth(1) {
         for param in query.split('&') {
             if let Some(value) = param
                 .strip_prefix("file=")
+                .or_else(|| param.strip_prefix("files="))
                 .or_else(|| param.strip_prefix("f="))
             {
                 let decoded = value.replace("%2F", "/").replace("%2E", ".");
@@ -355,6 +357,14 @@ mod tests {
                 .unwrap(),
             "xml"
         );
+        // Query parameter: ?files=data.gml (Nextcloud-style)
+        assert_eq!(
+            extract_extension_from_url(
+                "https://example.com/s/opendata/download?path=%2F3d&files=city_model.gml"
+            )
+            .unwrap(),
+            "gml"
+        );
     }
 
     #[test]
@@ -388,6 +398,11 @@ mod tests {
         assert_eq!(
             url_filename("s3://my-bucket/path/to/data.cjseq"),
             "data.cjseq"
+        );
+        // Nextcloud-style download URL with files= query param
+        assert_eq!(
+            url_filename("https://example.com/s/opendata/download?path=%2F3d&files=city_model.gml"),
+            "city_model.gml"
         );
     }
 }

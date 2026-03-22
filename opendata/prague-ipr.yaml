@@ -25,8 +25,7 @@ extent:
   temporal:
     start: "2015-03-31T00:00:00Z" # NOTE: Extracted from data creation date described on website (1st link in 'Links')
     end: "2020-07-17T00:00:00Z" # NOTE: Extracted from data update date described on website (1st link in 'Links')
-inputs:
-  - https://geoportalpraha.cz/data-a-sluzby/ke-stazeni/7e6316e95cfe4f36ae06bbfb687bf34b # NOTE: Area-based download
+inputs: [] # NOTE: Area-based download via geoportal. See links for the portal.
 links:
   - rel: about
     href: https://geoportalpraha.cz/en/data-and-services/articles-and-projects/3D-model/3d-model-budovy-mosty

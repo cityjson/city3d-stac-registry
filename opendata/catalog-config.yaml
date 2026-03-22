@@ -2,7 +2,7 @@ id: tudelft-3d-opencities
 title: TU Delft 3D Open Cities Portal
 description: "A comprehensive catalog of open 3D city model datasets from around the world.\nCurated by the 3D Geoinformation Research Group at TU Delft.\nThis catalog aggregates CityJSON and CityGML datasets from various cities and regions.\n"
 collections:
-# - american-cities-config.yaml
+- american-cities-config.yaml
 - netherlands-3d-bag-config.yaml
 - estonia-config.yaml
 - hamburg-config.yaml
@@ -29,14 +29,13 @@ collections:
 - poznan-geopoz.yaml
 - prague-ipr.yaml
 - riga-georiga.yaml
-- auvergine-rhone-alpes-eleven-sectors-craig-config.yaml
+- auvergne-rhone-alpes-eleven-sectors-craig-config.yaml
 - auvergne-rhone-alpes-zae-craig-config.yaml
 - chatel-guyon-riom-craig-config.yaml
 - clermont-ferrand-craig-config.yaml
 - hessen-hvbg-config.yaml
 - isere-craig-config.yaml
 - leipzig-stadt-config.yaml
-- mecklenburg-vorpommern-laiv-config.yaml
 - niedersachsen-lgln-config.yaml
 - nordrhein-westfalen-geobasis-config.yaml
 - rheinland-pfalz-lvermgeo-config.yaml
@@ -45,6 +44,7 @@ collections:
 - schleswig-holstein-lvermgeo-config.yaml
 - vichy-unesco-craig-config.yaml
 # These are not valid, actual data not found or not publicly accessible
+# - mecklenburg-vorpommern-laiv-config.yaml
 # - berlin-config.yaml
 # - brussels-config.yaml
 # - dresden-config.yaml

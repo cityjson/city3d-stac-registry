@@ -21,11 +21,10 @@ providers:
       - licensor
     description: Bavarian State Administration for Surveying
     # NOTE: Contact information not available
-inputs:
-  - https://geodaten.bayern.de/odd/a/lod2/citygml/meta/metalink/09.meta4 # Note: Bulk download for a complete dataset is available via this Metalink.
+inputs: [] # NOTE: Bulk download available via Metalink (.meta4) - not a directly processable format.
 extent:
   spatial:
-    bbox: []
+    bbox: [8.98, 47.27, 13.84, 50.56] # [west, south, east, north] Bavaria state boundaries
     crs: EPSG:25832
 links:
   - rel: about

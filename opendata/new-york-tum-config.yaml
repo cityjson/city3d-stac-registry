@@ -45,9 +45,9 @@ links:
   type: text/html
   title: TU Delft 3D Open Cities Portal
 - rel: cite-as
-  href: https://doi.org/10.3929/ethz-b-000220530
+  href: https://doi.org/10.5194/isprs-annals-IV-4-W5-9-2017
   type: text/html
-  title: Research Article
+  title: "CityGML and the Streets of New York (ISPRS Annals, 2017)"
 - rel: source
   href: https://opendata.cityofnewyork.us/
   type: text/html

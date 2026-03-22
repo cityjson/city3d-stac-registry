@@ -1058,9 +1058,8 @@ async fn process_collection_logic(
             .map(|s| PathBuf::from(s.as_str()))
             .collect()
     } else {
-        return Err(CityJsonStacError::StacError(
-            "No inputs provided".to_string(),
-        ));
+        // No inputs — may be a config-only collection (e.g., Helsinki viewer-only)
+        Vec::new()
     };
 
     // Extract CRS override from config (used as fallback when files lack CRS metadata)
@@ -1115,13 +1114,32 @@ async fn process_collection_logic(
         }
     }
 
-    if sources.is_empty() {
-        return Err(crate::error::CityJsonStacError::NoFilesFound);
+    // Check if this is a config-only collection (no input files, metadata from config)
+    let config_only = sources.is_empty();
+
+    if config_only {
+        // Config-only mode: need at least a bbox from config
+        let has_config_bbox = merged_config
+            .extent
+            .as_ref()
+            .and_then(|e| e.spatial.as_ref())
+            .and_then(|s| s.bbox.as_ref())
+            .is_some_and(|bbox| !bbox.is_empty());
+
+        if !has_config_bbox {
+            return Err(crate::error::CityJsonStacError::StacError(
+                "No input files found and no spatial extent (bbox) in config. \
+                 For collection-only mode, provide extent.spatial.bbox in the config file."
+                    .to_string(),
+            ));
+        }
+
+        print_info("Config-only mode: generating collection from config metadata (no items)");
+    } else {
+        print_info(format!("Found {} input source(s)", sources.len()));
     }
 
-    print_info(format!("Found {} input source(s)", sources.len()));
-
-    // Detect filename collisions (only relevant for local files really, but let's check all virtual names)
+    // --- File processing (skipped in config-only mode) ---
     let mut stem_counts: std::collections::HashMap<String, usize> =
         std::collections::HashMap::new();
 
@@ -1144,10 +1162,12 @@ async fn process_collection_logic(
         *stem_counts.entry(stem.to_string()).or_insert(0) += 1;
     }
 
-    // Create output directories early
+    // Create output directories
     std::fs::create_dir_all(&config.output)?;
     let items_dir = config.output.join("items");
-    std::fs::create_dir_all(&items_dir)?;
+    if !config_only {
+        std::fs::create_dir_all(&items_dir)?;
+    }
 
     // Accumulator for streaming processing
     let mut accumulator = CollectionAccumulator::new();
@@ -1264,13 +1284,19 @@ async fn process_collection_logic(
             continue;
         }
 
+        // For remote sources, preserve the original URL as the asset href fallback
+        let original_url = match source {
+            InputSource::Remote(url) => Some(url.as_str()),
+            InputSource::Local(_) => None,
+        };
+
         // Process and generate item
         let builder_result = if has_collision {
             StacItemBuilder::from_file_with_format_suffix_and_crs(
                 file_path,
                 reader.as_ref(),
                 config.base_url.as_deref(),
-                None,
+                original_url,
                 crs_override.as_ref(),
             )
         } else {
@@ -1278,7 +1304,7 @@ async fn process_collection_logic(
                 file_path,
                 reader.as_ref(),
                 config.base_url.as_deref(),
-                None,
+                original_url,
                 crs_override.as_ref(),
             )
         };
@@ -1488,10 +1514,55 @@ async fn process_collection_logic(
         .clone()
         .unwrap_or_else(|| config.license.clone());
 
-    let mut collection_builder = StacCollectionBuilder::new(&collection_id)
-        .license(license)
-        .temporal_extent(Some(chrono::Utc::now()), None)
-        .aggregate_from_metadata(&accumulator.items_metadata)?;
+    let mut collection_builder = StacCollectionBuilder::new(&collection_id).license(license);
+
+    // Set temporal extent from config or default
+    if let Some(temporal) = merged_config
+        .extent
+        .as_ref()
+        .and_then(|e| e.temporal.as_ref())
+    {
+        let start = temporal
+            .start
+            .as_ref()
+            .and_then(|s| s.parse::<chrono::DateTime<chrono::Utc>>().ok());
+        let end = temporal
+            .end
+            .as_ref()
+            .and_then(|s| s.parse::<chrono::DateTime<chrono::Utc>>().ok());
+        collection_builder = collection_builder.temporal_extent(start, end);
+    } else {
+        collection_builder = collection_builder.temporal_extent(Some(chrono::Utc::now()), None);
+    }
+
+    if !config_only {
+        // Normal mode: aggregate metadata from processed items
+        collection_builder =
+            collection_builder.aggregate_from_metadata(&accumulator.items_metadata)?;
+    } else {
+        // Config-only mode: use bbox from config extent
+        if let Some(bbox) = merged_config
+            .extent
+            .as_ref()
+            .and_then(|e| e.spatial.as_ref())
+            .and_then(|s| s.bbox.as_ref())
+        {
+            let bbox3d = if bbox.len() == 6 {
+                crate::metadata::BBox3D::new(bbox[0], bbox[1], bbox[2], bbox[3], bbox[4], bbox[5])
+            } else if bbox.len() >= 4 {
+                crate::metadata::BBox3D::new(bbox[0], bbox[1], 0.0, bbox[2], bbox[3], 0.0)
+            } else {
+                return Err(CityJsonStacError::StacError(
+                    "Config bbox must have 4 or 6 elements".to_string(),
+                ));
+            };
+
+            // Transform to WGS84 if CRS is provided
+            let crs = crs_override.clone().unwrap_or_default();
+            let wgs84_bbox = bbox3d.to_wgs84(&crs)?;
+            collection_builder = collection_builder.spatial_extent(wgs84_bbox);
+        }
+    }
 
     // Apply config-based metadata
     if let Some(t) = &merged_config.title {
@@ -1509,6 +1580,37 @@ async fn process_collection_logic(
     if let Some(providers) = &merged_config.providers {
         for provider in providers {
             collection_builder = collection_builder.provider(provider.clone().into());
+        }
+    }
+
+    // Apply config summaries (merged with auto-detected)
+    if let Some(summaries) = &merged_config.summaries {
+        for (key, value) in summaries {
+            collection_builder = collection_builder.summary(key.clone(), value.clone());
+        }
+    }
+
+    // Apply config links
+    if let Some(links) = &merged_config.links {
+        for link_cfg in links {
+            let mut link = stac::Link::new(&link_cfg.href, &link_cfg.rel);
+            link.r#type = link_cfg.link_type.clone();
+            link.title = link_cfg.title.clone();
+            collection_builder = collection_builder.link(link);
+        }
+    }
+
+    // Apply config assets
+    if let Some(assets) = &merged_config.assets {
+        for (key, asset_cfg) in assets {
+            let mut asset = stac::Asset::new(&asset_cfg.href);
+            asset.r#type = asset_cfg.media_type.clone();
+            asset.title = asset_cfg.title.clone();
+            asset.description = asset_cfg.description.clone();
+            if let Some(roles) = &asset_cfg.roles {
+                asset.roles = roles.clone();
+            }
+            collection_builder = collection_builder.asset(key.clone(), asset);
         }
     }
 

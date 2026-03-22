@@ -2,7 +2,7 @@
 id: brussels-3d
 title: Brussels 3D City Model (LoD2)
 description: "3D LoD2 city model of Brussels, Belgium, from the UrbIS database.\nThe UrbIS (Urban Information System) is the official geospatial database\nfor the Brussels-Capital Region. Available in CityGML format via TU Delft.\n"
-license: CC-BY-4.0
+license: other # UrbIS Open Data License (custom, not standard SPDX)
 keywords:
 - 3d city model
 - buildings
@@ -13,12 +13,12 @@ keywords:
 - capital
 - UrbIS
 providers:
-- name: CIBG/CIRB
-  url: https://cibg.brussels/
+- name: Paradigm (formerly CIBG/CIRB)
+  url: https://paradigm.brussels/
   roles:
   - producer
   - licensor
-  description: Brussels Regional Informatics Centre (Centre d'Informatique pour la Région Bruxelloise / Centrum voor Informatika voor het Brussels Gewest) - manages the UrbIS database
+  description: Brussels Regional IT Agency (formerly CIBG/CIRB) - manages the UrbIS database
 - name: Brussels-Capital Region
   url: https://www.brussels.be/
   roles:
@@ -43,14 +43,10 @@ links:
   type: text/html
   title: Brussels Open Data Portal
 - rel: source
-  href: https://data.bruxelles.be/
-  type: text/html
-  title: Brussels Open Data Portal
-- rel: source
   href: https://opendata.brussel.be/
   type: text/html
   title: Brussels Open Data Portal (alternative)
 - rel: license
-  href: https://cibg.brussels/nl/onze-oplossingen/urbis-solutions/urbis-open-data-licentie
+  href: https://datastore.brussels/web/urbis-download
   type: text/html
   title: UrbIS Open Data License

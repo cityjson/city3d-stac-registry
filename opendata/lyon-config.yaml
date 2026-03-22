@@ -3,7 +3,7 @@
 id: lyon-3d
 title: Lyon 3D City Model (LoD2)
 description: "Comprehensive 3D building basemap of the Metropolis of Lyon.\nThe data is managed in 3D and covers the entire territory, structured into 5 semantic layers.\n1. Roof volumes (captured at gutter level)\n2. 3D ridge lines (roof edges)\n3. Ridge vertices (highest points)\n4. Superstructures (roof-on-roof features)\n5. Buildings under construction.\n"  # NOTE: Data is provided as separate structural layers.
-license: ETALAB-2.0
+license: etalab-2.0
 keywords:
 - 3d city model
 - buildings
@@ -46,9 +46,9 @@ links:
   type: text/html
   title: Grand Lyon Open Data Portal
 - rel: license
-  href: https://www.etalab.gouv.fr/licence-ouverte-open-licence/
-  type: text/html
-  title: ETALAB Open Licence 2.0 (Licence Ouverte)
+  href: https://www.etalab.gouv.fr/wp-content/uploads/2017/04/ETALAB-Licence-Ouverte-v2.0.pdf
+  type: application/pdf
+  title: Licence Ouverte 2.0 (Etalab Open Licence)
 - rel: citation
   href: https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0242010
   type: text/html

@@ -1,6 +1,6 @@
 id: new-york-doitt-3d
-title: New York City 3D Building Models (LoD2) by DoITT
-description: "3D LoD2 building models of New York City by the Department of Information Technology & Telecommunications (DoITT).\nCreated from cadastre footprints combined with LiDAR data.\nBuildings are modeled with thematic surfaces in LoD2, though for most buildings the geometric shape is LoD1.\nAvailable in CityGML, ESRI Multipatch, and DGN formats.\n"
+title: New York City 3D Building Models (LoD2) by NYC OTI
+description: "3D LoD2 building models of New York City by the Office of Technology and Innovation (OTI, formerly DoITT).\nCreated from cadastre footprints combined with LiDAR data.\nBuildings are modeled with thematic surfaces in LoD2, though for most buildings the geometric shape is LoD1.\nAvailable in CityGML, ESRI Multipatch, and DGN formats.\n"
 license: OTHER
 keywords:
 - 3d city model
@@ -10,14 +10,14 @@ keywords:
 - New York City
 - CityGML
 - LiDAR
-- DoITT
+- OTI
 providers:
-- name: NYC Department of Information Technology & Telecommunications (DoITT)
-  url: https://www.nyc.gov/site/doitt/index.page
+- name: NYC Office of Technology and Innovation (OTI)
+  url: https://www.nyc.gov/assets/cto/
   roles:
   - producer
   - licensor
-  description: NYC Department of Information Technology & Telecommunications
+  description: NYC Office of Technology and Innovation (formerly DoITT)
 inputs:
   - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/DA13_3D_Buildings_Merged.city.json
   # - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/DA13_3D_Buildings_Merged.gml
@@ -34,9 +34,9 @@ links:
   type: text/html
   title: TU Delft 3D Open Cities Portal
 - rel: source
-  href: https://www.nyc.gov/site/doitt/initiatives/3d-building.page
+  href: https://data.cityofnewyork.us/City-Government/3-D-Building-Model/tnru-abg2
   type: text/html
-  title: NYC 3D Building Models Official Page (DoITT)
+  title: NYC 3D Building Model (NYC Open Data)
 - rel: source
   href: https://www.nyc.gov/site/planning/data-maps/open-data/dwn-nyc-3d-model-download.page
   type: text/html

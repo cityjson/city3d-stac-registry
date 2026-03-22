@@ -1,5 +1,5 @@
 id: municipal-kuopio-2021
-title: Kuopion 3D-rakennukset CityGML LOD2 teksturoituna 7/2021
+title: Kuopion 3D-rakennukset CityGML LOD2 teksturoituna 2/2022
 description: |
   Textured 3D building models of Kuopio in CityGML 2.0 format.
   The dataset includes JPG textures for some areas. The level
@@ -47,4 +47,4 @@ links:
 # - Format: CityGML 2.0
 # - Compression: ZIP containing textured CityGML files (JPG textures)
 # - Original Projection: EPSG:3881 (ETRS-GK27) and N2000 height system
-# - SHA1 Checksum: 444d0d89cc8151e6fa149a3c9113ee0f73c70486cc73f7560d366614ad235a98
+# - SHA256 Checksum: 444d0d89cc8151e6fa149a3c9113ee0f73c70486cc73f7560d366614ad235a98

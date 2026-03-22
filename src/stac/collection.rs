@@ -23,6 +23,8 @@ pub struct StacCollectionBuilder {
     links: Vec<stac::Link>,
     assets: IndexMap<String, stac::Asset>,
     item_assets: IndexMap<String, stac::ItemAsset>,
+    /// Whether this collection has processed items (affects extension declarations)
+    has_items: bool,
 }
 
 impl StacCollectionBuilder {
@@ -42,6 +44,7 @@ impl StacCollectionBuilder {
             links: Vec::new(),
             assets: IndexMap::new(),
             item_assets: IndexMap::new(),
+            has_items: false,
         }
     }
 
@@ -144,6 +147,9 @@ impl StacCollectionBuilder {
         mut self,
         readers: &[Box<dyn CityModelMetadataReader>],
     ) -> Result<Self> {
+        if !readers.is_empty() {
+            self.has_items = true;
+        }
         // Collect all versions
         let versions: HashSet<String> = readers.iter().filter_map(|r| r.version().ok()).collect();
         if !versions.is_empty() {
@@ -288,6 +294,9 @@ impl StacCollectionBuilder {
         mut self,
         items_metadata: &[crate::stac::ItemMetadata],
     ) -> Result<Self> {
+        if !items_metadata.is_empty() {
+            self.has_items = true;
+        }
         use crate::stac::CityObjectsCount;
 
         // Collect all versions
@@ -405,6 +414,18 @@ impl StacCollectionBuilder {
                 .insert("city3d:materials".to_string(), serde_json::to_value(vals)?);
         }
 
+        // Aggregate proj:code from items
+        let unique_proj_codes: HashSet<String> = items_metadata
+            .iter()
+            .filter_map(|m| m.proj_code.clone())
+            .collect();
+        if !unique_proj_codes.is_empty() {
+            let mut codes: Vec<String> = unique_proj_codes.into_iter().collect();
+            codes.sort();
+            self.summaries
+                .insert("proj:code".to_string(), serde_json::to_value(codes)?);
+        }
+
         // Merge spatial extents from item bboxes
         let parsed_bboxes: Vec<BBox3D> = items_metadata
             .iter()
@@ -435,6 +456,9 @@ impl StacCollectionBuilder {
 
     /// Aggregate metadata from pre-parsed STAC items
     pub fn aggregate_from_items(mut self, items: &[stac::Item]) -> Result<Self> {
+        if !items.is_empty() {
+            self.has_items = true;
+        }
         // Helper to extract string from item properties
         fn get_string(item: &stac::Item, key: &str) -> Option<String> {
             item.properties
@@ -699,12 +723,42 @@ impl StacCollectionBuilder {
 
         // Auto-generate item_assets if not explicitly set
         if self.item_assets.is_empty() && self.summaries.contains_key("city3d:version") {
+            let mut additional_fields = Map::new();
+
+            // Add proj:code to item_assets when a single CRS is known
+            if let Some(proj_codes) = self.summaries.get("proj:code") {
+                if let Some(arr) = proj_codes.as_array() {
+                    if arr.len() == 1 {
+                        if let Some(code) = arr[0].as_str() {
+                            additional_fields
+                                .insert("proj:code".to_string(), Value::String(code.to_string()));
+                        }
+                    }
+                }
+            }
+
+            // Add city3d extension properties to item_assets
+            if let Some(lods) = self.summaries.get("city3d:lods") {
+                additional_fields.insert("city3d:lods".to_string(), lods.clone());
+            }
+            if let Some(co_types) = self.summaries.get("city3d:co_types") {
+                additional_fields.insert("city3d:co_types".to_string(), co_types.clone());
+            }
+            if let Some(version) = self.summaries.get("city3d:version") {
+                // For item_assets, use a single version string if only one exists
+                if let Some(arr) = version.as_array() {
+                    if arr.len() == 1 {
+                        additional_fields.insert("city3d:version".to_string(), arr[0].clone());
+                    }
+                }
+            }
+
             let item_asset = stac::ItemAsset {
                 title: Some("3D city model data".to_string()),
                 description: None,
                 r#type: None,
                 roles: vec!["data".to_string()],
-                additional_fields: Map::new(),
+                additional_fields,
             };
             collection
                 .item_assets
@@ -719,9 +773,17 @@ impl StacCollectionBuilder {
             );
         }
 
-        // Always add File Extension
-        stac_extensions
-            .push("https://stac-extensions.github.io/file/v2.1.0/schema.json".to_string());
+        // Add File Extension if file:size or file:checksum is used on any
+        // collection-level asset, or if the collection has items (items carry
+        // file:size on their data assets when built from local files)
+        let has_file_props_on_assets = collection.assets.values().any(|a| {
+            a.additional_fields.contains_key("file:size")
+                || a.additional_fields.contains_key("file:checksum")
+        });
+        if has_file_props_on_assets || self.has_items {
+            stac_extensions
+                .push("https://stac-extensions.github.io/file/v2.1.0/schema.json".to_string());
+        }
 
         collection.extensions = stac_extensions;
 
