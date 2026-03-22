@@ -723,12 +723,26 @@ impl StacCollectionBuilder {
 
         // Auto-generate item_assets if not explicitly set
         if self.item_assets.is_empty() && self.summaries.contains_key("city3d:version") {
+            let mut additional_fields = Map::new();
+
+            // Add proj:code to item_assets when a single CRS is known
+            if let Some(proj_codes) = self.summaries.get("proj:code") {
+                if let Some(arr) = proj_codes.as_array() {
+                    if arr.len() == 1 {
+                        if let Some(code) = arr[0].as_str() {
+                            additional_fields
+                                .insert("proj:code".to_string(), Value::String(code.to_string()));
+                        }
+                    }
+                }
+            }
+
             let item_asset = stac::ItemAsset {
                 title: Some("3D city model data".to_string()),
                 description: None,
                 r#type: None,
                 roles: vec!["data".to_string()],
-                additional_fields: Map::new(),
+                additional_fields,
             };
             collection
                 .item_assets
