@@ -99,8 +99,8 @@ impl BBox3D {
             }
         };
 
-        // Already WGS84
-        if epsg == 4326 {
+        // Already WGS84 (2D or 3D)
+        if matches!(epsg, 4326 | 4979) {
             return Ok(self.clone());
         }
 
@@ -183,6 +183,7 @@ fn is_wgs84_equivalent_geographic(epsg: u32) -> bool {
     matches!(
         epsg,
         4326  // WGS84 geographic 2D
+        | 4979 // WGS84 geographic 3D (with ellipsoidal height)
         | 6668 // JGD2011 geographic 2D (GRS80 ellipsoid)
     )
 }

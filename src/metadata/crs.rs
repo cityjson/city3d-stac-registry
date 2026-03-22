@@ -135,9 +135,13 @@ impl CRS {
         Self::from_epsg(4326)
     }
 
-    /// Returns true if this CRS is WGS84 (EPSG:4326)
+    /// Returns true if this CRS uses WGS84 geographic coordinates.
+    ///
+    /// Matches EPSG:4326 (2D), EPSG:4979 (3D with ellipsoidal height),
+    /// and EPSG:4978 (geocentric XYZ). All share the WGS84 datum with
+    /// longitude/latitude axes, so no horizontal reprojection is needed.
     pub fn is_wgs84(&self) -> bool {
-        self.epsg == Some(4326)
+        matches!(self.epsg, Some(4326) | Some(4979) | Some(4978))
     }
 }
 
