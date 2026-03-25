@@ -1,0 +1,110 @@
+[
+  {
+    "city_code": "07209",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "08546",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "11243",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "11246",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "11442",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "11464",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "15209",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "16211",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "20206",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "22305",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "22306",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "22341",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "23201",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "24202",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "27203",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "28229",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "29210",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "29343",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "31204",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "33203",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "34203",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "34209",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "38203",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "38215",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "40130",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "40447",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "city_code": "44206",
+    "error": "HTTP Error 404: Not Found"
+  }
+]
