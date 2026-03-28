@@ -27,3 +27,4 @@ venv/
 scripts/crawlers/
 
 *.local.*
+.env

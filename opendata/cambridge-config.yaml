@@ -1,0 +1,66 @@
+id: cambridge-3d
+title: Cambridge MA 3D City Model (LoD2)
+description: |
+  3D city model of Cambridge, Massachusetts, USA.
+  High-quality LoD2 building models with detailed roof structures captured via
+  aerial photogrammetry (CyberCity 3D), with ~10cm precision.
+  Roof details larger than 1 meter are captured.
+
+  Note: This is Cambridge, Massachusetts (USA), NOT Cambridge, United Kingdom.
+  Cambridge UK does not have an openly available 3D city model.
+
+  Available formats:
+  - Esri GDB Multipatch (citywide, direct download)
+  - Scene Layer Package (ArcGIS Online)
+  - SketchUp SKP (tiled, via interactive map)
+  - Wavefront OBJ (tiled, via interactive map)
+  - DXF ground plans (tiled, via interactive map)
+
+  Cambridge MA buildings are also available in CityJSON/CityGML format via the
+  Open City Model project (Middlesex County, FIPS 25017), but at LoD1 only.
+license: other
+keywords:
+- 3d city model
+- buildings
+- LOD2
+- USA
+- Cambridge
+- Massachusetts
+- Multipatch
+- OBJ
+- SketchUp
+- GDB
+providers:
+- name: City of Cambridge GIS
+  url: https://www.cambridgema.gov/GIS
+  roles:
+  - producer
+  - licensor
+  - host
+  description: City of Cambridge, Massachusetts - GIS department
+inputs:
+  - https://cambmagisdata.blob.core.windows.net/camb3d/Camb3D_Active_20220810.gdb.zip
+extent:
+  spatial:
+    bbox: [-71.1603989, 42.3524025, -71.0639844, 42.4042593]
+    crs: EPSG:2249  # NAD83 State Plane Massachusetts Mainland (Feet)
+  temporal:
+    start: '2010-01-01T00:00:00Z'
+    end: '2023-04-10T23:59:59Z'
+links:
+- rel: about
+  href: https://www.cambridgema.gov/GIS/3D/3ddata/3ddatadownloadmap
+  type: text/html
+  title: Cambridge 3D Data Download Map (tiled SketchUp/OBJ/DXF)
+- rel: about
+  href: https://www.cambridgema.gov/GIS/3D/3ddata
+  type: text/html
+  title: Cambridge 3D Data Overview
+- rel: about
+  href: https://www.cambridgema.gov/GIS/3D/citywide3dmodel
+  type: text/html
+  title: Cambridge Citywide 3D Model
+- rel: about
+  href: https://3d.bk.tudelft.nl/opendata/opencities/
+  type: text/html
+  title: TU Delft 3D Open Cities Portal

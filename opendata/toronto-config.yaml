@@ -1,0 +1,53 @@
+id: toronto-3d
+title: Toronto 3D City Model (LoD1)
+description: |
+  3D LoD1 city model of Toronto, Canada.
+  Building footprints with height information for virtually every building in the City of Toronto.
+  The "3D Massing" dataset is maintained by City Planning Division and refreshed annually.
+
+  Note: The portal UI shows a "Retired" label, but the CKAN API returns is_retired: false
+  and the data files (2025 vintage) are actively hosted and accessible (verified 2026-03-25).
+
+  Data format: ESRI Shapefile (3D with EleZ height) and ESRI Multipatch Geodatabase.
+  No CityJSON or CityGML format available.
+license: OGL-Canada-2.0  # Open Government Licence - Toronto
+keywords:
+- 3d city model
+- buildings
+- LOD1
+- Canada
+- Toronto
+- Ontario
+- multipatch
+- shapefile
+providers:
+- name: City of Toronto
+  url: https://www.toronto.ca/
+  roles:
+  - producer
+  - licensor
+  description: Toronto city government, City Planning Division
+- name: City of Toronto Open Data Portal
+  url: https://open.toronto.ca/
+  roles:
+  - host
+  description: Toronto CKAN open data portal
+inputs:
+  - https://ckan0.cf.opendata.inter.prod-toronto.ca/dataset/387b2e3b-2a76-4199-8b3b-0b7d22e2ec10/resource/c57a333a-dc6c-416e-8dd0-7b7964161720/download/3dmassingshapefile_2025_wgs84.zip
+  - https://ckan0.cf.opendata.inter.prod-toronto.ca/dataset/387b2e3b-2a76-4199-8b3b-0b7d22e2ec10/resource/74c5826a-690e-4c8f-83d2-ff1fc2fc72db/download/3dmassingmultipatch_2025_wgs84.gdb.zip
+extent:
+  spatial:
+    bbox: [-79.6392832, 43.5796082, -79.1132193, 43.8554425]
+    crs: EPSG:4326  # WGS84 (download files are in WGS84; native CRS is EPSG:2952)
+  temporal:
+    start: '2025-01-01T00:00:00Z'
+    end: '2025-12-31T23:59:59Z'
+links:
+- rel: about
+  href: https://open.toronto.ca/dataset/3d-massing/
+  type: text/html
+  title: Toronto 3D Massing Dataset
+- rel: source
+  href: https://www.toronto.ca/city-government/data-research-maps/open-data/
+  type: text/html
+  title: City of Toronto Open Data

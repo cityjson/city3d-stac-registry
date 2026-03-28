@@ -1,0 +1,74 @@
+id: zwolle-3d
+title: Zwolle 3D City Model (via Netherlands 3D BAG)
+description: |
+  3D city model of Zwolle, Netherlands.
+  Zwolle is covered by the Netherlands 3D BAG (3D Basisregistratie Adressen en Gebouwen),
+  the national 3D building dataset containing all 10+ million buildings in the Netherlands.
+
+  The 3D BAG provides LoD1.2, LoD1.3, and LoD2.2 models and is maintained by
+  3D Geoinformation Group at TU Delft and 3DGI.
+
+  Zwolle area contains approximately 145,000 buildings (BAG municipality code: 0193).
+  Data is available in CityJSON format via the 3DBAG API:
+    https://api.3dbag.nl/collections/pand/items?bbox=196000,499000,206000,508000
+
+  Note: The full Netherlands 3D BAG dataset is catalogued separately in
+  netherlands-3d-bag-config.yaml. This config is for the Zwolle-specific subset.
+license: CC-BY-4.0
+keywords:
+- 3d city model
+- buildings
+- LOD1
+- LOD2
+- Netherlands
+- Zwolle
+- Overijssel
+- 3DBAG
+- CityJSON
+- national dataset
+providers:
+- name: 3D Geoinformation Group (TU Delft)
+  url: https://3d.bk.tudelft.nl/
+  roles:
+  - processor
+  - host
+  description: 3D Geoinformation Research Group at TU Delft - creates and hosts the 3D BAG dataset
+- name: 3DGI
+  url: https://3dgi.xyz/
+  roles:
+  - processor
+  - host
+  description: Software company for 3D geoinformation - co-maintains 3D BAG
+- name: Kadaster
+  url: https://www.kadaster.nl/
+  roles:
+  - producer
+  description: Dutch Land Registry Office - source BAG data
+extent:
+  spatial:
+    bbox: [6.0036191, 52.4405307, 6.2108108, 52.5879404]
+    crs: EPSG:7415  # EPSG:28992 (RD New) + EPSG:5709 (NAP height)
+  temporal:
+    start: '2021-01-01T00:00:00Z'
+    end: '2025-09-03T23:59:59Z'
+links:
+- rel: about
+  href: https://www.3dbag.nl/
+  type: text/html
+  title: 3D BAG Official Website
+- rel: about
+  href: https://api.3dbag.nl/api.html
+  type: text/html
+  title: 3D BAG API Documentation
+- rel: about
+  href: https://docs.3dbag.nl/en/delivery/webservices/
+  type: text/html
+  title: 3D BAG Webservices Documentation
+- rel: preview
+  href: https://3dbag.nl/en/viewer?rdx=200500&rdy=503000&zoom=3
+  type: text/html
+  title: 3D BAG Viewer (Zwolle area)
+- rel: related
+  href: https://github.com/3DBAG/3dbag-pipeline
+  type: text/html
+  title: 3D BAG Pipeline (GitHub)

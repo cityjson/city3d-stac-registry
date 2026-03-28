@@ -1,0 +1,68 @@
+id: melbourne-3d
+title: Melbourne 3D Textured Mesh (Photomesh)
+description: |
+  3D textured mesh (photogrammetry) of Melbourne, Australia.
+  Photomesh representing all physical features (buildings, trees, terrain) across City of Melbourne.
+  Available in OBJ format with material (.mtl) and texture (.jpg) files, and SLPK format.
+
+  2018 capture: OBJ format, tile-based download (7.5cm ground sample distance).
+  2020 capture: OBJ and SLPK formats, 2cm ground sample distance.
+
+  This is a photogrammetric 3D mesh, NOT a semantic CityJSON/CityGML city model.
+  The data does not contain semantic building attributes or LoD classifications.
+  Victoria state also provides Vicmap Buildings with 2D/3D representations statewide.
+license: CC-BY-4.0
+keywords:
+- 3d city model
+- photogrammetry
+- textured mesh
+- buildings
+- Australia
+- Melbourne
+- Victoria
+- OBJ
+- SLPK
+providers:
+- name: City of Melbourne
+  url: https://www.melbourne.vic.gov.au/
+  roles:
+  - producer
+  - licensor
+  description: Melbourne city government - produces and maintains open 3D data
+- name: City of Melbourne Open Data Portal
+  url: https://data.melbourne.vic.gov.au/
+  roles:
+  - host
+  description: CoM Open Data Portal (Opendatasoft platform)
+extent:
+  spatial:
+    bbox: [144.8969810, -37.8506670, 144.9913462, -37.7754510]
+    crs: EPSG:28355  # MGA zone 55 (Victoria, Australia)
+  temporal:
+    start: '2018-05-01T00:00:00Z'
+    end: '2020-05-31T23:59:59Z'
+links:
+- rel: about
+  href: https://data.melbourne.vic.gov.au/explore/dataset/city-of-melbourne-3d-textured-mesh-photomesh-2018/
+  type: text/html
+  title: CoM 3D Textured Mesh 2018
+- rel: about
+  href: https://data.melbourne.vic.gov.au/explore/dataset/city-of-melbourne-3d-textured-mesh-photomesh-2020/
+  type: text/html
+  title: CoM 3D Textured Mesh 2020
+- rel: about
+  href: https://data.melbourne.vic.gov.au/explore/dataset/city-of-melbourne-3d-point-cloud-2018/
+  type: text/html
+  title: CoM 3D Point Cloud 2018
+- rel: preview
+  href: https://cityofmelbourne.maps.arcgis.com/apps/webappviewer3d/index.html?id=6bf14438b0244afab46fc135d1471198
+  type: text/html
+  title: 3D Mesh Viewer (OBJ, 2020)
+- rel: preview
+  href: https://cityofmelbourne.maps.arcgis.com/apps/webappviewer3d/index.html?id=c20d6752668f4d808db0fa03ebdae303
+  type: text/html
+  title: 3D Mesh Viewer (SLPK, 2020)
+- rel: related
+  href: https://www.land.vic.gov.au/maps-and-spatial/spatial-data/vicmap-catalogue/vicmap-buildings
+  type: text/html
+  title: Vicmap Buildings (statewide 2D/3D building data)

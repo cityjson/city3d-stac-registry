@@ -1,0 +1,58 @@
+id: bordeaux-3d
+title: Bordeaux 3D City Model (LoD2)
+description: |
+  3D LoD2 city model of Bordeaux Metropole, France.
+  Photorealistic 3D model of the Bordeaux metropolitan area from summer 2012.
+  Buildings are modelled at LOD2 (CityGML standard) with textures from aerial photography.
+  The model is divided into downloadable tiles of 1.4 km x 1 km, subdivided into 200m x 200m sub-tiles.
+  An untextured ("maquette blanche") version is also available as dataset bati3d_nt.
+
+  Data format: AutoDesk 3DS (.3ds) - tile-based download through the Bordeaux Metropole open data portal.
+  No CityJSON or CityGML files are directly available.
+license: other
+keywords:
+- 3d city model
+- buildings
+- LOD2
+- France
+- Bordeaux
+- 3DS
+- textures
+- photorealistic
+- metropole
+providers:
+- name: Bordeaux Metropole
+  url: https://www.bordeaux-metropole.fr/
+  roles:
+  - producer
+  - licensor
+  description: Bordeaux metropolitan area - original data producer
+- name: Bordeaux Metropole Open Data
+  url: https://opendata.bordeaux-metropole.fr/
+  roles:
+  - host
+  description: Bordeaux Metropole open data portal (Opendatasoft platform)
+extent:
+  spatial:
+    bbox: [-0.8838898, 44.7416956, -0.4549856, 45.0410389]
+    crs: EPSG:2154  # Lambert 93 (French national projection)
+  temporal:
+    start: '2012-01-01T00:00:00Z'
+    end: '2012-12-31T23:59:59Z'
+links:
+- rel: about
+  href: https://opendata.bordeaux-metropole.fr/explore/dataset/bati3d/information/
+  type: text/html
+  title: Bordeaux 3D Textured Model (bati3d) - Open Data Portal
+- rel: related
+  href: https://opendata.bordeaux-metropole.fr/explore/dataset/bati3d_nt/information/
+  type: text/html
+  title: Bordeaux 3D Untextured Model (bati3d_nt) - Open Data Portal
+- rel: preview
+  href: https://opendata.bordeaux-metropole.fr/explore/dataset/bati3d/map/
+  type: text/html
+  title: Interactive Map Viewer (tile download)
+- rel: about
+  href: https://3d.bk.tudelft.nl/opendata/opencities/
+  type: text/html
+  title: TU Delft 3D Open Cities Portal

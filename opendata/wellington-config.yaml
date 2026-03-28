@@ -1,0 +1,117 @@
+id: wellington-3d
+title: Wellington NZ 3D City Buildings (2022)
+description: |
+  3D building models of Wellington, New Zealand (2022 capture).
+  Modelled from high resolution aerial imagery (7.5cm GSD) captured between
+  29/01/2022 and 03/03/2022 using a Vexcel Osprey Mark 4 camera system.
+  LoD3 detail with textured facades from oblique imagery.
+  Accuracy: Horizontal RMS 0.25m, Vertical RMS 0.30m.
+
+  Coverage: Entire Wellington City urban area, divided into 44 sub-areas.
+  Each sub-area is a ZIP archive containing GDB, DWG, and SKP files.
+
+  Data format: GDB (File Geodatabase), DWG (AutoCAD), SKP (SketchUp).
+  No CityJSON or CityGML files available.
+
+  An older 2017 dataset (SLPK format) is also available via data.govt.nz.
+license: CC-BY-4.0
+keywords:
+- 3d city model
+- buildings
+- LOD3
+- New Zealand
+- Wellington
+- GDB
+- DWG
+- SketchUp
+- photogrammetry
+- textured
+providers:
+- name: Wellington City Council
+  url: https://wellington.govt.nz/
+  roles:
+  - producer
+  - licensor
+  description: Wellington city government - produces 3D building data
+- name: AAM Group
+  url: https://aamgroup.com/
+  roles:
+  - processor
+  description: Aerial imagery capture and 3D modelling contractor
+- name: Wellington City Council Open Data
+  url: https://data-wcc.opendata.arcgis.com/
+  roles:
+  - host
+  description: WCC ArcGIS Open Data Portal and S3 storage
+inputs:
+  # 2022 3D Buildings - S3 bucket downloads (GDB + DWG + SKP per area)
+  # 44 sub-areas verified accessible 2026-03-25
+  # URL pattern: https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/{AreaName}.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Wellington_Central.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Te_Aro.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Pipitea.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Hataitai.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Miramar.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Kelburn.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Karori.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Brooklyn.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Houghton_Bay.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Island_Bay.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Southgate.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Melrose.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Churton_Park.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Crofton_Downs.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Aro_Valley.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Tawa.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Wadestown.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Ngaio.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Ngauranga.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Takapu_Valley.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Ohariu.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Mount_Victoria.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Rongotai.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Kilbirnie.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Oriental_Bay.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Strathmore_Park.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Mount_Cook.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Lyall_Bay.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Karaka_Bays.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Thorndon.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Roseneath.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Newtown.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Makara.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Johnsonville.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Khandallah.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Newlands.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Seatoun.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Vogeltown.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Berhampore.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Highbury.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Kingston.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Wilton.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Northland.zip
+  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Kaiwharawhara.zip
+extent:
+  spatial:
+    bbox: [174.6172114, -41.4487953, 174.9372114, -41.1287953]
+    crs: EPSG:2193  # NZTM2000 horizontal, NZVD2016 vertical
+  temporal:
+    start: '2022-01-29T00:00:00Z'
+    end: '2022-03-03T23:59:59Z'
+links:
+- rel: about
+  href: https://data-wcc.opendata.arcgis.com/documents/3d-wellington
+  type: text/html
+  title: 3D Wellington (WCC Open Data Portal)
+- rel: about
+  href: https://catalogue.data.govt.nz/dataset/wellington-central-3d-buildings
+  type: text/html
+  title: Wellington Central 3D Buildings - data.govt.nz
+- rel: about
+  href: https://catalogue.data.govt.nz/dataset/3d-wellington
+  type: text/html
+  title: 3D Wellington (2017 dataset) - data.govt.nz
+- rel: describedby
+  href: https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/01+Metadata+WCC+AAM+3D+Buildings.pdf
+  type: application/pdf
+  title: Metadata PDF - WCC AAM 3D Buildings
