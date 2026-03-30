@@ -1,0 +1,67 @@
+id: wcc-wellington-2017
+title: Wellington 3D Buildings 2017
+description: |
+  3D Buildings in Wellington, New Zealand, covering the area from Kaiwharawhara
+  in the north, to Melrose in the South, and extending from Kelburn to Rongotai.
+  Captured 5th May 2017. The coverage area has been divided into 29 sub-areas.
+  NOTE: The input links currently point to ArcGIS item pages containing ESRI Scene Layer Package (SLPK) format files.
+license: CC-BY-4.0
+keywords:
+  - 3d city model
+  - buildings
+  - new zealand
+  - wellington
+  - slpk
+providers:
+  - name: Wellington City Council
+    url: https://data-wcc.opendata.arcgis.com/
+    roles:
+      - producer
+      - licensor
+  - name: AAM NZ Ltd.
+    roles:
+      - producer
+    # NOTE: Co-credited with Wellington City Council for creation
+inputs:
+  - http://wcc.maps.arcgis.com/home/item.html?id=7f8239740eec45f1b19e8dab0ce3bf86 # NOTE: Kaiwharawhara
+  - http://wcc.maps.arcgis.com/home/item.html?id=36393e36def34ac4b25322e29f492a29 # NOTE: Lower Wadestown
+  - http://wcc.maps.arcgis.com/home/item.html?id=6f9987d2503145298a12f35c9717c74b # NOTE: Pipitea North
+  - http://wcc.maps.arcgis.com/home/item.html?id=2f476a3313c34566a38815c2ea54f827 # NOTE: Pipitea South
+  - http://wcc.maps.arcgis.com/home/item.html?id=08f36099a1844dcda839869f96abfd97 # NOTE: Thorndon East
+  - http://wcc.maps.arcgis.com/home/item.html?id=f82cdea6bd354edf93741d6d23926f79 # NOTE: Thorndon North West
+  - http://wcc.maps.arcgis.com/home/item.html?id=bd6790afd10a4201a9742768603d03f0 # NOTE: Kelburn North
+  - http://wcc.maps.arcgis.com/home/item.html?id=41e113ea1047483cad21959fa75af95b # NOTE: Kelburn South
+  - http://wcc.maps.arcgis.com/home/item.html?id=863cdc6759984c0fa771cada4e89a536 # NOTE: CBD North
+  - http://wcc.maps.arcgis.com/home/item.html?id=0f43fc5d6fac404fb66a155a81bd59f7 # NOTE: CBD South
+  - http://wcc.maps.arcgis.com/home/item.html?id=15589d8c901d4e1787aff90d1ff41fbb # NOTE: Aro Valley
+  - http://wcc.maps.arcgis.com/home/item.html?id=0ea3c0d397344a85845c835fcd60d8ff # NOTE: Te Aro West
+  - http://wcc.maps.arcgis.com/home/item.html?id=971ea89a5318446988ab1b69139dac69 # NOTE: Te Aro Centre
+  - http://wcc.maps.arcgis.com/home/item.html?id=8166e6922f54401e944e1e9eadba9211 # NOTE: Te Aro East
+  - http://wcc.maps.arcgis.com/home/item.html?id=6f4f1fc7120645d29541582b5b469c56 # NOTE: Mt Victoria South
+  - http://wcc.maps.arcgis.com/home/item.html?id=7544855969f54896b8199c8e75099bd3 # NOTE: Mt Victoria North
+  - http://wcc.maps.arcgis.com/home/item.html?id=44e6409342314871b943348bc059dbd6 # NOTE: Oriental Bay - Roseneath
+  - http://wcc.maps.arcgis.com/home/item.html?id=6d104c3b58b740689fd3147948d7b321 # NOTE: Hataitai
+  - http://wcc.maps.arcgis.com/home/item.html?id=8161a93f5406420cb5d0c5db52836e51 # NOTE: Mt Cook West
+  - http://wcc.maps.arcgis.com/home/item.html?id=617375223e9f4267ab7e7d76f60235fd # NOTE: Mt Cook East
+  - http://wcc.maps.arcgis.com/home/item.html?id=f2931cdb87c04703be8a6ce725c2f1f8 # NOTE: Newtown East
+  - http://wcc.maps.arcgis.com/home/item.html?id=612e26fdb6b64d89a98b7c21dd5bcd0d # NOTE: Newtown South
+  - http://wcc.maps.arcgis.com/home/item.html?id=284ed48cb02c436cb9935dc9e293a1bc # NOTE: Newtown Central
+  - http://wcc.maps.arcgis.com/home/item.html?id=6809f340fb5c4f279d1fc03062a17761 # NOTE: Melrose
+  - http://wcc.maps.arcgis.com/home/item.html?id=3f321d3d0ab146ab93f4a6ceb0edd407 # NOTE: Lyall Bay West
+  - http://wcc.maps.arcgis.com/home/item.html?id=67733e5ccc624db6a6995154c765006e # NOTE: Lyall Bay East
+  - http://wcc.maps.arcgis.com/home/item.html?id=47c81cacac3546aab2d91d3a57241416 # NOTE: Rongotai
+  - http://wcc.maps.arcgis.com/home/item.html?id=8803d25314fa4959be4002cb30017345 # NOTE: Kilbirnie North
+  - http://wcc.maps.arcgis.com/home/item.html?id=04f03aabf638433a8763c4d7b4cf1ead # NOTE: Kilbirnie Central
+links:
+  - rel: about
+    href: https://data-wcc.opendata.arcgis.com/documents/WCC::3d-wellington/about?path=
+    type: text/html
+    title: Product Description Page
+  - rel: metadata
+    href: https://www.arcgis.com/sharing/rest/content/items/9c39b3bcc9d24358a89c20fcffd909b7/info/metadata/metadata.xml?format=default&output=html
+    type: application/xml
+    title: ISO-19139 Metadata
+  - rel: source
+    href: https://data-wcc.opendata.arcgis.com
+    type: text/html
+    title: Wellington Open Data Portal

@@ -1,0 +1,53 @@
+id: bordeaux-metropole-2012
+title: Textured 3D Model of Bordeaux Métropole
+description: |
+  Realistic 3D model of the Bordeaux Métropole territory based on an aerial acquisition in the summer of 2012.
+  The dataset is an assembly of a Digital Terrain Model (DTM) draped with a 2012 orthophoto, combined with
+  textured LoD2 3D building models provided in AutoDesk 3DS format.
+  Building models were produced by SIRADEL, and draping was processed by Bordeaux Métropole.
+  The dataset is cut into 1.4km x 1km tiles (sub-divided into 200m x 200m). Downloads are area-based
+  via an interactive graphic downloader, requiring users to reference the 'to_dalle_s' grid.
+license: etalab-2.0
+keywords:
+  - 3d city model
+  - france
+  - bordeaux
+  - lod2
+  - textured
+  - 3ds
+providers:
+  - name: Bordeaux Métropole (Direction de l'Information Géographique)
+    url: https://opendata.bordeaux-metropole.fr/pages/accueil/
+    roles:
+      - producer
+      - host
+      - licensor
+    description: Official Open Data Portal for Bordeaux Métropole
+    # NOTE: Contact via dig@bordeaux-metropole.fr
+inputs:
+  - https://data.bordeaux-metropole.fr/opendata/graphic_downloader/?layer=343&format=76 # NOTE: Interactive area-based graphic downloader endpoint.
+extent:
+  spatial:
+    bbox: [-0.88, 44.73, -0.44, 45.05] # [west, south, east, north]
+    crs: EPSG:3945
+links:
+  - rel: about
+    href: https://opendata.bordeaux-metropole.fr/explore/dataset/bati3d/information/
+    type: text/html
+    title: Product Description Page - Agglo 3D (Textured)
+  - rel: related
+    href: https://opendata.bordeaux-metropole.fr/explore/dataset/to_dalle_s/information/
+    type: text/html
+    title: Tile Reference Grid Dataset (TO_DALLE_S)
+  - rel: alternate
+    href: https://opendata.bordeaux-metropole.fr/explore/dataset/bati3d_nt/information/
+    type: text/html
+    title: Non-textured 3D models
+  - rel: source
+    href: https://opendata.bordeaux-metropole.fr/pages/accueil/
+    type: text/html
+    title: Bordeaux Métropole Open Data Portal
+  - rel: license
+    href: https://www.etalab.gouv.fr/wp-content/uploads/2014/05/Licence_Ouverte.pdf
+    type: application/pdf
+    title: Licence Ouverte / Open Licence (Etalab)
