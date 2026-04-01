@@ -1,4 +1,3 @@
-# NOTE: webpage doesn't exist anymore
 id: north-rhine-westphalia-3d
 title: North Rhine-Westphalia 3D Building Models (LoD1+LoD2)
 description: "Enormous 3D building dataset covering the entire state of North Rhine-Westphalia (NRW), Germany.\nNRW is the most populated state in Germany. Cities included: Düsseldorf, Essen, Oberhausen,\nKöln (Cologne), Bonn, and many more.\nCreated from cadastre footprints, LiDAR, and aerial images.\nLoD1 is derived from LoD2 models with average roof height.\nAvailable in CityGML format.\n"
@@ -30,13 +29,13 @@ providers:
 inputs: []
 extent:
   spatial:
-    bbox: []
+    bbox: [5.8, 50.3, 9.5, 52.6]
     crs: EPSG:25832
   temporal:
     start: '2016-01-01T00:00:00Z'
     end: '2019-12-31T23:59:59Z'
 links:
-- rel: alternate # update
+- rel: alternate
   href: https://www.gis.nrw.de/geobasis/LOD2/SceneServer
   type: application/json
   title: 3D Scene Server API for web visualization
@@ -48,10 +47,10 @@ links:
   href: https://geoportal.nrw/
   type: text/html
   title: Geoportal.NRW
-- rel: alternate
+- rel: about
   href: https://3d.bk.tudelft.nl/opendata/opencities/
   type: text/html
-  title: TU Delft 3D Open Cities Portal (host)
+  title: TU Delft 3D Open Cities Portal
 - rel: license
   href: https://www.govdata.de/dl-de/zero-2-0
   type: text/html

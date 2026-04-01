@@ -1,6 +1,3 @@
-# Helsinki 3D City Model
-# Collection-only config: no downloadable files, metadata + viewer link only
-# Data is accessed via interactive web viewer (users select extent to download)
 id: helsinki-3d
 title: Helsinki 3D City Model (LoD1/LoD2)
 description: |
@@ -35,6 +32,7 @@ providers:
   - producer
   - licensor
   description: Helsinki city government - Urban Environment Division
+inputs: []
 extent:
   spatial:
     # Helsinki municipality bounds (WGS84)

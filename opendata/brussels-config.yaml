@@ -1,8 +1,11 @@
-# NOTE: Data hosted by TU Delft OpenCities project, original source from Brussels Regional Informatics Centre
 id: brussels-3d
 title: Brussels 3D City Model (LoD2)
-description: "3D LoD2 city model of Brussels, Belgium, from the UrbIS database.\nThe UrbIS (Urban Information System) is the official geospatial database\nfor the Brussels-Capital Region. Available in CityGML format via TU Delft.\n"
-license: other # UrbIS Open Data License (custom, not standard SPDX)
+description: |
+  3D LoD2 city model of Brussels, Belgium, from the UrbIS database.
+  The UrbIS (Urban Information System) is the official geospatial database
+  for the Brussels-Capital Region. Available in CityGML format.
+  Data can be downloaded from the Brussels Datastore portal.
+license: other
 keywords:
 - 3d city model
 - buildings
@@ -24,16 +27,19 @@ providers:
   roles:
   - licensor
   description: Brussels-Capital Region government, the public authority for the region
-inputs:
-  - https://datastore.brussels/web/data/dataset/e9ec2aa4-cffd-11ee-bccc-00090ffe0001#access
+inputs: []
 extent:
   spatial:
-    bbox: []
+    bbox: [4.23, 50.76, 4.48, 50.91]
     crs: EPSG:31370
   temporal:
     start: '2024-02-01T00:00:00Z'
     end: '2025-12-06T23:59:59Z'
 links:
+- rel: alternate
+  href: https://datastore.brussels/web/data/dataset/e9ec2aa4-cffd-11ee-bccc-00090ffe0001
+  type: text/html
+  title: UrbIS 3D Data Download (Brussels Datastore)
 - rel: about
   href: https://3d.bk.tudelft.nl/opendata/opencities/
   type: text/html

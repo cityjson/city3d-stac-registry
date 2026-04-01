@@ -37,7 +37,6 @@ collections:
 - isere-craig-config.yaml
 - leipzig-stadt-config.yaml
 - niedersachsen-lgln-config.yaml
-- nordrhein-westfalen-geobasis-config.yaml
 - rheinland-pfalz-lvermgeo-config.yaml
 - sachsen-anhalt-lvermgeo-config.yaml
 - sachsen-geosn-config.yaml
@@ -47,14 +46,13 @@ collections:
 - melbourne-config.yaml
 - toronto-config.yaml
 - wellington-config.yaml
-# These are not valid, actual data not found or not publicly accessible
-# - mecklenburg-vorpommern-laiv-config.yaml
-# - berlin-config.yaml
-# - brussels-config.yaml
-# - dresden-config.yaml
-# - espoo-config.yaml
-# - helsinki-config.yaml
-# - lyon-config.yaml
-# - north-rhine-westphalia-config.yaml
-# - potsdam-config.yaml
-# - vienna-config.yaml
+- mecklenburg-vorpommern-laiv-config.yaml
+- berlin-config.yaml
+- brussels-config.yaml
+- dresden-config.yaml
+- espoo-config.yaml
+- helsinki-config.yaml
+- lyon-config.yaml
+- north-rhine-westphalia-config.yaml
+- potsdam-config.yaml
+- vienna-config.yaml

@@ -1,7 +1,10 @@
-# It's not CityGML, CityJSON
 id: potsdam-3d
 title: Potsdam 3D City Model (LoD2)
-description: "3D LoD2 city model of Potsdam, Germany.\nAvailable in CityGML format.\n"
+description: |
+  3D LoD2 city model of Potsdam, Germany.
+  Available in CityGML format. The data is also available as GeoJSON export
+  via the Potsdam Open Data portal (Opendatasoft platform).
+  Original data produced from laser scanning (2011) for the 2012 dataset.
 license: dl-de/by-2-0
 keywords:
 - 3d city model
@@ -18,17 +21,24 @@ providers:
   - producer
   - licensor
   description: Potsdam municipality - Official city government
-inputs:
-  - https://opendata.potsdam.de/api/explore/v2.1/catalog/datasets/3d-gebaudemodell-lod2-citygml/exports/geojson?lang=en&timezone=Europe%2FBerlin&epsg=25833
+inputs: []
 extent:
   spatial:
-    bbox: []
+    bbox: [12.89, 52.34, 13.17, 52.51]
     crs: EPSG:25833
   temporal:
-    start: '2011-01-01T00:00:00Z' # Laser scanning from 2011, dataset labeled "Potsdam 2012"
+    start: '2011-01-01T00:00:00Z'
     end: '2012-12-31T23:59:59Z'
 links:
-- rel: source 
+- rel: alternate
+  href: https://opendata.potsdam.de/explore/dataset/3d-gebaudemodell-lod2-citygml/information/
+  type: text/html
+  title: Potsdam 3D Building Model LoD2 CityGML (Open Data Portal)
+- rel: alternate
+  href: https://opendata.potsdam.de/api/explore/v2.1/catalog/datasets/3d-gebaudemodell-lod2-citygml/exports/geojson
+  type: application/geo+json
+  title: GeoJSON Export (Opendatasoft API)
+- rel: source
   href: https://opendata.potsdam.de/pages/home/
   type: text/html
   title: Open Data Portal of the state capital Potsdam
@@ -36,10 +46,10 @@ links:
   href: https://geoportal.brandenburg.de/
   type: text/html
   title: Geoportal Brandenburg (state geoportal)
-- rel: alternate
+- rel: about
   href: https://3d.bk.tudelft.nl/opendata/opencities/
   type: text/html
-  title: TU Delft 3D Open Cities Portal (host)
+  title: TU Delft 3D Open Cities Portal
 - rel: license
   href: https://www.govdata.de/dl-de/by-2-0
   type: text/html

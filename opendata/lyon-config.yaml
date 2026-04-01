@@ -1,8 +1,16 @@
-# NOTE: Data requires interactive portal access - JavaScript-heavy frontend
-# Portal: https://data.grandlyon.com/jeux-de-donnees/maquettes-3d-texturees-a-commune-arrondissement-2009-2012-2015-metropole-lyon/info
 id: lyon-3d
 title: Lyon 3D City Model (LoD2)
-description: "Comprehensive 3D building basemap of the Metropolis of Lyon.\nThe data is managed in 3D and covers the entire territory, structured into 5 semantic layers.\n1. Roof volumes (captured at gutter level)\n2. 3D ridge lines (roof edges)\n3. Ridge vertices (highest points)\n4. Superstructures (roof-on-roof features)\n5. Buildings under construction.\n"  # NOTE: Data is provided as separate structural layers.
+description: |
+  Comprehensive 3D building basemap of the Metropolis of Lyon, France.
+  The data is managed in 3D and covers the entire territory, structured into 5 semantic layers:
+  1. Roof volumes (captured at gutter level)
+  2. 3D ridge lines (roof edges)
+  3. Ridge vertices (highest points)
+  4. Superstructures (roof-on-roof features)
+  5. Buildings under construction
+
+  Data is available through the Grand Lyon open data portal as WFS services
+  and downloadable textured 3D models (CityGML) by commune/arrondissement.
 license: etalab-2.0
 keywords:
 - 3d city model
@@ -22,25 +30,24 @@ providers:
   roles:
   - producer
   - licensor
-  description: Lyon metropolitan government (Grand Lyon), the public authority responsible for the 3D city model production and licensing
-inputs:
-  - https://data.grandlyon.com/geoserver/metropole-de-lyon/ows?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=metropole-de-lyon:fpc_fond_plan_communaut.fpctoit&outputFormat=GML3&SRSNAME=EPSG:4171&sortBy=gid # Note: Data for 1. Roof volumes (captured at gutter level)
-  # - https://data.grandlyon.com/geoserver/metropole-de-lyon/ows?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=metropole-de-lyon:fpc_fond_plan_communaut.fpclignefaitage&outputFormat=GML3&SRSNAME=EPSG:4171&sortBy=gid # Note: Data for 2. 3D ridege lines (roof edges)
-  # - https://data.grandlyon.com/geoserver/metropole-de-lyon/ows?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=metropole-de-lyon:fpc_fond_plan_communaut.fpcsommetfaitage&outputFormat=GML3&SRSNAME=EPSG:4171&sortBy=gid # Note: Data for 3. Ridge vertices (highest points)
-  # - https://data.grandlyon.com/geoserver/metropole-de-lyon/ows?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=metropole-de-lyon:fpc_fond_plan_communaut.fpcsurtoit&outputFormat=GML3&SRSNAME=EPSG:4171&sortBy=gid # Note: Data for 4. Superstructures (roof-on-roof features)
-  # - https://data.grandlyon.com/geoserver/metropole-de-lyon/ows?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=metropole-de-lyon:fpc_fond_plan_communaut.fpcbaticonstruction&outputFormat=GML3&SRSNAME=EPSG:4171&sortBy=gid. # Note: Data for 5. Buildings under construction
+  description: Lyon metropolitan government (Grand Lyon)
+inputs: []
 extent:
   spatial:
-    bbox: []
+    bbox: [4.67, 45.57, 5.03, 45.94]
     crs: EPSG:4171
   temporal:
     start: '2009-01-01T00:00:00Z'
     end: '2015-12-31T23:59:59Z'
 links:
-- rel: source
+- rel: alternate
   href: https://data.grandlyon.com/jeux-de-donnees/maquettes-3d-texturees-a-commune-arrondissement-2009-2012-2015-metropole-lyon/info
   type: text/html
   title: Grand Lyon 3D Textured Models (2009-2012-2015)
+- rel: alternate
+  href: https://data.grandlyon.com/geoserver/metropole-de-lyon/ows?SERVICE=WFS&VERSION=2.0.0&request=GetCapabilities
+  type: application/xml
+  title: Grand Lyon WFS Service (GML3 building layers)
 - rel: about
   href: https://data.grandlyon.com/
   type: text/html

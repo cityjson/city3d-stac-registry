@@ -28,7 +28,7 @@ inputs:
   - https://www.geodaten-mv.de/dienste/gebaeude_download?index=0&dataset=8397b554-5cb9-4274-8be8-c20490d9a6e8&file=lod2_33_206_5920_2_gml.zip
 extent:
   spatial:
-    bbox: []
+    bbox: [10.59, 53.11, 14.41, 54.68]
     crs: EPSG:25833
 links:
   - rel: about

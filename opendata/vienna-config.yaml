@@ -24,7 +24,7 @@ inputs:
   # - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/Vienna_102081.gml
 extent:
   spatial:
-    bbox: []
+    bbox: [16.18, 48.12, 16.58, 48.32]
     crs: EPSG:31255
   temporal:
     start: '2018-01-01T00:00:00Z'

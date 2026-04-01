@@ -21,7 +21,7 @@ providers:
 inputs: []
 extent:
   spatial:
-    bbox: []
+    bbox: [13.09, 52.33, 13.76, 52.68]
     crs: EPSG:25833
   temporal:
     start: '2013-01-01T00:00:00Z'
