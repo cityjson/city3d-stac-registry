@@ -1,0 +1,37 @@
+id: linz-3d
+title: Linz 3D City Model (LoD2)
+description: "3D LoD2 city model of Linz, Austria.\nAvailable in CityGML format.\n"
+license: CC-BY-3.0-AT
+keywords:
+- 3d city model
+- buildings
+- LOD2
+- Austria
+- Linz
+- CityGML
+providers:
+- name: City of Linz (Magistrat der Landeshauptstadt Linz)
+  url: https://www.linz.at/
+  roles:
+  - producer
+  - licensor
+  - host
+  description: Linz city government - Magistrat der Landeshauptstadt Linz, Planung, Technik und Umwelt (PTU) / Vermessung und Geoinformation
+inputs:
+  from_file: ../manifests/linz_urls.txt
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:31254
+  temporal:
+    start: '2011-01-01T00:00:00Z'
+    end: '2011-12-31T23:59:59Z'
+links:
+- rel: about
+  href: https://geo.data.linz.gv.at/katalog/geodata/3d_geo_daten_lod2/2018/
+  type: text/html
+  title: Linz 3D Geodata Catalog (2018 LoD2 Tiles)
+- rel: source
+  href: https://data.linz.gv.at/
+  type: text/html
+  title: Linz Open Data (via data.gv.at)

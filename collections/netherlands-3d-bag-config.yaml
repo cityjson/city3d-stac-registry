@@ -1,0 +1,57 @@
+id: netherlands-3d-bag
+title: Netherlands 3D BAG (v20250903)
+description: "All 10 million+ buildings in the Netherlands with LoD1 and LoD2 representations.\nDerived from the Dutch BAG (Basisregistratie Adressen en Gebouwen) registry.\nTiled dataset with 8,941 tiles in quadtree structure (zoom levels 8-14).\nAvailable in CityJSON (.gz), GeoPackage (.gz), OBJ (.zip), and IFC (.zip) formats.\n"
+license: CC-BY-4.0
+keywords:
+- 3d city model
+- buildings
+- LOD1
+- LOD2
+- Netherlands
+- national
+- CityJSON
+- BAG
+- 10M buildings
+- Kadaster
+- tiled
+providers:
+- name: 3D Geoinformation Group (TU Delft)
+  url: https://3d.bk.tudelft.nl/
+  roles:
+  - processor
+  - host
+  description: 3D Geoinformation Research Group at TU Delft - creates and hosts the 3D BAG dataset
+- name: 3DBAG.nl
+  url: https://www.3dbag.nl/
+  roles:
+  - host
+  description: Official 3D BAG distribution platform (data.3dbag.nl)
+- name: 3DGI
+  description: A software development and consulting company with a focus on 3D geoinformation and open source technologies
+  roles: ["processor", "host"]
+  url: https://3dgi.xyz/
+inputs:
+  from_file: ../manifests/3dbag_urls.txt
+extent:
+  spatial:
+    bbox: []
+    crs: EPSG:28992
+  temporal:
+    start: '2021-01-01T00:00:00Z'
+links:
+- rel: about
+  href: https://www.3dbag.nl/
+  type: text/html
+  title: 3D BAG Official Website
+- rel: about
+  href: https://3d.bk.tudelft.nl/projects/3dbag
+  type: text/html
+  title: 3D BAG Project at TU Delft
+- rel: cite-as
+  href: https://doi.org/10.5281/zenodo.3568506
+  type: text/html
+  title: Dataset DOI (Zenodo)
+- rel: license
+  href: https://creativecommons.org/licenses/by/4.0/
+  type: text/html
+  title: Creative Commons Attribution 4.0 International
