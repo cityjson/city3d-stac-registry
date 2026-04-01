@@ -9,7 +9,7 @@ description: |
 
   Data format: AutoDesk 3DS (.3ds) - tile-based download through the Bordeaux Metropole open data portal.
   No CityJSON or CityGML files are directly available.
-license: other
+license: etalab-2.0
 keywords:
 - 3d city model
 - buildings
@@ -32,10 +32,12 @@ providers:
   roles:
   - host
   description: Bordeaux Metropole open data portal (Opendatasoft platform)
+inputs:
+  - https://data.bordeaux-metropole.fr/opendata/graphic_downloader/?layer=343&format=76 # Interactive area-based graphic downloader endpoint
 extent:
   spatial:
     bbox: [-0.8838898, 44.7416956, -0.4549856, 45.0410389]
-    crs: EPSG:2154  # Lambert 93 (French national projection)
+    crs: EPSG:3945  # CC Zone 5 (local projected CRS for Bordeaux area)
   temporal:
     start: '2012-01-01T00:00:00Z'
     end: '2012-12-31T23:59:59Z'
@@ -44,15 +46,19 @@ links:
   href: https://opendata.bordeaux-metropole.fr/explore/dataset/bati3d/information/
   type: text/html
   title: Bordeaux 3D Textured Model (bati3d) - Open Data Portal
-- rel: related
+- rel: alternate
   href: https://opendata.bordeaux-metropole.fr/explore/dataset/bati3d_nt/information/
   type: text/html
-  title: Bordeaux 3D Untextured Model (bati3d_nt) - Open Data Portal
+  title: Non-textured 3D models (bati3d_nt)
 - rel: preview
   href: https://opendata.bordeaux-metropole.fr/explore/dataset/bati3d/map/
   type: text/html
   title: Interactive Map Viewer (tile download)
-- rel: about
-  href: https://3d.bk.tudelft.nl/opendata/opencities/
+- rel: related
+  href: https://opendata.bordeaux-metropole.fr/explore/dataset/to_dalle_s/information/
   type: text/html
-  title: TU Delft 3D Open Cities Portal
+  title: Tile Reference Grid Dataset (TO_DALLE_S)
+- rel: license
+  href: https://www.etalab.gouv.fr/wp-content/uploads/2014/05/Licence_Ouverte.pdf
+  type: application/pdf
+  title: Licence Ouverte / Open Licence (Etalab)

@@ -43,6 +43,10 @@ collections:
 - sachsen-geosn-config.yaml
 - schleswig-holstein-lvermgeo-config.yaml
 - vichy-unesco-craig-config.yaml
+- bordeaux-config.yaml
+- melbourne-config.yaml
+- toronto-config.yaml
+- wellington-config.yaml
 # These are not valid, actual data not found or not publicly accessible
 # - mecklenburg-vorpommern-laiv-config.yaml
 # - berlin-config.yaml
