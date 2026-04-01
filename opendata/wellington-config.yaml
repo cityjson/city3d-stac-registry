@@ -115,3 +115,11 @@ links:
   href: https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/01+Metadata+WCC+AAM+3D+Buildings.pdf
   type: application/pdf
   title: Metadata PDF - WCC AAM 3D Buildings
+- rel: metadata
+  href: https://www.arcgis.com/sharing/rest/content/items/9c39b3bcc9d24358a89c20fcffd909b7/info/metadata/metadata.xml?format=default&output=html
+  type: application/xml
+  title: ISO-19139 Metadata (2017 dataset)
+- rel: alternate
+  href: http://wcc.maps.arcgis.com/home/item.html?id=7f8239740eec45f1b19e8dab0ce3bf86
+  type: text/html
+  title: 2017 3D Buildings SLPK - Kaiwharawhara (ArcGIS)

@@ -51,3 +51,15 @@ links:
   href: https://www.toronto.ca/city-government/data-research-maps/open-data/
   type: text/html
   title: City of Toronto Open Data
+- rel: alternate
+  href: https://cot-planning.maps.arcgis.com/apps/webappviewer/index.html?id=161511b3fd7943e39465f3d857389aab
+  type: text/html
+  title: Interactive Web Map (Individual tile downloads)
+- rel: alternate
+  href: https://ckan0.cf.opendata.inter.prod-toronto.ca/dataset/387b2e3b-2a76-4199-8b3b-0b7d22e2ec10/resource/7be91382-5a2f-4135-895f-55c7975133d0/download/3dcontextmassing_tile_locator.pdf
+  type: application/pdf
+  title: 3D Massing Tile Locator Map
+- rel: license
+  href: https://open.toronto.ca/open-data-licence/
+  type: text/html
+  title: Open Government Licence - Toronto

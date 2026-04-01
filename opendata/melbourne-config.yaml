@@ -34,6 +34,16 @@ providers:
   roles:
   - host
   description: CoM Open Data Portal (Opendatasoft platform)
+inputs:
+  # 2020 3D Textured Mesh - SLPK tiles (WGS84)
+  - https://gis-3dmodelcapture-2020.s3.ap-southeast-2.amazonaws.com/photomesh/SLPK/WGS84/Flemington_WGS84.slpk
+  - https://gis-3dmodelcapture-2020.s3.ap-southeast-2.amazonaws.com/photomesh/SLPK/WGS84/Bolte_WGS84.slpk
+  - https://gis-3dmodelcapture-2020.s3.ap-southeast-2.amazonaws.com/photomesh/SLPK/WGS84/Westgate_WGS84.slpk
+  - https://gis-3dmodelcapture-2020.s3.ap-southeast-2.amazonaws.com/photomesh/SLPK/WGS84/Royal_Park_WGS84.slpk
+  - https://gis-3dmodelcapture-2020.s3.ap-southeast-2.amazonaws.com/photomesh/SLPK/WGS84/Melb_Uni_WGS84.slpk
+  - https://gis-3dmodelcapture-2020.s3.ap-southeast-2.amazonaws.com/photomesh/SLPK/WGS84/CBD_WGS84.slpk
+  - https://gis-3dmodelcapture-2020.s3.ap-southeast-2.amazonaws.com/photomesh/SLPK/WGS84/Southbank_WGS84.slpk
+  - https://gis-3dmodelcapture-2020.s3.ap-southeast-2.amazonaws.com/photomesh/SLPK/WGS84/Hoddle_WGS84.slpk
 extent:
   spatial:
     bbox: [144.8969810, -37.8506670, 144.9913462, -37.7754510]
