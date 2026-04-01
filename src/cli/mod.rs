@@ -789,114 +789,158 @@ async fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
 
     let total_collections = collection_targets.len() as u64;
     let catalog_pb = create_progress_bar(total_collections, "Generating collections…");
+    let catalog_pb_arc = std::sync::Arc::new(catalog_pb);
 
     let mut generated_collections: Vec<(String, String)> = Vec::new(); // (href, title)
     let mut catalog_errors: u64 = 0;
 
+    // Process collections concurrently
+    let config_output = config.output.clone();
+    let config_base_url = config.base_url.clone();
+    let config_license = config.license.clone();
+    let config_pretty = config.pretty;
+    let config_dry_run = config.dry_run;
+    let config_overwrite_items = config.overwrite_items;
+    let config_overwrite_collections = config.overwrite_collections;
+    let config_geoparquet = config.geoparquet;
+
+    let catalog_semaphore = std::sync::Arc::new(tokio::sync::Semaphore::new(
+        std::thread::available_parallelism()
+            .map(|n| n.get())
+            .unwrap_or(4),
+    ));
+
+    let mut handles = Vec::with_capacity(collection_targets.len());
+
     for (input_dir, id_hint) in collection_targets {
-        if !input_dir.exists() {
-            catalog_pb.println(format!(
-                "  {} Directory not found, skipping: {}",
-                console::style("⚠").yellow(),
-                input_dir.display()
-            ));
-            catalog_pb.inc(1);
-            catalog_errors += 1;
-            continue;
-        }
+        let pb = catalog_pb_arc.clone();
+        let output = config_output.clone();
+        let base_url = config_base_url.clone();
+        let license = config_license.clone();
 
-        let collection_output_dir = config.output.join(&id_hint);
+        let catalog_sem = catalog_semaphore.clone();
+        let handle = tokio::spawn(async move {
+            let _permit = catalog_sem.acquire_owned().await.unwrap();
+            if !input_dir.exists() {
+                pb.println(format!(
+                    "  {} Directory not found, skipping: {}",
+                    console::style("⚠").yellow(),
+                    input_dir.display()
+                ));
+                pb.inc(1);
+                return Err((
+                    input_dir.display().to_string(),
+                    "Directory not found".to_string(),
+                ));
+            }
 
-        let mut collection_config = CollectionConfig {
-            inputs: Vec::new(),
-            output: collection_output_dir.clone(),
-            config: None,
-            id: Some(id_hint.clone()),
-            title: Some(format!("Collection from {}", id_hint)),
-            description: None,
-            license: config.license.clone(),
-            include: vec![],
-            exclude: vec![],
-            recursive: true,
-            max_depth: None,
-            skip_errors: true,
-            base_url: None, // Will be set below based on input type
-            pretty: config.pretty,
-            dry_run: config.dry_run,
-            overwrite_items: config.overwrite_items,
-            overwrite_collection: config.overwrite_collections,
-            geoparquet: config.geoparquet,
-            // Collections under a catalog get parent/root links
-            parent_href: Some("../catalog.json".to_string()),
-            root_href: Some("../catalog.json".to_string()),
-        };
+            let collection_output_dir = output.join(&id_hint);
 
-        // Check if input is a config file
-        if input_dir.is_file() {
-            if let Some(ext) = input_dir.extension().and_then(|e| e.to_str()) {
-                if matches!(ext, "toml" | "yaml" | "yml") {
-                    catalog_pb.println(format!(
-                        "  {} Loading config: {}",
-                        console::style("›").blue(),
-                        input_dir.display()
-                    ));
-                    collection_config.config = Some(input_dir.clone());
-                    // Don't set base_url here - let the config file's base_url take precedence
-                    // via merge_with_cli in process_collection_logic
+            let mut collection_config = CollectionConfig {
+                inputs: Vec::new(),
+                output: collection_output_dir,
+                config: None,
+                id: Some(id_hint.clone()),
+                title: Some(format!("Collection from {}", id_hint)),
+                description: None,
+                license,
+                include: vec![],
+                exclude: vec![],
+                recursive: true,
+                max_depth: None,
+                skip_errors: true,
+                base_url: None,
+                pretty: config_pretty,
+                dry_run: config_dry_run,
+                overwrite_items: config_overwrite_items,
+                overwrite_collection: config_overwrite_collections,
+                geoparquet: config_geoparquet,
+                parent_href: Some("../catalog.json".to_string()),
+                root_href: Some("../catalog.json".to_string()),
+            };
+
+            // Check if input is a config file
+            if input_dir.is_file() {
+                if let Some(ext) = input_dir.extension().and_then(|e| e.to_str()) {
+                    if matches!(ext, "toml" | "yaml" | "yml") {
+                        pb.println(format!(
+                            "  {} Loading config: {}",
+                            console::style("›").blue(),
+                            input_dir.display()
+                        ));
+                        collection_config.config = Some(input_dir.clone());
+                    } else {
+                        collection_config.inputs = vec![input_dir.clone()];
+                        collection_config.base_url =
+                            base_url.clone().map(|u| format!("{u}{id_hint}/"));
+                    }
                 } else {
                     collection_config.inputs = vec![input_dir.clone()];
-                    // For non-config files, use catalog's base_url if available
-                    collection_config.base_url =
-                        config.base_url.clone().map(|u| format!("{u}{id_hint}/"));
+                    collection_config.base_url = base_url.clone().map(|u| format!("{u}{id_hint}/"));
                 }
             } else {
                 collection_config.inputs = vec![input_dir.clone()];
-                collection_config.base_url =
-                    config.base_url.clone().map(|u| format!("{u}{id_hint}/"));
+                collection_config.base_url = base_url.clone().map(|u| format!("{u}{id_hint}/"));
             }
-        } else {
-            // Directory
-            collection_config.inputs = vec![input_dir.clone()];
-            // For directories, use catalog's base_url if available
-            collection_config.base_url = config.base_url.clone().map(|u| format!("{u}{id_hint}/"));
-        }
 
-        catalog_pb.set_message(format!("Processing: {id_hint}"));
-        match process_collection_logic(collection_config).await {
-            Ok((_col_path, col_id, col_title)) => {
-                let relative_href = format!("./{}/collection.json", id_hint);
+            pb.set_message(format!("Processing: {id_hint}"));
+            match process_collection_logic(collection_config).await {
+                Ok((_col_path, col_id, col_title)) => {
+                    let relative_href = format!("./{}/collection.json", id_hint);
 
-                let href = if let Some(base) = &config.base_url {
-                    let normalized_base = if base.ends_with('/') {
-                        base.to_string()
+                    let href = if let Some(base) = &base_url {
+                        let normalized_base = if base.ends_with('/') {
+                            base.to_string()
+                        } else {
+                            format!("{base}/")
+                        };
+                        format!("{normalized_base}{id_hint}/collection.json")
                     } else {
-                        format!("{base}/")
+                        relative_href
                     };
-                    format!("{normalized_base}{id_hint}/collection.json")
-                } else {
-                    relative_href
-                };
 
-                catalog_pb.println(format!(
-                    "  {} Collection ready: {}",
-                    console::style("✓").green(),
-                    col_title.clone().unwrap_or_else(|| col_id.clone())
-                ));
-                generated_collections.push((href, col_title.unwrap_or(col_id)));
+                    pb.println(format!(
+                        "  {} Collection ready: {}",
+                        console::style("✓").green(),
+                        col_title.clone().unwrap_or_else(|| col_id.clone())
+                    ));
+                    pb.inc(1);
+                    Ok((href, col_title.unwrap_or(col_id)))
+                }
+                Err(e) => {
+                    pb.println(format!(
+                        "  {} Failed ({}): {}",
+                        console::style("✗").red(),
+                        input_dir.display(),
+                        e
+                    ));
+                    pb.inc(1);
+                    Err((input_dir.display().to_string(), e.to_string()))
+                }
             }
-            Err(e) => {
-                catalog_pb.println(format!(
-                    "  {} Failed ({}): {}",
-                    console::style("✗").red(),
-                    input_dir.display(),
-                    e
-                ));
+        });
+
+        handles.push(handle);
+    }
+
+    // Collect results from all concurrent collection tasks
+    let results = futures::future::join_all(handles).await;
+    catalog_pb_arc.finish_and_clear();
+
+    for result in results {
+        match result {
+            Ok(Ok((href, title))) => {
+                generated_collections.push((href, title));
+            }
+            Ok(Err(_)) => {
+                catalog_errors += 1;
+            }
+            Err(join_err) => {
+                print_error(format!("Collection task failed: {join_err}"));
                 catalog_errors += 1;
             }
         }
-        catalog_pb.inc(1);
     }
-    catalog_pb.finish_and_clear();
 
     // Generate Catalog
     let catalog_id = merged_config.id.unwrap_or_else(|| {
@@ -1175,250 +1219,336 @@ async fn process_collection_logic(
     // Buffer items for GeoParquet output
     let mut geoparquet_items: Vec<crate::stac::StacItem> = Vec::new();
 
-    // Process each file - write items immediately, accumulate metadata
+    // Process each file concurrently - write items immediately, accumulate metadata
     let pb = create_progress_bar(sources.len() as u64, "Processing files…");
-    for source in &sources {
-        let source_desc = match source {
-            InputSource::Local(p) => p.display().to_string(),
-            InputSource::Remote(u) => u.clone(),
-        };
-        // Truncate long paths for the progress message
-        let short_desc = source_desc
-            .split(['/', '\\'])
-            .next_back()
-            .unwrap_or(&source_desc);
-        pb.set_message(format!("Processing: {short_desc}"));
+    let semaphore = std::sync::Arc::new(tokio::sync::Semaphore::new(
+        std::thread::available_parallelism()
+            .map(|n| n.get())
+            .unwrap_or(4),
+    ));
 
-        // First, get the reader to determine the item ID and filename
-        let reader = match get_reader_from_source(source).await {
-            Ok(r) => r,
-            Err(e) => {
-                if config.skip_errors {
-                    accumulator.add_error(source_desc.clone(), e.to_string());
-                    pb.println(format!(
-                        "  {} Skipping {short_desc}: {e}",
-                        console::style("⚠").yellow()
-                    ));
-                    pb.inc(1);
-                    continue;
-                } else {
-                    pb.finish_and_clear();
-                    return Err(e);
-                }
-            }
-        };
+    // Shared state for concurrent processing
+    let pb_arc = std::sync::Arc::new(pb);
+    let items_dir_arc = std::sync::Arc::new(items_dir.clone());
+    let base_url_arc = std::sync::Arc::new(config.base_url.clone());
+    let collection_id_arc = std::sync::Arc::new(collection_id.clone());
+    let crs_override_arc = std::sync::Arc::new(crs_override.clone());
+    let stem_counts_arc = std::sync::Arc::new(stem_counts);
 
-        // Determine item ID and filename
-        let file_path = reader.file_path();
-        let stem = file_path
-            .file_stem()
-            .and_then(|s| s.to_str())
-            .unwrap_or("unknown");
-        let has_collision = stem_counts.get(stem).is_some_and(|&count| count > 1);
+    /// Result of processing a single item concurrently
+    enum ItemResult {
+        /// Successfully processed item
+        Success {
+            metadata: ItemMetadata,
+            item_href: String,
+            title: Option<String>,
+            stac_item: Option<Box<crate::stac::StacItem>>,
+        },
+        /// Item processing failed
+        Error { source: String, error: String },
+        /// Non-recoverable error (when skip_errors is false)
+        Fatal(CityJsonStacError),
+    }
 
-        // Generate item ID based on collision detection
-        let item_id = if has_collision {
-            let encoding = reader.encoding();
-            let suffix = match encoding {
-                "CityJSON" => "_cj",
-                "CityJSONSeq" => "_cjseq",
-                "FlatCityBuf" => "_fcb",
-                _ => "",
+    let mut handles = Vec::with_capacity(sources.len());
+
+    for source in sources {
+        let sem = semaphore.clone();
+        let pb = pb_arc.clone();
+        let items_dir = items_dir_arc.clone();
+        let base_url = base_url_arc.clone();
+        let collection_id = collection_id_arc.clone();
+        let crs_override = crs_override_arc.clone();
+        let stem_counts = stem_counts_arc.clone();
+        let skip_errors = config.skip_errors;
+        let pretty = config.pretty;
+        let overwrite_items = config.overwrite_items;
+        let geoparquet = config.geoparquet;
+
+        let handle = tokio::spawn(async move {
+            let _permit = sem.acquire_owned().await.unwrap();
+
+            let source_desc = match &source {
+                InputSource::Local(p) => p.display().to_string(),
+                InputSource::Remote(u) => u.clone(),
             };
-            format!("{}{}", stem, suffix)
-        } else {
-            stem.to_string()
-        };
+            let short_desc = source_desc
+                .split(['/', '\\'])
+                .next_back()
+                .unwrap_or(&source_desc)
+                .to_string();
+            pb.set_message(format!("Processing: {short_desc}"));
 
-        let item_filename = format!("{item_id}_item.json");
-        let item_path = items_dir.join(&item_filename);
-
-        // Check if item already exists and overwrite flag
-        if item_path.exists() && !config.overwrite_items {
-            // Skip processing, read existing item for metadata
-            pb.println(format!(
-                "  {} Skipping existing: {}",
-                console::style("⚠").yellow(),
-                item_filename
-            ));
-
-            match ItemMetadata::from_file(&item_path) {
-                Ok(metadata) => {
-                    // Buffer existing item for GeoParquet if enabled
-                    if config.geoparquet {
-                        if let Ok(content) = std::fs::read_to_string(&item_path) {
-                            if let Ok(existing_item) =
-                                serde_json::from_str::<crate::stac::StacItem>(&content)
-                            {
-                                geoparquet_items.push(existing_item);
-                            }
-                        }
-                    }
-
-                    let item_href = format!("./items/{item_filename}");
-                    let title = file_path
-                        .file_name()
-                        .and_then(|n| n.to_str())
-                        .map(String::from);
-                    accumulator.add_item(metadata, item_href, title);
-                }
+            // Get the reader
+            let reader = match get_reader_from_source(&source).await {
+                Ok(r) => r,
                 Err(e) => {
-                    // Failed to read existing item - this is an error
-                    accumulator.add_error(item_filename.clone(), e.clone());
-                    if config.skip_errors {
+                    if skip_errors {
                         pb.println(format!(
-                            "  {} Failed to read existing item: {e}",
-                            console::style("✗").red()
+                            "  {} Skipping {short_desc}: {e}",
+                            console::style("⚠").yellow()
                         ));
+                        pb.inc(1);
+                        return ItemResult::Error {
+                            source: source_desc,
+                            error: e.to_string(),
+                        };
                     } else {
-                        pb.finish_and_clear();
-                        return Err(CityJsonStacError::StacError(format!(
-                            "Failed to read existing item {}: {}",
-                            item_path.display(),
-                            e
-                        )));
+                        pb.inc(1);
+                        return ItemResult::Fatal(e);
+                    }
+                }
+            };
+
+            // Determine item ID and filename
+            let file_path = reader.file_path();
+            let stem = file_path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("unknown");
+            let has_collision = stem_counts.get(stem).is_some_and(|&count| count > 1);
+
+            let item_id = if has_collision {
+                let encoding = reader.encoding();
+                let suffix = match encoding {
+                    "CityJSON" => "_cj",
+                    "CityJSONSeq" => "_cjseq",
+                    "FlatCityBuf" => "_fcb",
+                    _ => "",
+                };
+                format!("{}{}", stem, suffix)
+            } else {
+                stem.to_string()
+            };
+
+            let item_filename = format!("{item_id}_item.json");
+            let item_path = items_dir.join(&item_filename);
+
+            // Check if item already exists and overwrite flag
+            if item_path.exists() && !overwrite_items {
+                pb.println(format!(
+                    "  {} Skipping existing: {}",
+                    console::style("⚠").yellow(),
+                    item_filename
+                ));
+
+                match ItemMetadata::from_file(&item_path) {
+                    Ok(metadata) => {
+                        let stac_item = if geoparquet {
+                            tokio::fs::read_to_string(&item_path)
+                                .await
+                                .ok()
+                                .and_then(|content| {
+                                    serde_json::from_str::<crate::stac::StacItem>(&content).ok()
+                                })
+                        } else {
+                            None
+                        };
+
+                        let item_href = format!("./items/{item_filename}");
+                        let title = file_path
+                            .file_name()
+                            .and_then(|n| n.to_str())
+                            .map(String::from);
+                        pb.inc(1);
+                        return ItemResult::Success {
+                            metadata,
+                            item_href,
+                            title,
+                            stac_item: stac_item.map(Box::new),
+                        };
+                    }
+                    Err(e) => {
+                        if skip_errors {
+                            pb.println(format!(
+                                "  {} Failed to read existing item: {e}",
+                                console::style("✗").red()
+                            ));
+                            pb.inc(1);
+                            return ItemResult::Error {
+                                source: item_filename,
+                                error: e,
+                            };
+                        } else {
+                            pb.inc(1);
+                            return ItemResult::Fatal(CityJsonStacError::StacError(format!(
+                                "Failed to read existing item {}: {}",
+                                item_path.display(),
+                                e
+                            )));
+                        }
                     }
                 }
             }
-            pb.inc(1);
-            continue;
-        }
 
-        // For remote sources, preserve the original URL as the asset href fallback
-        let original_url = match source {
-            InputSource::Remote(url) => Some(url.as_str()),
-            InputSource::Local(_) => None,
-        };
+            // For remote sources, preserve the original URL as the asset href fallback
+            let original_url = match &source {
+                InputSource::Remote(url) => Some(url.clone()),
+                InputSource::Local(_) => None,
+            };
 
-        // Process and generate item
-        let builder_result = if has_collision {
-            StacItemBuilder::from_file_with_format_suffix_and_crs(
-                file_path,
-                reader.as_ref(),
-                config.base_url.as_deref(),
-                original_url,
-                crs_override.as_ref(),
-            )
-        } else {
-            StacItemBuilder::from_file_with_crs_override(
-                file_path,
-                reader.as_ref(),
-                config.base_url.as_deref(),
-                original_url,
-                crs_override.as_ref(),
-            )
-        };
+            // Process and generate item
+            let builder_result = if has_collision {
+                StacItemBuilder::from_file_with_format_suffix_and_crs(
+                    file_path,
+                    reader.as_ref(),
+                    base_url.as_deref(),
+                    original_url.as_deref(),
+                    (*crs_override).as_ref(),
+                )
+            } else {
+                StacItemBuilder::from_file_with_crs_override(
+                    file_path,
+                    reader.as_ref(),
+                    base_url.as_deref(),
+                    original_url.as_deref(),
+                    (*crs_override).as_ref(),
+                )
+            };
 
-        match builder_result {
-            Ok(builder) => match builder
-                .collection_id(&collection_id)
-                .collection_link("../collection.json")
-                .build()
-            {
-                Ok(item) => {
-                    // Buffer item for GeoParquet if enabled
-                    if config.geoparquet {
-                        geoparquet_items.push(item.clone());
+            match builder_result {
+                Ok(builder) => match builder
+                    .collection_id(&*collection_id)
+                    .collection_link("../collection.json")
+                    .build()
+                {
+                    Ok(item) => {
+                        let metadata = ItemMetadata::from_item(&item);
+                        let item_id = item.id.clone();
+
+                        // Serialize item
+                        let json = if pretty {
+                            serde_json::to_string_pretty(&item)
+                        } else {
+                            serde_json::to_string(&item)
+                        };
+
+                        match json {
+                            Ok(json) => {
+                                let item_filename = format!("{item_id}_item.json");
+                                let item_path = items_dir.join(&item_filename);
+                                if let Err(e) = tokio::fs::write(&item_path, &json).await {
+                                    if skip_errors {
+                                        pb.println(format!(
+                                            "  {} Skipping {short_desc}: {e}",
+                                            console::style("⚠").yellow()
+                                        ));
+                                        pb.inc(1);
+                                        return ItemResult::Error {
+                                            source: source_desc,
+                                            error: e.to_string(),
+                                        };
+                                    } else {
+                                        pb.inc(1);
+                                        return ItemResult::Fatal(CityJsonStacError::IoError(e));
+                                    }
+                                }
+
+                                let item_href = format!("./items/{item_filename}");
+                                let title = file_path
+                                    .file_name()
+                                    .and_then(|n| n.to_str())
+                                    .map(String::from);
+                                let stac_item = if geoparquet {
+                                    Some(Box::new(item))
+                                } else {
+                                    None
+                                };
+                                pb.inc(1);
+                                ItemResult::Success {
+                                    metadata,
+                                    item_href,
+                                    title,
+                                    stac_item,
+                                }
+                            }
+                            Err(e) => {
+                                if skip_errors {
+                                    pb.println(format!(
+                                        "  {} Skipping {short_desc}: {e}",
+                                        console::style("⚠").yellow()
+                                    ));
+                                    pb.inc(1);
+                                    ItemResult::Error {
+                                        source: source_desc,
+                                        error: e.to_string(),
+                                    }
+                                } else {
+                                    pb.inc(1);
+                                    ItemResult::Fatal(CityJsonStacError::JsonError(e))
+                                }
+                            }
+                        }
                     }
-
-                    // Extract metadata before writing
-                    let metadata = ItemMetadata::from_item(&item);
-                    let item_id = item.id.clone();
-
-                    // Serialize item
-                    let json = if config.pretty {
-                        match serde_json::to_string_pretty(&item) {
-                            Ok(j) => j,
-                            Err(e) => {
-                                if config.skip_errors {
-                                    accumulator.add_error(source_desc.clone(), e.to_string());
-                                    pb.println(format!(
-                                        "  {} Skipping {short_desc}: {e}",
-                                        console::style("⚠").yellow()
-                                    ));
-                                    pb.inc(1);
-                                    continue;
-                                } else {
-                                    pb.finish_and_clear();
-                                    return Err(CityJsonStacError::JsonError(e));
-                                }
-                            }
-                        }
-                    } else {
-                        match serde_json::to_string(&item) {
-                            Ok(j) => j,
-                            Err(e) => {
-                                if config.skip_errors {
-                                    accumulator.add_error(source_desc.clone(), e.to_string());
-                                    pb.println(format!(
-                                        "  {} Skipping {short_desc}: {e}",
-                                        console::style("⚠").yellow()
-                                    ));
-                                    pb.inc(1);
-                                    continue;
-                                } else {
-                                    pb.finish_and_clear();
-                                    return Err(CityJsonStacError::JsonError(e));
-                                }
-                            }
-                        }
-                    };
-
-                    // Write item immediately to disk
-                    let item_filename = format!("{item_id}_item.json");
-                    let item_path = items_dir.join(&item_filename);
-                    if let Err(e) = std::fs::write(&item_path, &json) {
-                        if config.skip_errors {
-                            accumulator.add_error(source_desc.clone(), e.to_string());
+                    Err(e) => {
+                        if skip_errors {
                             pb.println(format!(
                                 "  {} Skipping {short_desc}: {e}",
                                 console::style("⚠").yellow()
                             ));
                             pb.inc(1);
-                            continue;
+                            ItemResult::Error {
+                                source: source_desc,
+                                error: e.to_string(),
+                            }
                         } else {
-                            pb.finish_and_clear();
-                            return Err(CityJsonStacError::IoError(e));
+                            pb.inc(1);
+                            ItemResult::Fatal(e)
                         }
                     }
-
-                    // Add to accumulator
-                    let item_href = format!("./items/{item_filename}");
-                    let title = file_path
-                        .file_name()
-                        .and_then(|n| n.to_str())
-                        .map(String::from);
-                    accumulator.add_item(metadata, item_href, title);
-                }
+                },
                 Err(e) => {
-                    if config.skip_errors {
-                        accumulator.add_error(source_desc.clone(), e.to_string());
+                    if skip_errors {
                         pb.println(format!(
                             "  {} Skipping {short_desc}: {e}",
                             console::style("⚠").yellow()
                         ));
+                        pb.inc(1);
+                        ItemResult::Error {
+                            source: source_desc,
+                            error: e.to_string(),
+                        }
                     } else {
-                        pb.finish_and_clear();
-                        return Err(e);
+                        pb.inc(1);
+                        ItemResult::Fatal(e)
                     }
                 }
-            },
-            Err(e) => {
-                if config.skip_errors {
-                    accumulator.add_error(source_desc.clone(), e.to_string());
-                    pb.println(format!(
-                        "  {} Skipping {short_desc}: {e}",
-                        console::style("⚠").yellow()
-                    ));
-                } else {
-                    pb.finish_and_clear();
-                    return Err(e);
+            }
+        });
+
+        handles.push(handle);
+    }
+
+    // Collect results from all concurrent tasks
+    let results = futures::future::join_all(handles).await;
+    pb_arc.finish_and_clear();
+
+    for result in results {
+        match result {
+            Ok(ItemResult::Success {
+                metadata,
+                item_href,
+                title,
+                stac_item,
+            }) => {
+                if let Some(item) = stac_item {
+                    geoparquet_items.push(*item);
                 }
+                accumulator.add_item(metadata, item_href, title);
+            }
+            Ok(ItemResult::Error { source, error }) => {
+                accumulator.add_error(source, error);
+            }
+            Ok(ItemResult::Fatal(e)) => {
+                return Err(e);
+            }
+            Err(join_err) => {
+                return Err(CityJsonStacError::StacError(format!(
+                    "Task failed: {join_err}"
+                )));
             }
         }
-        pb.inc(1);
     }
-    pb.finish_and_clear();
 
     // Check if collection file exists and overwrite flag
     let collection_path = config.output.join("collection.json");
