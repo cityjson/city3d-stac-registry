@@ -804,6 +804,12 @@ async fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
     let config_overwrite_collections = config.overwrite_collections;
     let config_geoparquet = config.geoparquet;
 
+    let catalog_semaphore = std::sync::Arc::new(tokio::sync::Semaphore::new(
+        std::thread::available_parallelism()
+            .map(|n| n.get())
+            .unwrap_or(4),
+    ));
+
     let mut handles = Vec::with_capacity(collection_targets.len());
 
     for (input_dir, id_hint) in collection_targets {
@@ -812,7 +818,9 @@ async fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
         let base_url = config_base_url.clone();
         let license = config_license.clone();
 
+        let catalog_sem = catalog_semaphore.clone();
         let handle = tokio::spawn(async move {
+            let _permit = catalog_sem.acquire_owned().await.unwrap();
             if !input_dir.exists() {
                 pb.println(format!(
                     "  {} Directory not found, skipping: {}",
@@ -917,9 +925,7 @@ async fn handle_catalog_command(config: CatalogConfig) -> Result<()> {
 
     // Collect results from all concurrent collection tasks
     let results = futures::future::join_all(handles).await;
-    let catalog_pb = std::sync::Arc::try_unwrap(catalog_pb_arc)
-        .unwrap_or_else(|arc| std::sync::Arc::try_unwrap(arc).expect("all tasks completed"));
-    catalog_pb.finish_and_clear();
+    catalog_pb_arc.finish_and_clear();
 
     for result in results {
         match result {
@@ -1236,7 +1242,7 @@ async fn process_collection_logic(
             metadata: ItemMetadata,
             item_href: String,
             title: Option<String>,
-            stac_item: Box<Option<crate::stac::StacItem>>,
+            stac_item: Option<Box<crate::stac::StacItem>>,
         },
         /// Item processing failed
         Error { source: String, error: String },
@@ -1260,7 +1266,7 @@ async fn process_collection_logic(
         let geoparquet = config.geoparquet;
 
         let handle = tokio::spawn(async move {
-            let _permit = sem.acquire().await.unwrap();
+            let _permit = sem.acquire_owned().await.unwrap();
 
             let source_desc = match &source {
                 InputSource::Local(p) => p.display().to_string(),
@@ -1329,7 +1335,8 @@ async fn process_collection_logic(
                 match ItemMetadata::from_file(&item_path) {
                     Ok(metadata) => {
                         let stac_item = if geoparquet {
-                            std::fs::read_to_string(&item_path)
+                            tokio::fs::read_to_string(&item_path)
+                                .await
                                 .ok()
                                 .and_then(|content| {
                                     serde_json::from_str::<crate::stac::StacItem>(&content).ok()
@@ -1348,7 +1355,7 @@ async fn process_collection_logic(
                             metadata,
                             item_href,
                             title,
-                            stac_item: Box::new(stac_item),
+                            stac_item: stac_item.map(Box::new),
                         };
                     }
                     Err(e) => {
@@ -1420,7 +1427,7 @@ async fn process_collection_logic(
                             Ok(json) => {
                                 let item_filename = format!("{item_id}_item.json");
                                 let item_path = items_dir.join(&item_filename);
-                                if let Err(e) = std::fs::write(&item_path, &json) {
+                                if let Err(e) = tokio::fs::write(&item_path, &json).await {
                                     if skip_errors {
                                         pb.println(format!(
                                             "  {} Skipping {short_desc}: {e}",
@@ -1442,13 +1449,17 @@ async fn process_collection_logic(
                                     .file_name()
                                     .and_then(|n| n.to_str())
                                     .map(String::from);
-                                let stac_item = if geoparquet { Some(item) } else { None };
+                                let stac_item = if geoparquet {
+                                    Some(Box::new(item))
+                                } else {
+                                    None
+                                };
                                 pb.inc(1);
                                 ItemResult::Success {
                                     metadata,
                                     item_href,
                                     title,
-                                    stac_item: Box::new(stac_item),
+                                    stac_item,
                                 }
                             }
                             Err(e) => {
@@ -1510,12 +1521,7 @@ async fn process_collection_logic(
 
     // Collect results from all concurrent tasks
     let results = futures::future::join_all(handles).await;
-    let pb = std::sync::Arc::try_unwrap(pb_arc).unwrap_or_else(|arc| {
-        // Fallback: clone the inner value is not possible for ProgressBar,
-        // but this path shouldn't be reached since all tasks are done
-        std::sync::Arc::try_unwrap(arc).expect("all tasks completed")
-    });
-    pb.finish_and_clear();
+    pb_arc.finish_and_clear();
 
     for result in results {
         match result {
@@ -1525,8 +1531,8 @@ async fn process_collection_logic(
                 title,
                 stac_item,
             }) => {
-                if let Some(item) = *stac_item {
-                    geoparquet_items.push(item);
+                if let Some(item) = stac_item {
+                    geoparquet_items.push(*item);
                 }
                 accumulator.add_item(metadata, item_href, title);
             }
