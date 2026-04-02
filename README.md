@@ -25,6 +25,11 @@ Canonical registry repository:
 └── .github/workflows/
 ```
 
+## Map viewer
+Config files registered in this repository automatically generate STAC catalogs, collections, and items. The generated STAC assets can be previewed on [https://cityjson.github.io/city3d-stac-map/](https://cityjson.github.io/city3d-stac-map/). 
+
+![City3d STAC map](./docs/stac-map-dark.png)
+
 ## Local Usage
 
 Initialize submodules first:
