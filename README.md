@@ -6,6 +6,9 @@ collections, and items.
 This repository is separate from the generator implementation. The CLI lives in the
 `tools/cityjson-stac` git submodule, which points to `git@github.com:HideBa/city3d-stac-tool.git`.
 
+Canonical registry repository:
+`https://github.com/cityjson/city3d-stac-registry`
+
 ## Repository Layout
 
 ```text
@@ -28,6 +31,12 @@ Initialize submodules first:
 
 ```bash
 git submodule update --init --recursive
+```
+
+Install the CLI as a native binary with Cargo:
+
+```bash
+cargo install --git ssh://git@github.com/HideBa/city3d-stac-tool.git --bin city3dstac
 ```
 
 Validate a collection config:

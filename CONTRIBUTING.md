@@ -2,6 +2,9 @@
 
 This repository accepts contributions for public 3D city model registry entries.
 
+Canonical repository URL:
+`https://github.com/cityjson/city3d-stac-registry`
+
 ## What belongs here
 
 - Collection configs in `collections/*.yaml`
@@ -19,6 +22,12 @@ The generator implementation does not belong here. Use the pinned submodule in
 
 ```bash
 git submodule update --init --recursive
+```
+
+Optional: install the CLI natively instead of running it through the submodule checkout:
+
+```bash
+cargo install --git ssh://git@github.com/HideBa/city3d-stac-tool.git --bin city3dstac
 ```
 
 2. Validate the changed collection config:
