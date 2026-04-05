@@ -4,7 +4,7 @@ Public registry of 3D city model dataset definitions used to generate STAC catal
 collections, and items.
 
 This repository is separate from the generator implementation. The CLI lives in the
-`tools/cityjson-stac` git submodule, which points to `git@github.com:HideBa/city3d-stac-tool.git`.
+`city3d-stac-tool` git submodule, which points to `git@github.com:HideBa/city3d-stac-tool.git`.
 
 Canonical registry repository:
 `https://github.com/cityjson/city3d-stac-registry`
@@ -20,8 +20,7 @@ Canonical registry repository:
 ├── manifests/
 │   └── *_urls.txt
 ├── docs/
-├── tools/
-│   └── cityjson-stac/
+├── city3d-stac-tool/
 └── .github/workflows/
 ```
 
@@ -47,21 +46,21 @@ cargo install --git ssh://git@github.com/HideBa/city3d-stac-tool.git --bin city3
 Validate a collection config:
 
 ```bash
-cargo run --manifest-path tools/cityjson-stac/Cargo.toml -- \
+cargo run --manifest-path city3d-stac-tool/Cargo.toml -- \
   collection --config collections/rotterdam-config.yaml --dry-run
 ```
 
 Validate the catalog config:
 
 ```bash
-cargo run --manifest-path tools/cityjson-stac/Cargo.toml -- \
+cargo run --manifest-path city3d-stac-tool/Cargo.toml -- \
   catalog --config catalog/catalog-config.yaml --dry-run
 ```
 
 Generate the published catalog locally:
 
 ```bash
-cargo run --manifest-path tools/cityjson-stac/Cargo.toml -- \
+cargo run --manifest-path city3d-stac-tool/Cargo.toml -- \
   catalog --config catalog/catalog-config.yaml -o build/site
 ```
 

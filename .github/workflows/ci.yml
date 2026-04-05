@@ -24,11 +24,11 @@ jobs:
           set -euo pipefail
           for cfg in collections/*.yaml; do
             echo "Validating $cfg"
-            cargo run --quiet --manifest-path tools/cityjson-stac/Cargo.toml -- \
+            cargo run --quiet --manifest-path city3d-stac-tool/Cargo.toml -- \
               collection --config "$cfg" --dry-run
           done
 
       - name: Validate catalog config
         run: |
-          cargo run --quiet --manifest-path tools/cityjson-stac/Cargo.toml -- \
+          cargo run --quiet --manifest-path city3d-stac-tool/Cargo.toml -- \
             catalog --config catalog/catalog-config.yaml --dry-run

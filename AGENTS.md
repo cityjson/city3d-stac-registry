@@ -10,7 +10,7 @@ Canonical repository URL:
 - `catalog/` contains the root catalog configuration
 - `collections/` contains one collection config per dataset
 - `manifests/` contains generated URL lists for large datasets
-- `tools/cityjson-stac/` is the vendored CLI tool repository
+- `city3d-stac-tool/` is the vendored CLI tool repository
 
 ## Working rules
 
@@ -22,13 +22,13 @@ Canonical repository URL:
 ## Validation
 
 - Validate a collection:
-  `cargo run --manifest-path tools/cityjson-stac/Cargo.toml -- collection --config collections/<dataset>.yaml --dry-run`
+  `cargo run --manifest-path city3d-stac-tool/Cargo.toml -- collection --config collections/<dataset>.yaml --dry-run`
 - Validate the catalog:
-  `cargo run --manifest-path tools/cityjson-stac/Cargo.toml -- catalog --config catalog/catalog-config.yaml --dry-run`
+  `cargo run --manifest-path city3d-stac-tool/Cargo.toml -- catalog --config catalog/catalog-config.yaml --dry-run`
 - Optional native install:
   `cargo install --git ssh://git@github.com/HideBa/city3d-stac-tool.git --bin city3dstac`
 
 ## Scope boundary
 
 - Registry policy and public dataset entries belong here
-- CLI implementation, tests, and release engineering belong in `tools/cityjson-stac`
+- CLI implementation, tests, and release engineering belong in `city3d-stac-tool`

@@ -5,7 +5,7 @@
 - `catalog/`: root catalog configuration
 - `collections/`: collection definitions contributed by users
 - `manifests/`: generated URL lists referenced by collection configs
-- `tools/cityjson-stac/`: pinned generator implementation
+- `city3d-stac-tool/`: pinned generator implementation
 
 ## Relative path rules
 

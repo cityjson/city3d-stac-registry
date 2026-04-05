@@ -7,7 +7,7 @@ git.
 
 - `Validate Registry` runs on pull requests and on pushes to `main`.
 - `Publish Catalog` runs on `main` and on manual dispatch.
-- The generator is executed from the pinned `tools/cityjson-stac` submodule.
+- The generator is executed from the pinned `city3d-stac-tool` submodule.
 
 ## Output contract
 
@@ -20,6 +20,6 @@ git.
 ```bash
 git submodule update --init --recursive
 
-cargo run --release --manifest-path tools/cityjson-stac/Cargo.toml -- \
+cargo run --release --manifest-path city3d-stac-tool/Cargo.toml -- \
   catalog --config catalog/catalog-config.yaml -o build/site
 ```

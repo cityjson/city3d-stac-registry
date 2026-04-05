@@ -14,7 +14,7 @@ Canonical repository URL:
 - Contributor-facing documentation
 
 The generator implementation does not belong here. Use the pinned submodule in
-`tools/cityjson-stac/`.
+`city3d-stac-tool/`.
 
 ## Contribution checklist
 
@@ -33,14 +33,14 @@ cargo install --git ssh://git@github.com/HideBa/city3d-stac-tool.git --bin city3
 2. Validate the changed collection config:
 
 ```bash
-cargo run --manifest-path tools/cityjson-stac/Cargo.toml -- \
+cargo run --manifest-path city3d-stac-tool/Cargo.toml -- \
   collection --config collections/<dataset>.yaml --dry-run
 ```
 
 3. If you changed the catalog membership, validate the root catalog too:
 
 ```bash
-cargo run --manifest-path tools/cityjson-stac/Cargo.toml -- \
+cargo run --manifest-path city3d-stac-tool/Cargo.toml -- \
   catalog --config catalog/catalog-config.yaml --dry-run
 ```
 

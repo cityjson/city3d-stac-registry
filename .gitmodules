@@ -1,3 +1,3 @@
-[submodule "tools/cityjson-stac"]
-	path = tools/cityjson-stac
-	url = git@github.com:HideBa/city3d-stac-tool.git
+[submodule "city3d-stac-tool"]
+	path = city3d-stac-tool
+	url = git@github.com:cityjson/city3d-stac-tool.git

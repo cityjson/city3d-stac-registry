@@ -28,7 +28,7 @@ jobs:
 
       - name: Generate catalog
         run: |
-          cargo run --release --manifest-path tools/cityjson-stac/Cargo.toml -- \
+          cargo run --release --manifest-path city3d-stac-tool/Cargo.toml -- \
             catalog --config catalog/catalog-config.yaml -o build/site
 
       - name: Configure Pages

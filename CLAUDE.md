@@ -10,7 +10,7 @@ Canonical repository URL:
 - Store dataset collection configs in `collections/`
 - Store the root catalog definition in `catalog/`
 - Store generated input URL manifests in `manifests/` when needed
-- Publish generated STAC by invoking the CLI from the `tools/cityjson-stac` submodule
+- Publish generated STAC by invoking the CLI from the `city3d-stac-tool` submodule
 
 ## What does not belong here
 
@@ -19,7 +19,7 @@ Canonical repository URL:
 - Tool-specific test fixtures and release automation
 - Generated STAC output committed to git
 
-Those belong in the separate tool repository vendored at `tools/cityjson-stac`.
+Those belong in the separate tool repository vendored at `city3d-stac-tool`.
 
 ## Editing guidance
 
@@ -32,8 +32,8 @@ Those belong in the separate tool repository vendored at `tools/cityjson-stac`.
 ## Validation workflow
 
 - Validate a single collection with:
-  `cargo run --manifest-path tools/cityjson-stac/Cargo.toml -- collection --config collections/<dataset>.yaml --dry-run`
+  `cargo run --manifest-path city3d-stac-tool/Cargo.toml -- collection --config collections/<dataset>.yaml --dry-run`
 - Validate the catalog with:
-  `cargo run --manifest-path tools/cityjson-stac/Cargo.toml -- catalog --config catalog/catalog-config.yaml --dry-run`
+  `cargo run --manifest-path city3d-stac-tool/Cargo.toml -- catalog --config catalog/catalog-config.yaml --dry-run`
 - Native binary install is also supported:
   `cargo install --git ssh://git@github.com/HideBa/city3d-stac-tool.git --bin city3dstac`
