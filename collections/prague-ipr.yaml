@@ -21,7 +21,7 @@ providers:
 extent:
   spatial:
     bbox: [14.201491, 49.918791, 14.735087, 50.193123] # [west, south, east, north]
-    crs: EPSG:5514
+    crs: EPSG:4326 # bbox provided in WGS84; native CRS is EPSG:5514 (S-JTSK / Krovak East North)
   temporal:
     start: "2015-03-31T00:00:00Z" # NOTE: Extracted from data creation date described on website (1st link in 'Links')
     end: "2020-07-17T00:00:00Z" # NOTE: Extracted from data update date described on website (1st link in 'Links')

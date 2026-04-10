@@ -24,11 +24,11 @@ providers:
   roles:
   - host
   description: Official open data portal of Hamburg
-inputs:
-  - http://archiv.transparenz.hamburg.de/hmbtgarchive/HMDK/lod2-de_hh_2016-11-22_21283_snap_1.GML
+inputs: [] # NOTE: Single 468MB GML file; commenting out to generate metadata-only collection for now.
+  # - http://archiv.transparenz.hamburg.de/hmbtgarchive/HMDK/lod2-de_hh_2016-11-22_21283_snap_1.GML
 extent:
   spatial:
-    bbox: []
+    bbox: [9.7277, 53.3950, 10.3253, 53.7412] # Hamburg approximate extent
     crs: EPSG:25832
   temporal:
     start: '2017-01-01T00:00:00Z'

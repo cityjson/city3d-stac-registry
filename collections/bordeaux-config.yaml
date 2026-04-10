@@ -32,8 +32,8 @@ providers:
   roles:
   - host
   description: Bordeaux Metropole open data portal (Opendatasoft platform)
-inputs:
-  - https://data.bordeaux-metropole.fr/opendata/graphic_downloader/?layer=343&format=76 # Interactive area-based graphic downloader endpoint
+inputs: [] # NOTE: Data is in 3DS format (not CityGML/CityJSON). Download via interactive portal only.
+  # - https://data.bordeaux-metropole.fr/opendata/graphic_downloader/?layer=343&format=76 # Interactive area-based graphic downloader endpoint
 extent:
   spatial:
     bbox: [-0.8838898, 44.7416956, -0.4549856, 45.0410389]

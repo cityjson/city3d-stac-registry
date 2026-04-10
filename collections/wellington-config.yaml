@@ -43,54 +43,10 @@ providers:
   roles:
   - host
   description: WCC ArcGIS Open Data Portal and S3 storage
-inputs:
+inputs: [] # NOTE: Data is in GDB/DWG/SKP format (not CityGML/CityJSON).
   # 2022 3D Buildings - S3 bucket downloads (GDB + DWG + SKP per area)
   # 44 sub-areas verified accessible 2026-03-25
   # URL pattern: https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/{AreaName}.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Wellington_Central.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Te_Aro.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Pipitea.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Hataitai.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Miramar.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Kelburn.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Karori.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Brooklyn.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Houghton_Bay.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Island_Bay.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Southgate.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Melrose.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Churton_Park.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Crofton_Downs.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Aro_Valley.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Tawa.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Wadestown.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Ngaio.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Ngauranga.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Takapu_Valley.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Ohariu.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Mount_Victoria.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Rongotai.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Kilbirnie.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Oriental_Bay.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Strathmore_Park.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Mount_Cook.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Lyall_Bay.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Karaka_Bays.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Thorndon.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Roseneath.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Newtown.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Makara.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Johnsonville.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Khandallah.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Newlands.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Seatoun.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Vogeltown.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Berhampore.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Highbury.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Kingston.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Wilton.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Northland.zip
-  - https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/Kaiwharawhara.zip
 extent:
   spatial:
     bbox: [174.6172114, -41.4487953, 174.9372114, -41.1287953]

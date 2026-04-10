@@ -22,8 +22,8 @@ providers:
       - licensor
     description: City of Freiburg im Breisgau - Geoinformation Department
     # NOTE: Contact via vermessung@freiburg.de or gdi-support@freiburg.de
-inputs:
-  - https://geoportal.freiburg.de/stadtmodell/20240426_Freiburg_LoD2.gml
+inputs: [] # NOTE: Single large GML file; commenting out to generate metadata-only collection for now.
+  # - https://geoportal.freiburg.de/stadtmodell/20240426_Freiburg_LoD2.gml
 extent:
   spatial:
     bbox: [7.661, 47.903, 7.932, 48.072] # [west, south, east, north]

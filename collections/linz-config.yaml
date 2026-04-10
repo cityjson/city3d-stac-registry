@@ -21,7 +21,7 @@ inputs:
   from_file: ../manifests/linz_urls.txt
 extent:
   spatial:
-    bbox: []
+    bbox: [14.1856, 48.2285, 14.4103, 48.3714] # Linz approximate extent
     crs: EPSG:31254
   temporal:
     start: '2011-01-01T00:00:00Z'

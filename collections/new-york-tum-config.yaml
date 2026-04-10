@@ -30,7 +30,7 @@ providers:
 inputs: []
 extent:
   spatial:
-    bbox: []
+    bbox: [-74.2591, 40.4774, -73.7004, 40.9176] # New York City approximate extent
     crs: EPSG:2263
   temporal:
     start: '2015-01-01T00:00:00Z'
