@@ -32,10 +32,13 @@ providers:
   description: Official PLATEAU API for 3D city model data access and discovery
 inputs:
   from_file: ../manifests/japan-plateau-urls.txt
+# Throttle parallel downloads against the PLATEAU CMS — it is rate-sensitive
+# and large zips have been seen to drop mid-transfer at higher concurrency.
+concurrency: 4
 extent:
   spatial:
-    bbox: []
-    crs: EPSG:6677
+    bbox: [122.93, 24.04, 153.99, 45.55] # [west, south, east, north] Japan national extent including outer islands
+    crs: EPSG:4326 # bbox in WGS84; native CRS varies by JGD2011 plane-rectangular zone (EPSG:6669–6687)
   temporal:
     start: '2021-01-01T00:00:00Z'
     end: '2021-12-31T23:59:59Z'
