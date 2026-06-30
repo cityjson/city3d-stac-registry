@@ -7,7 +7,7 @@ description: |
   ATKIS (as of 01.10.2024). Buildings feature standardized roof shapes (e.g., gable or hipped roofs).
   Standard heights based on building function are applied if the automatically calculated height is less than 1m.
   It is provided as an open dataset without any usage restrictions or conditions (Zero license).
-license: dl-de/zero-2-0
+license: DL-DE-ZERO-2.0
 keywords:
   - 3d city model
   - germany
@@ -30,7 +30,7 @@ inputs:
 extent:
   spatial:
     bbox: [5.8, 50.3, 9.5, 52.6] # [west, south, east, north]
-    crs: EPSG:25832
+    crs: EPSG:4326
   temporal:
     start: "2019-01-01T00:00:00Z" # NOTE: Based on the earliest ALS/DGM1 data vintage (2019).
     end: "2024-10-01T00:00:00Z" # NOTE: Based on the latest ATKIS data vintage (01.10.2024).

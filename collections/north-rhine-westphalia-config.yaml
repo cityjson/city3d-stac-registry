@@ -1,7 +1,7 @@
 id: north-rhine-westphalia-3d
 title: North Rhine-Westphalia 3D Building Models (LoD1+LoD2)
-description: "Enormous 3D building dataset covering the entire state of North Rhine-Westphalia (NRW), Germany.\nNRW is the most populated state in Germany. Cities included: Düsseldorf, Essen, Oberhausen,\nKöln (Cologne), Bonn, and many more.\nCreated from cadastre footprints, LiDAR, and aerial images.\nLoD1 is derived from LoD2 models with average roof height.\nAvailable in CityGML format.\n"
-license: dl-de/zero-2-0
+description: "Enormous 3D building dataset covering the entire state of North Rhine-Westphalia (NRW), Germany.\nNRW is the most populated state in Germany. Cities included: Düsseldorf, Essen, Oberhausen,\nKöln (Cologne), Bonn, and many more.\nCreated from cadastre footprints, LiDAR, and aerial images.\nLoD1 is derived from LoD2 models with average roof height.\nAvailable in CityGML format.\nDeprecated duplicate configuration; use `nordrhein-westfalen-geobasis-config.yaml` / `geobasis-nrw` for the canonical entry.\n"
+license: DL-DE-ZERO-2.0
 keywords:
 - 3d city model
 - buildings
@@ -15,22 +15,18 @@ keywords:
 - multi-city
 - LiDAR
 providers:
-- name: Land Nordrhein-Westfalen
-  url: https://www.land.nrw/
+- name: Geobasis NRW (Bezirksregierung Köln)
+  url: https://www.bezreg-koeln.nrw.de/geobasis-nrw
   roles:
   - producer
   - licensor
-  description: North Rhine-Westphalia state government
-- name: Open.NRW
-  url: https://open.nrw/
-  roles:
   - host
-  description: Official open data portal of North Rhine-Westphalia
+  description: State Office for Geoinformation and Surveying North Rhine-Westphalia
 inputs: []
 extent:
   spatial:
     bbox: [5.8, 50.3, 9.5, 52.6]
-    crs: EPSG:25832
+    crs: EPSG:4326
   temporal:
     start: '2016-01-01T00:00:00Z'
     end: '2019-12-31T23:59:59Z'
@@ -40,17 +36,17 @@ links:
   type: application/json
   title: 3D Scene Server API for web visualization
 - rel: source
-  href: https://open.nrw/
+  href: https://www.geoportal.nrw/?activetab=map#/datasets/iso/5d9a8abc-dfd0-4dda-b8fa-165cce4d8065
   type: text/html
-  title: Open.NRW - Official Open Data Portal
+  title: Geoportal NRW Metadata (ISO 19115)
 - rel: alternate
   href: https://geoportal.nrw/
   type: text/html
   title: Geoportal.NRW
-- rel: about
-  href: https://3d.bk.tudelft.nl/opendata/opencities/
-  type: text/html
-  title: TU Delft 3D Open Cities Portal
+- rel: alternate
+  href: https://www.bezreg-koeln.nrw.de/system/files/media/document/file/geobasis_3dg_testdaten_3d-gm-lod2_citygml.zip
+  type: application/zip
+  title: Test Data Download (LoD2 CityGML)
 - rel: license
   href: https://www.govdata.de/dl-de/zero-2-0
   type: text/html

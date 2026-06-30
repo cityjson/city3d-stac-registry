@@ -5,7 +5,7 @@ description: |
   The dataset covers the municipalities of Cournon-d'Auvergne, Gerzat, and parts of Chamalières and Clermont-Ferrand.
   It contains approximately 45,000 buildings modeled in LoD 2.2 with textured roofs.
   Produced between 2024 and 2025 by ATGT using 5cm resolution nadir aerial photographs acquired in 2022.
-license: etalab-2.0 # NOTE: Licence Ouverte v2.0
+license: Etalab-2.0 # NOTE: Licence Ouverte v2.0
 keywords:
   - 3d city model
   - france

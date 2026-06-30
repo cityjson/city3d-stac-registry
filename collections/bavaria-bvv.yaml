@@ -25,7 +25,7 @@ inputs: [] # NOTE: Bulk download available via Metalink (.meta4) - not a directl
 extent:
   spatial:
     bbox: [8.98, 47.27, 13.84, 50.56] # [west, south, east, north] Bavaria state boundaries
-    crs: EPSG:25832
+    crs: EPSG:4326
 links:
   - rel: about
     href: https://geodaten.bayern.de/opengeodata/OpenDataDetail.html?pn=lod2

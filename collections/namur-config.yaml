@@ -1,6 +1,6 @@
 id: namur-3d
 title: Namur 3D City Model (LoD2)
-description: "3D LoD2 city model of Namur, Belgium (capital of Wallonia), with textures.\nIncludes special features: bridges (ponts) and the historic citadel (citadelle).\nAvailable in SketchUp (.skp) format from the Namur open data portal.\nNote: SketchUp format is not directly supported by cityjson-stac CLI.\n"
+description: "3D LoD2 city model of Namur, Belgium (capital of Wallonia), with textures.\nIncludes special features: bridges (ponts at LoD2.2), the station footbridge, and the historic citadel (citadelle).\nAvailable in CityGML and SketchUp (.skp) formats from the Namur open data portal.\n"
 license: CC-BY-4.0
 keywords:
 - 3d city model
@@ -29,7 +29,7 @@ inputs: [] # NOTE: Server unreachable (carto.ville.namur.be timeout). SketchUp f
 extent:
   spatial:
     bbox: [4.82, 50.43, 4.90, 50.48] # [west, south, east, north] Namur city center
-    crs: EPSG:31370
+    crs: EPSG:4326
   temporal:
     start: '2018-01-01T00:00:00Z'
     end: '2018-12-31T23:59:59Z'
@@ -46,3 +46,7 @@ links:
   href: https://3d.bk.tudelft.nl/opendata/opencities/
   type: text/html
   title: TU Delft 3D Open Cities Portal
+- rel: license
+  href: https://creativecommons.org/licenses/by/4.0/
+  type: text/html
+  title: CC BY 4.0

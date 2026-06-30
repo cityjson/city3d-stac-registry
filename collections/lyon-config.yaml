@@ -11,7 +11,7 @@ description: |
 
   Data is available through the Grand Lyon open data portal as WFS services
   and downloadable textured 3D models (CityGML) by commune/arrondissement.
-license: etalab-2.0
+license: Etalab-2.0
 keywords:
 - 3d city model
 - buildings
@@ -35,7 +35,7 @@ inputs: []
 extent:
   spatial:
     bbox: [4.67, 45.57, 5.03, 45.94]
-    crs: EPSG:4171
+    crs: EPSG:4326
   temporal:
     start: '2009-01-01T00:00:00Z'
     end: '2015-12-31T23:59:59Z'

@@ -5,7 +5,7 @@ description: |
   The dataset contains approximately 15,000 buildings modeled in LoD 2.2 with textured roofs.
   Produced in 2024 by ATGT using 5cm resolution nadir aerial photographs acquired in 2018 for the PCRS.
   The precision is under 10 cm in planimetry (XY) and under 20 cm in altimetry (Z).
-license: etalab-2.0 # NOTE: Licence Ouverte v2.0
+license: Etalab-2.0 # NOTE: Licence Ouverte v2.0
 keywords:
   - 3d city model
   - france

@@ -17,6 +17,7 @@ providers:
     roles:
       - producer
       - licensor
+      - host
     description: Prague Institute of Planning and Development
 extent:
   spatial:
@@ -35,6 +36,10 @@ links:
     href: https://geoportalpraha.cz
     type: text/html
     title: IPR Prague Geoportal - Home
+  - rel: license
+    href: https://creativecommons.org/licenses/by/4.0/
+    type: text/html
+    title: Creative Commons Attribution 4.0 International (attribution "data base © IPR Praha")
 # Additional Notes:
 # - Formats available: CityGML, Multipatch, Shapefile, DGN, DWG
 # - Structure: Divided by map sheets (1:5000)

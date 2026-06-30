@@ -5,7 +5,7 @@ description: |
   IMPORTANT: This dataset does NOT cover the entirety of these cities or municipalities. It exclusively models specific industrial, commercial, and business parks within those territories.
   The dataset contains approximately 24,000 buildings modeled in high detail at LoD 3 with textured roofs.
   Produced between 2024 and 2025 by ATGT using 3 to 5 cm resolution nadir aerial photographs acquired between 2016 and 2022.
-license: etalab-2.0 # NOTE: Licence Ouverte v2.0
+license: Etalab-2.0 # NOTE: Licence Ouverte v2.0
 keywords:
   - 3d city model
   - france

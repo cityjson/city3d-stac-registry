@@ -9,7 +9,7 @@ description: |
   topographical structures with 3D relevance like bridges, towers, and wind turbines.
   LoD2 models feature standardized roof shapes with a general height
   accuracy of +/- 1m[cite: 21].
-license: proprietary # NOTE: Offered as free self-service download, but exact open data license (e.g., dl-de/by-2-0) is not explicitly named.
+license: DL-DE-ZERO-2.0 # Datenlizenz Deutschland – Zero – Version 2.0 (per geoportal.hessen.de INSPIRE 3D LoD2 metadata; HVBG offers it "lizenz- und kostenfrei").
 keywords:
   - 3d city model
   - germany
@@ -29,7 +29,7 @@ inputs: [] # NOTE: Direct download URLs are dynamic and expire daily. See links 
 extent:
   spatial:
     bbox: [7.77, 49.39, 10.24, 51.66] # [west, south, east, north] Hessen state boundaries
-    crs: EPSG:25832
+    crs: EPSG:4326
   temporal:
     start: "2007-01-01T00:00:00Z" # NOTE: Airborne Laser Scanning (ALS) baseline acquisition started in 2007.
     end: "2024-12-31T00:00:00Z" # NOTE: ALKIS update cycle and supplementary data mention 2024.
@@ -38,6 +38,10 @@ links:
     href: https://gds.hessen.de/INTERSHOP/web/WFS/HLBG-Geodaten-Site/de_DE/-/EUR/ViewDownloadcenter-Start?path=3D-Daten/3D-Geb%C3%A4udemodelle/3D-Geb%C3%A4udemodelle%20LoD2
     type: text/html
     title: HVBG Hessen web portal
+  - rel: license
+    href: https://www.govdata.de/dl-de/zero-2-0
+    type: text/html
+    title: Datenlizenz Deutschland – Zero – Version 2.0
   - rel: about
     href: https://hvbg.hessen.de/landesvermessung/geotopographie/3d-daten/3d-gebaeudemodelle
     type: text/html
@@ -50,7 +54,7 @@ links:
     href: https://gds.hessen.de/INTERSHOP/static/WFS/HLBG-Geodaten-Site/-/HLBG-Geodaten/de_DE/Downloadcenter/Daten/3D-Daten/Produktbeschreibung_Erweiterter_Grunddatenbestand_LoD2.pdf
     type: application/pdf
     title: Product Description - Extended Basic Data Stock LoD2 (PDF)
-  - rel: alternative
+  - rel: alternate
     href: https://hvbg.hessen.de/sites/hvbg.hessen.de/files/2022-08/3d_gebaeude_testdaten_lodd2.zip
     type: application/zip
     title: Test Data Download (LoD2)

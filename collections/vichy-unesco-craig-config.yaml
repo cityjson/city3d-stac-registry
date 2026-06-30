@@ -5,7 +5,7 @@ description: |
   Unlike broader city models, this dataset focuses on a specific historical zone, containing exactly 879 buildings.
   Because of its focus on heritage preservation, the models are highly detailed at LoD 3 with textured roofs.
   Produced in 2024 by ATGT using ultra-high resolution (3cm) nadir aerial photographs acquired in 2021.
-license: etalab-2.0 # NOTE: Licence Ouverte v2.0
+license: Etalab-2.0 # NOTE: Licence Ouverte v2.0
 keywords:
   - 3d city model
   - france

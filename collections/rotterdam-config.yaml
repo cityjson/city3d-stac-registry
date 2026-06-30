@@ -1,7 +1,7 @@
 id: rotterdam-3d
 title: Rotterdam 3D City Model (LoD2)
 description: "3D LoD2 city model of Rotterdam, Netherlands, with textures.\nCreated from cadastre footprints combined with LiDAR data.\nThis sample dataset covers the Delfshaven district of Rotterdam.\nOriginal data available in CityGML format from the city open data portal.\n"
-license: CC-BY-4.0
+license: other # Rotterdam 3D open data is published as "Publiek domein" (Creative Commons Public Domain Mark 1.0) per data.overheid.nl (dataset 10230-rotterdam-3d).
 keywords:
 - 3d city model
 - buildings
@@ -51,6 +51,10 @@ links:
   href: https://data.rotterdam.nl/
   type: text/html
   title: Rotterdam Open Data Portal
+- rel: license
+  href: https://creativecommons.org/publicdomain/mark/1.0/
+  type: text/html
+  title: Public Domain Mark 1.0
 - rel: root
   href: https://www.pdok.nl/
   type: text/html

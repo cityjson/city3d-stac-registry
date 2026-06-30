@@ -4,7 +4,7 @@ description: |
   Digital 3D building models (LoD1 and LoD2) for the state of Rheinland-Pfalz, Germany.
   The models are based on the ALKIS footprints and feature standardized roof shapes.
   The height accuracy for LoD2 is generally 1 meter, although larger deviations can occur with complex roof shapes.
-license: dl-de/by-2-0
+license: DL-DE-BY-2.0
 keywords:
   - 3d city model
   - germany

@@ -44,6 +44,10 @@ links:
     href: https://e-government.hannover-stadt.de/geonetwork/srv/ger/catalog.search#/search?resultType=details&sortBy=relevance&from=1&to=20&fast=index&_content_type=json
     type: application/json
     title: Geonetwork Catalog Search - Hannover
+  - rel: license
+    href: https://creativecommons.org/licenses/by/4.0/
+    type: text/html
+    title: Creative Commons Attribution 4.0 International (CC BY 4.0)
 # Additional Notes:
 # - Vertical Accuracy: +/- 1m
 # - Exclusions: Buildings < 15m² and allotment gardens (Kleingärten) are not included.

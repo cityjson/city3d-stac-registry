@@ -47,7 +47,7 @@ inputs: [] # NOTE: Data is in SLPK/OBJ format (not CityGML/CityJSON). See links 
 extent:
   spatial:
     bbox: [144.8969810, -37.8506670, 144.9913462, -37.7754510]
-    crs: EPSG:28355  # MGA zone 55 (Victoria, Australia)
+    crs: EPSG:4326  # bbox is longitude/latitude; native CRS is MGA zone 55 (EPSG:28355)
   temporal:
     start: '2018-05-01T00:00:00Z'
     end: '2020-05-31T23:59:59Z'
@@ -76,3 +76,7 @@ links:
   href: https://www.land.vic.gov.au/maps-and-spatial/spatial-data/vicmap-catalogue/vicmap-buildings
   type: text/html
   title: Vicmap Buildings (statewide 2D/3D building data)
+- rel: license
+  href: https://creativecommons.org/licenses/by/4.0/
+  type: text/html
+  title: CC BY 4.0

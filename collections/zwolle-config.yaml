@@ -30,6 +30,7 @@ providers:
 - name: 3D Geoinformation Group (TU Delft)
   url: https://3d.bk.tudelft.nl/
   roles:
+  - licensor
   - processor
   - host
   description: 3D Geoinformation Research Group at TU Delft - creates and hosts the 3D BAG dataset
@@ -47,7 +48,7 @@ providers:
 extent:
   spatial:
     bbox: [6.0036191, 52.4405307, 6.2108108, 52.5879404]
-    crs: EPSG:7415  # EPSG:28992 (RD New) + EPSG:5709 (NAP height)
+    crs: EPSG:4326  # bbox is longitude/latitude; native CRS is EPSG:7415 (RD New + NAP height)
   temporal:
     start: '2021-01-01T00:00:00Z'
     end: '2025-09-03T23:59:59Z'

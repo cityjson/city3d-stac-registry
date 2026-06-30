@@ -9,7 +9,7 @@ description: |
 
   Data format: AutoDesk 3DS (.3ds) - tile-based download through the Bordeaux Metropole open data portal.
   No CityJSON or CityGML files are directly available.
-license: etalab-2.0
+license: other
 keywords:
 - 3d city model
 - buildings
@@ -37,7 +37,7 @@ inputs: [] # NOTE: Data is in 3DS format (not CityGML/CityJSON). Download via in
 extent:
   spatial:
     bbox: [-0.8838898, 44.7416956, -0.4549856, 45.0410389]
-    crs: EPSG:3945  # CC Zone 5 (local projected CRS for Bordeaux area)
+    crs: EPSG:4326  # bbox is longitude/latitude; native CRS is CC Zone 5 (EPSG:3945)
   temporal:
     start: '2012-01-01T00:00:00Z'
     end: '2012-12-31T23:59:59Z'
@@ -61,4 +61,4 @@ links:
 - rel: license
   href: https://www.etalab.gouv.fr/wp-content/uploads/2014/05/Licence_Ouverte.pdf
   type: application/pdf
-  title: Licence Ouverte / Open Licence (Etalab)
+  title: Licence Ouverte 2014 / Open Licence

@@ -24,7 +24,7 @@ providers:
 - name: City of Ingolstadt
   url: https://www.ingolstadt.de/
   roles:
-  - collaborator
+  - producer
   description: Ingolstadt municipality - Data acquisition support
 inputs:
   - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/Ingolstadt.city.json

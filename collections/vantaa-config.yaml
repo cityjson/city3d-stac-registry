@@ -54,7 +54,7 @@ inputs: []
 extent:
   spatial:
     bbox: [24.7853, 60.2370, 25.1978, 60.3770] # Vantaa approximate extent
-    crs: EPSG:3067
+    crs: EPSG:4326
   temporal:
     start: '2017-01-01T00:00:00Z'
     end: '2017-12-31T23:59:59Z'

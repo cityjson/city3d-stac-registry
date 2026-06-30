@@ -10,7 +10,7 @@ description: |
 
   Data format: ESRI Shapefile (3D with EleZ height) and ESRI Multipatch Geodatabase.
   No CityJSON or CityGML format available.
-license: OGL-Canada-2.0  # Open Government Licence - Toronto
+license: other  # Open Government Licence - Toronto
 keywords:
 - 3d city model
 - buildings

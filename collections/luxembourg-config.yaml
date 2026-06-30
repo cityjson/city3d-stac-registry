@@ -50,3 +50,7 @@ links:
   href: https://geoportail.lu/
   type: text/html
   title: Luxembourg Geoportal
+- rel: license
+  href: https://creativecommons.org/publicdomain/zero/1.0/
+  type: text/html
+  title: CC0 1.0 Universal Public Domain Dedication

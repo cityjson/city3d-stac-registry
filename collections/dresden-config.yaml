@@ -4,7 +4,7 @@ description: |
   3D city model of Dresden, Germany, available at multiple Levels of Detail: LoD1, LoD2, and LoD3.
   Buildings have partially textured models.
   Available in CityGML format. Data is accessible through the Dresden Open Data Portal.
-license: dl-de/by-2-0
+license: DL-DE-BY-2.0
 keywords:
 - 3d city model
 - buildings
@@ -26,7 +26,7 @@ inputs: []
 extent:
   spatial:
     bbox: [13.57, 50.97, 13.95, 51.18]
-    crs: EPSG:25833
+    crs: EPSG:4326
   temporal:
     start: '2009-01-01T00:00:00Z'
     end: '2009-12-31T23:59:59Z'

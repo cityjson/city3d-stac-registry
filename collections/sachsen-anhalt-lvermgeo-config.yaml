@@ -6,7 +6,7 @@ description: |
   Underground buildings are explicitly excluded.
   LoD1 models are represented as block models with flat roofs, featuring a height accuracy of approximately 5 meters.
   LoD2 models feature standardized roof shapes aligned with actual ridge lines, providing a height accuracy of approximately 1 meter.
-license: dl-de/by-2-0
+license: DL-DE-BY-2.0
 keywords:
   - 3d city model
   - germany

@@ -47,7 +47,7 @@ inputs: []
 extent:
   spatial:
     bbox: [24.56, 60.13, 24.88, 60.32]
-    crs: EPSG:3067
+    crs: EPSG:4326
   temporal:
     start: '2019-01-01T00:00:00Z'
     end: '2019-12-31T23:59:59Z'

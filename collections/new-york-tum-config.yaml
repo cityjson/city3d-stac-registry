@@ -21,17 +21,19 @@ providers:
   roles:
   - producer
   - processor
+  - host
   description: TUM Chair of Geoinformatics created this dataset from NYC Open Data using FME
 - name: NYC Open Data Portal
   url: https://opendata.cityofnewyork.us/
   roles:
   - licensor
+  - host
   description: Original data source - NYC Open Data terms of use apply
 inputs: []
 extent:
   spatial:
     bbox: [-74.2591, 40.4774, -73.7004, 40.9176] # New York City approximate extent
-    crs: EPSG:2263
+    crs: EPSG:4326
   temporal:
     start: '2015-01-01T00:00:00Z'
     end: '2015-12-31T23:59:59Z'
@@ -52,3 +54,7 @@ links:
   href: https://opendata.cityofnewyork.us/
   type: text/html
   title: NYC Open Data Portal (Original Data Source)
+- rel: license
+  href: https://www.nyc.gov/home/terms-of-use.page
+  type: text/html
+  title: NYC.gov Terms of Use

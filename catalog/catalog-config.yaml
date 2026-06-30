@@ -53,6 +53,6 @@ collections:
 - ../collections/espoo-config.yaml
 - ../collections/helsinki-config.yaml
 - ../collections/lyon-config.yaml
-- ../collections/north-rhine-westphalia-config.yaml
+- ../collections/nordrhein-westfalen-geobasis-config.yaml
 - ../collections/potsdam-config.yaml
 - ../collections/vienna-config.yaml

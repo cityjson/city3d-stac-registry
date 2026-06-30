@@ -37,7 +37,8 @@ providers:
   url: https://aamgroup.com/
   roles:
   - processor
-  description: Aerial imagery capture and 3D modelling contractor
+  - licensor
+  description: Aerial imagery capture and 3D modelling contractor; co-copyright holder (attribution required alongside WCC per CC BY 4.0)
 - name: Wellington City Council Open Data
   url: https://data-wcc.opendata.arcgis.com/
   roles:
@@ -50,7 +51,7 @@ inputs: [] # NOTE: Data is in GDB/DWG/SKP format (not CityGML/CityJSON).
 extent:
   spatial:
     bbox: [174.6172114, -41.4487953, 174.9372114, -41.1287953]
-    crs: EPSG:2193  # NZTM2000 horizontal, NZVD2016 vertical
+    crs: EPSG:4326  # bbox is longitude/latitude; native CRS is NZTM2000 horizontal + NZVD2016 vertical
   temporal:
     start: '2022-01-29T00:00:00Z'
     end: '2022-03-03T23:59:59Z'
@@ -71,6 +72,10 @@ links:
   href: https://gis-building-models-public-wcc-arcgis-prod.s3.ap-southeast-2.amazonaws.com/2022+3D+Buildings+Files/01+Metadata+WCC+AAM+3D+Buildings.pdf
   type: application/pdf
   title: Metadata PDF - WCC AAM 3D Buildings
+- rel: license
+  href: https://creativecommons.org/licenses/by/4.0/
+  type: text/html
+  title: CC BY 4.0
 - rel: metadata
   href: https://www.arcgis.com/sharing/rest/content/items/9c39b3bcc9d24358a89c20fcffd909b7/info/metadata/metadata.xml?format=default&output=html
   type: application/xml

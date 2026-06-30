@@ -5,7 +5,7 @@ description: |
   The UrbIS (Urban Information System) is the official geospatial database
   for the Brussels-Capital Region. Available in CityGML format.
   Data can be downloaded from the Brussels Datastore portal.
-license: other
+license: CC0-1.0
 keywords:
 - 3d city model
 - buildings
@@ -21,17 +21,13 @@ providers:
   roles:
   - producer
   - licensor
+  - host
   description: Brussels Regional IT Agency (formerly CIBG/CIRB) - manages the UrbIS database
-- name: Brussels-Capital Region
-  url: https://www.brussels.be/
-  roles:
-  - licensor
-  description: Brussels-Capital Region government, the public authority for the region
 inputs: []
 extent:
   spatial:
     bbox: [4.23, 50.76, 4.48, 50.91]
-    crs: EPSG:31370
+    crs: EPSG:4326
   temporal:
     start: '2024-02-01T00:00:00Z'
     end: '2025-12-06T23:59:59Z'
@@ -53,6 +49,6 @@ links:
   type: text/html
   title: Brussels Open Data Portal (alternative)
 - rel: license
-  href: https://datastore.brussels/web/urbis-download
+  href: https://creativecommons.org/publicdomain/zero/1.0/
   type: text/html
-  title: UrbIS Open Data License
+  title: CC0 1.0 Universal Public Domain Dedication

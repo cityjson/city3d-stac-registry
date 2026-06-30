@@ -46,9 +46,9 @@ links:
   type: text/html
   title: TU Delft 3D Open Cities Portal
 - rel: source
-  href: https://data.denhaag.nl/
+  href: https://denhaag.dataplatform.nl/
   type: text/html
-  title: The Hague Open Data Portal
+  title: The Hague Open Data Portal (Dataplatform Den Haag)
 - rel: root
   href: https://www.pdok.nl/
   type: text/html

@@ -18,6 +18,7 @@ providers:
 - name: 3D Geoinformation Group (TU Delft)
   url: https://3d.bk.tudelft.nl/
   roles:
+  - licensor
   - processor
   - host
   description: 3D Geoinformation Research Group at TU Delft - creates and hosts the 3D BAG dataset

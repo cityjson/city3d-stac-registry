@@ -7,7 +7,7 @@ description: |
   Structures are currently modeled exclusively as LoD1 objects because standard roof shapes cannot typically be assigned to them.
   The models are automatically generated using building floor plans from the ATKIS database, combined with a Digital Terrain Model (DGM) and non-ground points from classified LiDAR point clouds.
   The dataset is updated annually based on ATKIS and new laser scan data. No manual detailed modeling or texturing is applied.
-license: dl-de/by-2-0
+license: DL-DE-BY-2.0
 keywords:
   - 3d city model
   - germany
@@ -31,7 +31,7 @@ inputs: [] # NOTE: Nextcloud share link requires authentication (possibly expire
 extent:
   spatial:
     bbox: [11.67, 50.00, 15.05, 51.80] # [west, south, east, north]
-    crs: EPSG:25833
+    crs: EPSG:4326
 links:
   - rel: source
     href: https://www.geodaten.sachsen.de/digitale-hoehenmodelle-3994.html

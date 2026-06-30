@@ -6,7 +6,7 @@ description: |
   and roof shapes are derived from automatic stereo aerial image analysis,
   LIDAR data, or manual modeling. The building ground height is set to the
   lowest point of the Digital Terrain Model (DTM) within the footprint.
-license: dl-de/by-2-0
+license: DL-DE-BY-2.0
 keywords:
   - 3d city model
   - germany
@@ -49,3 +49,7 @@ links:
     href: https://data.geobasis-bb.de/geobasis/daten/3d_gebaeude/lod1_gml/
     type: text/html
     title: LGB Brandenburg - LoD1 CityGML Data Directory (Alternative Level of Detail)
+  - rel: license
+    href: https://www.govdata.de/dl-de/by-2-0
+    type: text/html
+    title: Datenlizenz Deutschland - Namensnennung - Version 2.0

@@ -1,7 +1,7 @@
 id: linz-3d
 title: Linz 3D City Model (LoD2)
 description: "3D LoD2 city model of Linz, Austria.\nAvailable in CityGML format.\n"
-license: CC-BY-3.0-AT
+license: CC-BY-4.0 # City of Linz open data (data.linz.gv.at) is published under CC BY 4.0; attribution "Stadt Linz".
 keywords:
 - 3d city model
 - buildings

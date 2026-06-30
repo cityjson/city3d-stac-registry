@@ -6,7 +6,7 @@ description: |
   to the actual ridge lines. The heights of the buildings are generally derived from
   laser scanning data. The data is provided in CityGML format.
   The dataset allows for statewide mass extraction via a GeoJSON link list, as well as area-based downloads.
-license: proprietary # NOTE: Despite being hosted on an "open geodata" portal, the metadata strictly states that reproduction or distribution violates copyright law and survey law. Verification of the actual terms of use on the portal is recommended.
+license: CC-BY-4.0
 keywords:
   - 3d city model
   - germany
@@ -29,7 +29,7 @@ inputs: [] # NOTE: Server has SSL certificate issue (missing intermediate CA). S
 extent:
   spatial:
     bbox: [7.87, 53.37, 11.32, 55.06] # [west, south, east, north]
-    crs: EPSG:25832
+    crs: EPSG:4326
   temporal:
     start: "2018-04-24T00:00:00Z" # NOTE: Initial creation date from the metadata.
     end: "2022-04-30T00:00:00Z" # NOTE: Date of the revision/publication referenced in the metadata.
@@ -50,6 +50,10 @@ links:
     href: https://geodaten.schleswig-holstein.de/gaialight-sh/_apps/dladownload/dl-lod2.html
     type: text/html
     title: Area-based Download Interface (Alternative Access)
+  - rel: license
+    href: https://geodaten.schleswig-holstein.de/gaialight-sh/_apps/dladownload/lizenz.html
+    type: text/html
+    title: Nutzungsbedingungen / CC BY 4.0
 # Additional Notes:
 # - Formats: CityGML
 # - Access Method: Mass download via GeoJSON link list (recommended for statewide processing) or interactive area-based selection.

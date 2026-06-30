@@ -1,7 +1,7 @@
 id: new-york-doitt-3d
 title: New York City 3D Building Models (LoD2) by NYC OTI
 description: "3D LoD2 building models of New York City by the Office of Technology and Innovation (OTI, formerly DoITT).\nCreated from cadastre footprints combined with LiDAR data.\nBuildings are modeled with thematic surfaces in LoD2, though for most buildings the geometric shape is LoD1.\nAvailable in CityGML, ESRI Multipatch, and DGN formats.\n"
-license: OTHER
+license: other
 keywords:
 - 3d city model
 - buildings
@@ -18,6 +18,11 @@ providers:
   - producer
   - licensor
   description: NYC Office of Technology and Innovation (formerly DoITT)
+- name: NYC Open Data Portal
+  url: https://opendata.cityofnewyork.us/
+  roles:
+  - host
+  description: City of New York open data portal
 inputs:
   - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/DA13_3D_Buildings_Merged.city.json
   # - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/DA13_3D_Buildings_Merged.gml

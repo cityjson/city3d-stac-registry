@@ -7,7 +7,7 @@ description: |
   Terrain Models (DGM), 3D point clouds from Airborne Laser Scanning (ALS) acquired
   between 2000 and 2018, and 3D point clouds derived from high-resolution (10 cm)
   digital stereoscopic aerial images collected since 2011.
-license: dl-de/by-2-0
+license: DL-DE-BY-2.0
 keywords:
   - 3d city model
   - germany
@@ -27,7 +27,7 @@ inputs: [] # NOTE: Manual download via map interface is required (max 10 tiles a
 extent:
   spatial:
     bbox: [7.20, 47.40, 10.70, 50.00]
-    crs: EPSG:25832
+    crs: EPSG:4326
   temporal:
     start: "2000-01-01T00:00:00Z"
     end: "2018-12-31T00:00:00Z" # NOTE: Extracted from the ALS data acquisition period (between 2000 and 2018).

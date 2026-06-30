@@ -6,7 +6,7 @@ description: |
   flat) without roof structures or facade textures. Geometries are derived from
   official building footprints (ALKIS), aerial imagery (orthophotos, oblique
   images, cycloramas), and digital elevation models (DGM5, DOM).
-license: dl-de/by-2-0
+license: DL-DE-BY-2.0
 keywords:
   - 3d city model
   - germany
@@ -27,9 +27,9 @@ inputs: [] # NOTE: Single large GML file; commenting out to generate metadata-on
 extent:
   spatial:
     bbox: [7.661, 47.903, 7.932, 48.072] # [west, south, east, north]
-    crs: EPSG:25832
+    crs: EPSG:4326
   temporal:
-    start: ""
+    start: null
     end: "2024-04-09T00:00:00Z" # NOTE: Extracted from the ISO metadata where the dateType is defined as "revision" (3rd link in 'Links').
 links:
   - rel: about

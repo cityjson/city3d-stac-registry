@@ -21,6 +21,7 @@ providers:
     roles:
       - producer
       - licensor
+      - host
     description: Official Open Data Portal for the City of Riga
 inputs:
   - https://data.gov.lv/dati/dataset/rigas-apkaimju-lod2-modeli/resource/2e00bb17-0c84-4ec4-9626-48002d0a47c8/download/atgazene_lod2.gml # Atgāzene
@@ -105,6 +106,10 @@ links:
     href: https://georiga.eu/en/
     type: text/html
     title: Rīga Open Data Portal (GEO RīGA)
+  - rel: license
+    href: https://creativecommons.org/licenses/by/4.0/
+    type: text/html
+    title: Creative Commons Attribution 4.0 International
 # Additional Notes:
 # - Formats Available: .gdb, .skp, .obj, .3ds, and .gml
 # - Structure: The dataset is divided into 58 separate files, corresponding to each neighborhood in Riga.

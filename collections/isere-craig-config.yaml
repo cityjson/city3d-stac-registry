@@ -7,7 +7,7 @@ description: |
   representing the calculated solar irradiation for the year 2023, taking into account roof
   characteristics and shadows from surrounding terrain and vegetation.
   Produced by ATGT from 5cm resolution nadir aerial photographs acquired between 2019 and 2024.
-license: etalab-2.0 # NOTE: Licence Ouverte 2.0 (Open License version 2.0) is the standard French open data license.
+license: Etalab-2.0 # NOTE: Licence Ouverte 2.0 (Open License version 2.0) is the standard French open data license.
 keywords:
   - 3d city model
   - france

@@ -8,7 +8,7 @@ description: |
   with a height accuracy of approximately +/- 1m. The dataset includes extensive attributes defined
   by the AdV standard, plus additional custom attributes provided by LGLN such as roof inclination,
   roof orientation, and calculated roof area.
-license: proprietary # NOTE: Exact license isn't explicitly named in the snippet (states "Geltende Lizenz je Gebäude"). Assumed restricted until a specific open data license (e.g., dl-de/by-2-0) is verified.
+license: various # NOTE: Official LGLN STAC reports "various"; per-tile licensing can vary.
 keywords:
   - 3d city model
   - germany
@@ -23,6 +23,7 @@ providers:
     url: https://lgln-geodaten.niedersachsen.de
     roles:
       - producer
+      - licensor
       - host
     description: State Office for Geoinformation and Land Surveying Lower Saxony
     # NOTE: Contact via Data_Access@lgln.niedersachsen.de
@@ -36,7 +37,7 @@ extent:
         11.7407869999998,
         54.002131999999094,
       ] # [west, south, east, north]
-    crs: EPSG:25832
+    crs: EPSG:4326
   temporal:
     start: "2024-05-31T00:00:00Z" # NOTE: Extracted from the product STAC (1st link in Links section)
     end: "2024-08-30T00:00:00Z" # NOTE: Extracted from the product STAC (1st link in Links section)
