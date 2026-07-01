@@ -41,6 +41,16 @@ extent:
   temporal:
     start: '2012-01-01T00:00:00Z'
     end: '2012-12-31T23:59:59Z'
+# Declared summaries (dataset not directly indexable; 3DS tile-based download
+# only). LoD2/textures confirmed by this collection's own description
+# ("Buildings are modelled at LOD2 (CityGML standard) with textures").
+summaries:
+  city3d:lods:
+  - 2
+  city3d:co_types:
+  - Building
+  city3d:textures:
+  - true
 links:
 - rel: about
   href: https://opendata.bordeaux-metropole.fr/explore/dataset/bati3d/information/

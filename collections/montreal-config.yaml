@@ -31,10 +31,6 @@ extent:
     start: '2009-01-01T00:00:00Z'
     end: '2009-12-31T23:59:59Z'
 links:
-- rel: about
-  href: https://3d.bk.tudelft.nl/opendata/opencities/
-  type: text/html
-  title: TU Delft 3D Open Cities Portal
 - rel: source
   href: https://donnees.montreal.ca/dataset/maquette-numerique-plateau-mont-royal-batiments-lod2-avec-textures
   type: text/html

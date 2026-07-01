@@ -27,6 +27,16 @@ extent:
     start: "2015-03-31T00:00:00Z" # NOTE: Extracted from data creation date described on website (1st link in 'Links')
     end: "2020-07-17T00:00:00Z" # NOTE: Extracted from data update date described on website (1st link in 'Links')
 inputs: [] # NOTE: Area-based download via geoportal. See links for the portal.
+# Declared summaries (dataset not directly indexable). Bridge confirmed by the
+# "3D Buildings and Bridges Model" link title above; LoD2/TINRelief sourced
+# from https://github.com/OloOcki/awesome-citygml (same geoportalpraha.cz portal).
+summaries:
+  city3d:lods:
+  - 2
+  city3d:co_types:
+  - Building
+  - Bridge
+  - TINRelief
 links:
   - rel: about
     href: https://geoportalpraha.cz/en/data-and-services/articles-and-projects/3D-model/3d-model-budovy-mosty
@@ -36,6 +46,14 @@ links:
     href: https://geoportalpraha.cz
     type: text/html
     title: IPR Prague Geoportal - Home
+  - rel: related
+    href: https://geoportalpraha.cz/en/data-and-services/7e6316e95cfe4f36ae06bbfb687bf34b
+    type: text/html
+    title: IPR Prague Geoportal - 3D Model Dataset Page (LoD2, bridges, DEM)
+  - rel: viewer
+    href: https://app.iprpraha.cz/apl/app/model3d/
+    type: text/html
+    title: 3D Model Viewer - Prague
   - rel: license
     href: https://creativecommons.org/licenses/by/4.0/
     type: text/html

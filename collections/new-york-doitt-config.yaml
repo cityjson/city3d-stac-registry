@@ -34,10 +34,6 @@ extent:
     start: '2014-01-01T00:00:00Z'
     end: '2014-12-31T23:59:59Z'
 links:
-- rel: about
-  href: https://3d.bk.tudelft.nl/opendata/opencities/
-  type: text/html
-  title: TU Delft 3D Open Cities Portal
 - rel: source
   href: https://data.cityofnewyork.us/City-Government/3-D-Building-Model/tnru-abg2
   type: text/html

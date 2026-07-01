@@ -50,10 +50,6 @@ links:
   href: https://www.cityjson.org/datasets/
   type: text/html
   title: CityJSON Datasets Page
-- rel: about
-  href: https://3d.bk.tudelft.nl/opendata/opencities/
-  type: text/html
-  title: TU Delft 3D Open Cities Portal
 - rel: related
   href: https://www.cityjson.org/specs/#geometry-templates
   type: text/html

@@ -58,6 +58,17 @@ extent:
   temporal:
     start: '2017-01-01T00:00:00Z'
     end: '2017-12-31T23:59:59Z'
+# Declared summaries (dataset not directly indexable). LoD1+LoD2/textures
+# confirmed directly by this collection's own description ("Textured
+# buildings", "Multiple Levels of Detail (LoD1 and LoD2)").
+summaries:
+  city3d:lods:
+  - 1
+  - 2
+  city3d:co_types:
+  - Building
+  city3d:textures:
+  - true
 links:
 - rel: about
   href: https://www.vantaa.fi/
@@ -67,7 +78,7 @@ links:
   href: https://hri.fi/
   type: text/html
   title: Helsinki Region Infoshare Portal
-- rel: about
-  href: https://3d.bk.tudelft.nl/opendata/opencities/
+- rel: viewer
+  href: https://kartta.vantaa.fi/
   type: text/html
-  title: TU Delft 3D Open Cities Portal
+  title: City of Vantaa Map Viewer (3D layers)

@@ -49,6 +49,9 @@ summaries:
   city3d:co_types:
   - Building
   - TINRelief
+  city3d:textures:
+  - true
+  - false
   proj:code:
   - EPSG:3879
 links:

@@ -31,6 +31,13 @@ extent:
   temporal:
     start: "2000-01-01T00:00:00Z"
     end: "2018-12-31T00:00:00Z" # NOTE: Extracted from the ALS data acquisition period (between 2000 and 2018).
+# Declared summaries (dataset not directly indexable; scoped to this LoD2
+# product specifically, per the LGL product page linked below)
+summaries:
+  city3d:lods:
+  - 2
+  city3d:co_types:
+  - Building
 links:
   - rel: about
     href: https://www.lgl-bw.de/Produkte/3D-Produkte/3D-Gebaeudemodelle/LoD2/

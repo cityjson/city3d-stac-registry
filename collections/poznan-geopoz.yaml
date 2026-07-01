@@ -5,7 +5,7 @@ description: |
   a dedicated layer for bridges, viaducts, and overpasses, as well as digital terrain
   models and additional descriptive attributes. The data is continually updated and
   accessible via an interactive web interface supporting Polish, English, and German.
-license: proprietary # NOTE: Specific open data license not explicitly stated in snippet
+license: other # NOTE: No explicit reuse license stated on any GEOPOZ/SIP Poznań page; access is free via the web viewer but terms are unconfirmed
 keywords:
   - 3d city model
   - poland
@@ -29,10 +29,35 @@ extent:
   spatial:
     bbox: [16.73, 52.29, 17.07, 52.51] # [west, south, east, north] Poznań city boundaries
     crs: EPSG:4326
+# Declared summaries (dataset not directly indexable; interactive download
+# only). Building/Bridge/TINRelief confirmed by this collection's own
+# description; PlantCover/CityFurniture/LoDs/textures sourced from
+# https://github.com/OloOcki/awesome-citygml (same sip.poznan.pl portal).
+summaries:
+  city3d:lods:
+  - 1
+  - 2
+  - 3
+  city3d:co_types:
+  - Building
+  - Bridge
+  - TINRelief
+  - PlantCover
+  - CityFurniture
+  city3d:textures:
+  - true
 links:
   - rel: source
     href: https://sipgeoportal.geopoz.poznan.pl/
     type: text/html
     title: SIP Geoportal Poznań
+  - rel: about
+    href: https://sip.poznan.pl/sip/
+    type: text/html
+    title: SIP Poznań Portal
+  - rel: viewer
+    href: https://sip.poznan.pl/model3d/
+    type: text/html
+    title: 3D Model Viewer - Poznań
 # Additional Notes:
 # - Access: The GeoData Portal allows users to interactively select the area to download via the web interface. There is no specific file to download.

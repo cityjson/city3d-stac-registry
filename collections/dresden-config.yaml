@@ -39,10 +39,6 @@ links:
   href: https://opendata.dresden.de/
   type: text/html
   title: Dresden Open Data Portal
-- rel: about
-  href: https://3d.bk.tudelft.nl/opendata/opencities/
-  type: text/html
-  title: TU Delft 3D Open Cities Portal
 - rel: license
   href: https://www.govdata.de/dl-de/by-2-0
   type: text/html

@@ -1,34 +1,47 @@
 id: ingolstadt-3d
-title: Ingolstadt 3D City Model (LoD3)
-description: "High-quality 3D LoD3 city model of Ingolstadt, Germany, created by a TU Delft research project.\nBuildings are manually modeled based on Mobile Laser Scanning (MLS) data.\nMainly focuses on buildings with textures. Includes a LoD3 Modeling Guide.\nAvailable in CityGML and CityJSON formats.\nNote: This is a research dataset, not official city data.\n"
-license: CC-BY-4.0
+title: Ingolstadt 3D Road Space Models (LoD3 Buildings, LoD2 Buildings, Road Network)
+description: "3D road space models of Ingolstadt, Germany, from the SAVe/SAVeNoW research project (Technical University of Munich).\nIncludes: (1) LoD3 buildings manually modeled in SketchUp/CityEditor from Mobile Laser Scanning (MLS) point clouds captured by 3D Mapping Solutions; (2) LoD2 buildings from the Bavarian State Survey Administration open data portal; (3) a semantic road network converted from an OpenDRIVE demo dataset by 3D Mapping Solutions.\nAvailable in CityGML (2.0 and 3.0). The LoD3 buildings are also mirrored as CityJSON by TU Delft.\nNote: This is a research dataset, not official city data. Component datasets carry different licenses; see the license links below.\n"
+license: other
 keywords:
 - 3d city model
 - buildings
+- LOD2
 - LOD3
 - Germany
 - Ingolstadt
 - CityGML
 - textured
 - MLS
+- road network
 - high-detail
 - research
 providers:
-- name: TU Delft 3D Geoinformation
-  url: https://3d.bk.tudelft.nl/
+- name: SAVe/SAVeNoW Research Project (Technical University of Munich)
+  url: https://github.com/savenow/lod3-road-space-models
   roles:
   - producer
   - licensor
-  - host
-  description: 3D Geoinformation Research Group at TU Delft - Research project creating LoD3 models
-- name: City of Ingolstadt
-  url: https://www.ingolstadt.de/
+  description: Chair of Geoinformatics, TU Munich - Manually modeled the LoD3 buildings and converted the road network from OpenDRIVE to CityGML
+- name: 3D Mapping Solutions GmbH
+  url: https://www.3d-mapping.de/en/
   roles:
   - producer
-  description: Ingolstadt municipality - Data acquisition support
+  description: Captured the MLS point clouds used as the LoD3 building modeling basis and produced the source OpenDRIVE road network demo dataset
+- name: Bayerische Vermessungsverwaltung (Bavarian State Survey Administration)
+  url: https://geodaten.bayern.de/opengeodata/OpenDataDetail.html?pn=lod2
+  roles:
+  - producer
+  - licensor
+  description: Publishes the open LoD2 building models covering the same area
+- name: TU Delft 3D Geoinformation
+  url: https://3d.bk.tudelft.nl/
+  roles:
+  - host
+  description: Mirrors a CityJSON conversion of the LoD3 buildings dataset
 inputs:
-  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/Ingolstadt.city.json
-  # - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/Ingolstadt.gml
+  - https://raw.githubusercontent.com/savenow/lod3-road-space-models/main/models/building/lod3/combined/citygml/lod3_building_models__v3.gml
+  - https://raw.githubusercontent.com/savenow/lod3-road-space-models/main/models/building/lod2/combined/citygml/lod2_building_models__v3.gml.gz
+  - https://raw.githubusercontent.com/savenow/lod3-road-space-models/main/models/road-network/citygml/2021-04-22_HD21_529_Intersections_CityHall_Ingolstadt_enhanced_traffic_spaces_v3.gml.gz
 extent:
   spatial:
     bbox: []
@@ -38,14 +51,22 @@ extent:
     end: '2020-12-31T23:59:59Z'
 links:
 - rel: source
-  href: https://3d.bk.tudelft.nl/opendata/opencities/
+  href: https://github.com/savenow/lod3-road-space-models
   type: text/html
-  title: TU Delft 3D Open Cities Portal
+  title: SAVe/SAVeNoW LOD3 Road Space Models Repository
 - rel: related
   href: https://creating-citygml-datasets.readthedocs.io/en/latest/creation-guidelines/lod3-models-based-on-point-clouds.html
   type: text/html
   title: LoD3 Modeling Guide (Creating CityGML Datasets)
 - rel: license
+  href: https://creativecommons.org/licenses/by-sa/4.0/
+  type: text/html
+  title: LoD3 buildings license - Creative Commons Attribution-ShareAlike 4.0 International
+- rel: license
   href: https://creativecommons.org/licenses/by/4.0/
   type: text/html
-  title: Creative Commons Attribution 4.0 International
+  title: LoD2 buildings license - Creative Commons Attribution 4.0 International
+- rel: license
+  href: https://creativecommons.org/licenses/by-nc-sa/4.0/
+  type: text/html
+  title: Road network license - Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International

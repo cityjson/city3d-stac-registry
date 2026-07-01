@@ -33,6 +33,13 @@ extent:
   temporal:
     start: "2018-04-24T00:00:00Z" # NOTE: Initial creation date from the metadata.
     end: "2022-04-30T00:00:00Z" # NOTE: Date of the revision/publication referenced in the metadata.
+# Declared summaries (dataset not directly indexable; portal has an SSL
+# certificate issue). Scoped to this LoD2 building product per its title.
+summaries:
+  city3d:lods:
+  - 2
+  city3d:co_types:
+  - Building
 links:
   - rel: about
     href: https://sh-mis.gdi-sh.de/smartfinder-sdi/?lang=en#/datasets/iso/0cd0b5b3-d5f8-407f-a7a3-b01739ed9806

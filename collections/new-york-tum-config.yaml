@@ -37,15 +37,20 @@ extent:
   temporal:
     start: '2015-01-01T00:00:00Z'
     end: '2015-12-31T23:59:59Z'
+# Declared summaries (dataset not directly indexable; sourced from
+# https://github.com/OloOcki/awesome-citygml, same TUM NYC project referenced above)
+summaries:
+  city3d:lods:
+  - 1
+  - 2
+  city3d:co_types:
+  - Building
+  - Road
 links:
 - rel: about
   href: https://www.asg.ed.tum.de/gis/projekte/new-york-city-3d/
   type: text/html
   title: TUM Project Page with Downloads
-- rel: alternate
-  href: https://3d.bk.tudelft.nl/opendata/opencities/
-  type: text/html
-  title: TU Delft 3D Open Cities Portal
 - rel: cite-as
   href: https://doi.org/10.5194/isprs-annals-IV-4-W5-9-2017
   type: text/html

@@ -42,6 +42,14 @@ extent:
   temporal:
     start: '2025-01-01T00:00:00Z'
     end: '2025-12-31T23:59:59Z'
+# Declared summaries (dataset not directly indexable; Shapefile/Multipatch
+# GDB, not CityGML/CityJSON). Building footprints with height only, per this
+# collection's own description; LoD1 confirmed by the "3D Massing" title.
+summaries:
+  city3d:lods:
+  - 1
+  city3d:co_types:
+  - Building
 links:
 - rel: about
   href: https://open.toronto.ca/dataset/3d-massing/

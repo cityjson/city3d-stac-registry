@@ -26,15 +26,33 @@ extent:
   temporal:
     start: '2013-01-01T00:00:00Z'
     end: '2015-12-31T23:59:59Z'
+# Declared summaries (dataset not directly indexable). LoD2/textures
+# confirmed directly by this collection's own description ("3D LoD2 city
+# model of Berlin ... with textures").
+summaries:
+  city3d:lods:
+  - 2
+  city3d:co_types:
+  - Building
+  city3d:textures:
+  - true
 links:
 - rel: source
   href: https://daten.berlin.de/datensaetze/3d-gebaudemodelle-im-level-of-detail-2-lod-2-3c7c49af
   type: text/html
   title: Berlin 3D Building Models LoD2 (Berlin Open Data)
-- rel: alternate
-  href: https://3d.bk.tudelft.nl/opendata/opencities/
+- rel: related
+  href: https://gdi.berlin.de/geonetwork/srv/ger/catalog.search#/metadata/3c7c49af-00a4-3bcd-bc00-20e7f0f1b7bf
   type: text/html
-  title: TU Delft 3D Open Cities Portal (host)
+  title: Berlin 3D Building Models LoD2 (Geoportal Metadata Record)
+- rel: related
+  href: https://www.businesslocationcenter.de/berlin3d-downloadportal/?lang=en#/export
+  type: text/html
+  title: Berlin 3D Mesh Download Portal
+- rel: about
+  href: https://www.businesslocationcenter.de/en/economic-atlas/download-portal/
+  type: text/html
+  title: Business Location Center - Download Portal (Berlin geodata)
 - rel: license
   href: https://www.govdata.de/dl-de/zero-2-0
   type: text/html

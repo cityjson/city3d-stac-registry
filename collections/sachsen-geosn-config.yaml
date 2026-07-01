@@ -32,7 +32,24 @@ extent:
   spatial:
     bbox: [11.67, 50.00, 15.05, 51.80] # [west, south, east, north]
     crs: EPSG:4326
+# Declared summaries (dataset not directly indexable). All values confirmed by
+# this collection's own description: LoD1/LoD2 buildings, LoD1-only structures
+# (bridges, wind turbines, masts, walls, weirs -> GenericCityObject), and
+# "No manual detailed modeling or texturing is applied".
+summaries:
+  city3d:lods:
+  - 1
+  - 2
+  city3d:co_types:
+  - Building
+  - GenericCityObject
+  city3d:textures:
+  - false
 links:
+  - rel: related
+    href: https://geodaten.sachsen.de/downloadbereich-digitale-3d-stadtmodelle-4875.html
+    type: text/html
+    title: GeoSN - 3D City Model Download Area
   - rel: source
     href: https://www.geodaten.sachsen.de/digitale-hoehenmodelle-3994.html
     type: text/html

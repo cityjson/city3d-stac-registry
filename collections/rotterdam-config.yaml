@@ -43,10 +43,6 @@ extent:
     start: '2010-01-01T00:00:00Z'
     end: '2010-12-31T23:59:59Z'
 links:
-- rel: about
-  href: https://3d.bk.tudelft.nl/opendata/opencities/
-  type: text/html
-  title: TU Delft 3D Open Cities Portal
 - rel: source
   href: https://data.rotterdam.nl/
   type: text/html

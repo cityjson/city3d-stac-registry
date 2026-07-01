@@ -25,7 +25,9 @@ providers:
   roles:
   - host
   description: Official open data portal of the City of Namur
-inputs: [] # NOTE: Server unreachable (carto.ville.namur.be timeout). SketchUp format not supported.
+inputs:
+  - https://carto.ville.namur.be/data/3D_Ponts_Citadelle/3D_Citadelle.ZIP
+  - https://data.namur.be/explore/assets/namur-3d-citadelle-et-ponts/view/#:~:text=https%3A//carto.ville.namur.be/data/3D_Ponts_Citadelle/3D_Ponts.ZIP
 extent:
   spatial:
     bbox: [4.82, 50.43, 4.90, 50.48] # [west, south, east, north] Namur city center
@@ -42,10 +44,6 @@ links:
   href: https://www.namur.be/
   type: text/html
   title: City of Namur Official Website
-- rel: alternate
-  href: https://3d.bk.tudelft.nl/opendata/opencities/
-  type: text/html
-  title: TU Delft 3D Open Cities Portal
 - rel: license
   href: https://creativecommons.org/licenses/by/4.0/
   type: text/html

@@ -65,6 +65,8 @@ summaries:
   - LandUse
   - SolitaryVegetationObject
   - TransportationComplex
+  city3d:textures:
+  - true
   proj:code:
   - EPSG:3067
 links:
@@ -77,10 +79,10 @@ links:
   type: text/html
   title: City of Espoo Official Website
 - rel: about
+  href: https://kartat.espoo.fi/3d/citymodel_en.html
+  type: text/html
+  title: Espoo 3D City Model - Detailed Information Page
+- rel: about
   href: https://hri.fi/
   type: text/html
   title: Helsinki Region Infoshare Portal
-- rel: about
-  href: https://3d.bk.tudelft.nl/opendata/opencities/
-  type: text/html
-  title: TU Delft 3D Open Cities Portal

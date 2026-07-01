@@ -33,6 +33,15 @@ extent:
   temporal:
     start: "2007-01-01T00:00:00Z" # NOTE: Airborne Laser Scanning (ALS) baseline acquisition started in 2007.
     end: "2024-12-31T00:00:00Z" # NOTE: ALKIS update cycle and supplementary data mention 2024.
+# Declared summaries (dataset not directly indexable; direct download URLs
+# expire daily). Scoped to the base LoD2 building product only — the
+# "ALKIS-ATKIS-übergreifender Grunddatenbestand" extension (bridges, towers,
+# wind turbines) is optional and not confirmed as included here.
+summaries:
+  city3d:lods:
+  - 2
+  city3d:co_types:
+  - Building
 links:
   - rel: source
     href: https://gds.hessen.de/INTERSHOP/web/WFS/HLBG-Geodaten-Site/de_DE/-/EUR/ViewDownloadcenter-Start?path=3D-Daten/3D-Geb%C3%A4udemodelle/3D-Geb%C3%A4udemodelle%20LoD2

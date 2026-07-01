@@ -31,6 +31,16 @@ extent:
   temporal:
     start: null
     end: "2024-04-09T00:00:00Z" # NOTE: Extracted from the ISO metadata where the dateType is defined as "revision" (3rd link in 'Links').
+# Declared summaries (dataset not directly indexable). textures: false is
+# confirmed directly by this collection's own description ("without roof
+# structures or facade textures").
+summaries:
+  city3d:lods:
+  - 2
+  city3d:co_types:
+  - Building
+  city3d:textures:
+  - false
 links:
   - rel: about
     href: https://geodaten.freiburg.de/geonetwork/srv/eng/catalog.search#/metadata/1c576440-e5e1-4095-bff1-a14d76cec6f4
@@ -48,6 +58,10 @@ links:
     href: https://www.govdata.de/dl-de/by-2-0
     type: text/html
     title: Datenlizenz Deutschland - Namensnennung - Version 2.0
+  - rel: viewer
+    href: https://3d.freiburg.de/#/
+    type: text/html
+    title: Freiburg 3D City Model Viewer
 # Additional Notes:
 # - Access Method: Direct HTTP download.
 # - Alternate Formats: Cesium 3D Tilesets (textured and untextured) are also available via the provider's endpoints.

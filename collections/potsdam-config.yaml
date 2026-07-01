@@ -29,6 +29,13 @@ extent:
   temporal:
     start: '2011-01-01T00:00:00Z'
     end: '2012-12-31T23:59:59Z'
+# Declared summaries (dataset not directly indexable). LoD2/CityGML confirmed
+# directly by this collection's own description.
+summaries:
+  city3d:lods:
+  - 2
+  city3d:co_types:
+  - Building
 links:
 - rel: alternate
   href: https://opendata.potsdam.de/explore/dataset/3d-gebaudemodell-lod2-citygml/information/
@@ -46,10 +53,6 @@ links:
   href: https://geoportal.brandenburg.de/
   type: text/html
   title: Geoportal Brandenburg (state geoportal)
-- rel: about
-  href: https://3d.bk.tudelft.nl/opendata/opencities/
-  type: text/html
-  title: TU Delft 3D Open Cities Portal
 - rel: license
   href: https://www.govdata.de/dl-de/by-2-0
   type: text/html

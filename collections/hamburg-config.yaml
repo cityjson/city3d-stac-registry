@@ -33,15 +33,30 @@ extent:
   temporal:
     start: '2017-01-01T00:00:00Z'
     end: '2017-12-31T23:59:59Z'
+# Declared summaries (dataset not directly indexable; sourced from
+# https://github.com/OloOcki/awesome-citygml, cross-checked against the same
+# suche.transparenz.hamburg.de dataset page linked below)
+summaries:
+  city3d:lods:
+  - 1
+  - 2
+  city3d:co_types:
+  - Building
+  city3d:textures:
+  - true
 links:
 - rel: source
   href: https://suche.transparenz.hamburg.de/dataset/3d-stadtmodell-lod2-de-hamburg2
   type: text/html
   title: Hamburg Transparency Portal Dataset Page
-- rel: alternate
-  href: https://3d.bk.tudelft.nl/opendata/opencities/
+- rel: related
+  href: https://metaver.de/trefferanzeige?docuuid=B438AD57-223B-43A4-8E74-767CEC8A96D7
   type: text/html
-  title: TU Delft 3D Open Cities Portal (host)
+  title: Detailed LoD2 Dataset (manually improved roofs, textured)
+- rel: viewer
+  href: https://geoportal-hamburg.de/geo-online/
+  type: text/html
+  title: Hamburg Geoportal Online Viewer
 - rel: license
   href: https://www.govdata.de/dl-de/by-2-0
   type: text/html
