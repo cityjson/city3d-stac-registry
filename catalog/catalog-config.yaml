@@ -7,7 +7,6 @@ collections:
 - ../collections/estonia-config.yaml
 - ../collections/hamburg-config.yaml
 - ../collections/ingolstadt-config.yaml
-- ../collections/japan-plateau-config.yaml
 - ../collections/linz-config.yaml
 - ../collections/luxembourg-config.yaml
 - ../collections/montreal-config.yaml
@@ -56,3 +55,4 @@ collections:
 - ../collections/nordrhein-westfalen-geobasis-config.yaml
 - ../collections/potsdam-config.yaml
 - ../collections/vienna-config.yaml
+- ../collections/japan-plateau-config.yaml
