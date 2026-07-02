@@ -57,20 +57,35 @@ for p in (yaml.safe_load(open('$CATALOG_CONFIG')).get('collections') or []):
 ")
   fi
 
+  declare -a failed=()
   for name in "${targets[@]}"; do
     cfg="$ROOT/collections/${name}-config.yaml"
     [ -f "$cfg" ] || cfg="$ROOT/collections/${name}.yaml"
     if [ ! -f "$cfg" ]; then
       echo "skip: no config found for '$name'" >&2
+      failed+=("$name")
       continue
     fi
-    id=$(python3 -c "import yaml; print(yaml.safe_load(open('$cfg'))['id'])")
+    if ! id=$(python3 -c "import yaml; print(yaml.safe_load(open('$cfg'))['id'])"); then
+      echo "✗ FAILED (bad config): $name" >&2
+      failed+=("$name")
+      continue
+    fi
     echo "═══ $name → $STAC_OUT/$id ═══"
-    "$TOOL" collection \
+    if ! "$TOOL" collection \
       --config "$cfg" \
       --output "$STAC_OUT/$id" \
-      --skip-errors --overwrite --pretty --geoparquet
+      --skip-errors --overwrite --pretty --geoparquet; then
+      echo "✗ FAILED: $name" >&2
+      failed+=("$name")
+    fi
   done
+
+  if (( ${#failed[@]} > 0 )); then
+    printf '%s\n' "${failed[@]}" > "$STAC_OUT/failed-collections.txt"
+    echo "⚠ ${#failed[@]} collection(s) failed, see $STAC_OUT/failed-collections.txt" >&2
+    echo "  Rerun with: scripts/generate-catalog.sh ${failed[*]}" >&2
+  fi
 fi
 
 # Rebuild the root catalog from whatever currently lives under $STAC_OUT.
@@ -81,3 +96,9 @@ echo "═══ catalog → $STAC_OUT/catalog.json ═══"
   --config "$CATALOG_CONFIG" \
   --output "$STAC_OUT" \
   --pretty
+
+# Catalog is rebuilt from whatever succeeded above; still signal failure so
+# CI/you notice, without having thrown away the partial progress.
+if (( ${#failed[@]:-0} > 0 )); then
+  exit 1
+fi

@@ -40,8 +40,8 @@ providers:
   description: Mirrors a CityJSON conversion of the LoD3 buildings dataset
 inputs:
   - https://raw.githubusercontent.com/savenow/lod3-road-space-models/main/models/building/lod3/combined/citygml/lod3_building_models__v3.gml
-  - https://raw.githubusercontent.com/savenow/lod3-road-space-models/main/models/building/lod2/combined/citygml/lod2_building_models__v3.gml.gz
-  - https://raw.githubusercontent.com/savenow/lod3-road-space-models/main/models/road-network/citygml/2021-04-22_HD21_529_Intersections_CityHall_Ingolstadt_enhanced_traffic_spaces_v3.gml.gz
+  - https://github.com/savenow/lod3-road-space-models/raw/refs/heads/main/models/building/lod2/combined/citygml/lod2_building_models__v3.gml.gz
+  - https://github.com/savenow/lod3-road-space-models/raw/fdddf41d62c49282bf319b79b9f0a7b0ce1152b2/models/road-network/citygml/2021-04-22_HD21_529_Intersections_CityHall_Ingolstadt_enhanced_traffic_spaces_v3.gml.gz
 extent:
   spatial:
     bbox: []
