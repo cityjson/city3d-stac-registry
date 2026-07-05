@@ -27,7 +27,7 @@ providers:
   description: Official open data portal of the City of Namur
 inputs:
   - https://carto.ville.namur.be/data/3D_Ponts_Citadelle/3D_Citadelle.ZIP
-  - https://data.namur.be/explore/assets/namur-3d-citadelle-et-ponts/view/#:~:text=https%3A//carto.ville.namur.be/data/3D_Ponts_Citadelle/3D_Ponts.ZIP
+  - https://carto.ville.namur.be/data/3D_Ponts_Citadelle/3D_Ponts.ZIP
 extent:
   spatial:
     bbox: [4.82, 50.43, 4.90, 50.48] # [west, south, east, north] Namur city center

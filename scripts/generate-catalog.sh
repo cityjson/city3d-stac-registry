@@ -30,6 +30,7 @@ mkdir -p "$TMPDIR" "$STAC_OUT"
 
 catalog_only=0
 declare -a targets=()
+declare -a failed=()
 for arg in "$@"; do
   case "$arg" in
     --catalog-only) catalog_only=1 ;;
@@ -57,7 +58,6 @@ for p in (yaml.safe_load(open('$CATALOG_CONFIG')).get('collections') or []):
 ")
   fi
 
-  declare -a failed=()
   for name in "${targets[@]}"; do
     cfg="$ROOT/collections/${name}-config.yaml"
     [ -f "$cfg" ] || cfg="$ROOT/collections/${name}.yaml"
@@ -99,6 +99,6 @@ echo "═══ catalog → $STAC_OUT/catalog.json ═══"
 
 # Catalog is rebuilt from whatever succeeded above; still signal failure so
 # CI/you notice, without having thrown away the partial progress.
-if (( ${#failed[@]:-0} > 0 )); then
+if (( ${#failed[@]} > 0 )); then
   exit 1
 fi
