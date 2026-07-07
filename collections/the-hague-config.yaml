@@ -1,5 +1,5 @@
 id: the-hague-3d
-title: The Hague 3D City Model (LoD2 with Terrain)
+title: The Hague 3D City Model (with Terrain)
 description: "3D LoD2 city model of The Hague (Den Haag), Netherlands, including terrain.\nThis is a sample dataset from the 2018 city model.\nA 2010 model is also available which contains terrain intersection curves.\nOriginal data available in CityGML and DGN formats from the city open data portal.\n"
 license: CC-BY-4.0
 keywords:
@@ -32,7 +32,7 @@ providers:
   description: 3D Geoinformation Research Group at TU Delft - converted to CityJSON and hosts sample dataset
 inputs:
   - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/DenHaag_01.city.json
-  # - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/DenHaag_01.xml
+  - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/DenHaag_01.xml
 extent:
   spatial:
     bbox: []

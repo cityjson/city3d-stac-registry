@@ -1,5 +1,5 @@
 id: espoo-3d
-title: Espoo 3D City Model (LoD1-LoD3)
+title: Espoo 3D City Model
 description: |
   3D city model of Espoo, Finland, at multiple Levels of Detail (LoD1 to LoD3).
   The city information model covers all object types defined in the CityGML standard,

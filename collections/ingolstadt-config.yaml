@@ -1,5 +1,5 @@
 id: ingolstadt-3d
-title: Ingolstadt 3D Road Space Models (LoD3 Buildings, LoD2 Buildings, Road Network)
+title: Ingolstadt 3D Road Space Model
 description: "3D road space models of Ingolstadt, Germany, from the SAVe/SAVeNoW research project (Technical University of Munich).\nIncludes: (1) LoD3 buildings manually modeled in SketchUp/CityEditor from Mobile Laser Scanning (MLS) point clouds captured by 3D Mapping Solutions; (2) LoD2 buildings from the Bavarian State Survey Administration open data portal; (3) a semantic road network converted from an OpenDRIVE demo dataset by 3D Mapping Solutions.\nAvailable in CityGML (2.0 and 3.0). The LoD3 buildings are also mirrored as CityJSON by TU Delft.\nNote: This is a research dataset, not official city data. Component datasets carry different licenses; see the license links below.\n"
 license: other
 keywords:

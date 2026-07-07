@@ -1,5 +1,5 @@
 id: zurich-3d
-title: Zürich 3D City Model (LoD2)
+title: Zürich 3D City Model
 description: |
   3D LoD2 city model of Zürich, Switzerland.
   Full city dataset with building models converted from CityGML to CityJSON.

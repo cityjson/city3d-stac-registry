@@ -1,5 +1,5 @@
 id: estonia-3d
-title: Estonia 3D Building Models (LoD1+LoD2)
+title: Estonia 3D Building Models
 description: "National 3D building dataset covering all of Estonia at LoD1 and LoD2.
   Data is produced from cadastral footprints and LiDAR. Available in Geodatabase,
   CityGML, and OBJ formats. Updated frequently with new municipalities added regularly.

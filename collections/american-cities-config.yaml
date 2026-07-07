@@ -1,5 +1,5 @@
 id: american-cities-3d
-title: American Cities 3D Buildings
+title: American Cities 3D Building Models
 description: "125 million buildings across the United States at LoD1.\nGenerated from Microsoft USBuildingFootprints, OpenStreetMap, and other open sources.\nSeparated by state. Available in both CityJSON and CityGML formats.\n"
 license: ODbL-1.0
 keywords:

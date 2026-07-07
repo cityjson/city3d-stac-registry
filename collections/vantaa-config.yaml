@@ -3,7 +3,7 @@
 # Data access through city portal or Helsinki Region Infoshare
 # NOTE: License needs verification - may not actually be CC-BY-4.0
 id: vantaa-3d
-title: Vantaa 3D City Model (LoD1+LoD2)
+title: Vantaa 3D City Model
 description: |
   3D city model of Vantaa, Finland, available at both LoD1 and LoD2.
   Vantaa is part of the Helsinki metropolitan area and participates in

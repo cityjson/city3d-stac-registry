@@ -1,5 +1,5 @@
 id: toronto-3d
-title: Toronto 3D City Model (LoD1)
+title: Toronto 3D City Model
 description: |
   3D LoD1 city model of Toronto, Canada.
   Building footprints with height information for virtually every building in the City of Toronto.
@@ -33,8 +33,6 @@ providers:
   - host
   description: Toronto CKAN open data portal
 inputs: [] # NOTE: Data is in Shapefile/Multipatch GDB format (not CityGML/CityJSON).
-  # - https://ckan0.cf.opendata.inter.prod-toronto.ca/dataset/387b2e3b-2a76-4199-8b3b-0b7d22e2ec10/resource/c57a333a-dc6c-416e-8dd0-7b7964161720/download/3dmassingshapefile_2025_wgs84.zip
-  # - https://ckan0.cf.opendata.inter.prod-toronto.ca/dataset/387b2e3b-2a76-4199-8b3b-0b7d22e2ec10/resource/74c5826a-690e-4c8f-83d2-ff1fc2fc72db/download/3dmassingmultipatch_2025_wgs84.gdb.zip
 extent:
   spatial:
     bbox: [-79.6392832, 43.5796082, -79.1132193, 43.8554425]

@@ -1,5 +1,5 @@
 id: netherlands-3d-bag
-title: Netherlands 3D BAG (v20250903)
+title: Netherlands 3D BAG Building Models (v20250903)
 description: "All 10 million+ buildings in the Netherlands with LoD1 and LoD2 representations.\nDerived from the Dutch BAG (Basisregistratie Adressen en Gebouwen) registry.\nTiled dataset with 8,941 tiles in quadtree structure (zoom levels 8-14).\nAvailable in CityJSON (.gz), GeoPackage (.gz), OBJ (.zip), and IFC (.zip) formats.\n"
 license: CC-BY-4.0
 keywords:

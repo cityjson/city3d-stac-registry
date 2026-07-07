@@ -1,5 +1,5 @@
 id: geobasis-nrw
-title: 3D Building Models LoD2 Nordrhein-Westfalen
+title: North Rhine-Westphalia 3D Building Models
 description: |
   Digital 3D building models (LoD2) for the state of Nordrhein-Westfalen (North Rhine-Westphalia), Germany.
   The models are derived from Airborne Laser Scanning (ALS, 2019-2024), a 1m resolution Digital
@@ -47,6 +47,14 @@ links:
     href: https://www.bezreg-koeln.nrw.de/system/files/media/document/file/geobasis_3dg_testdaten_3d-gm-lod2_citygml.zip
     type: application/zip
     title: Test Data Download (LoD2 CityGML)
+  - rel: alternate
+    href: https://www.gis.nrw.de/geobasis/LOD2/SceneServer
+    type: application/json
+    title: 3D Scene Server API for web visualization
+  - rel: license
+    href: https://www.govdata.de/dl-de/zero-2-0
+    type: text/html
+    title: Datenlizenz Deutschland - Zero - Version 2.0
 # Additional Notes:
 # - Format: CityGML
 # - Access Method: Direct HTTP directory containing data archives.

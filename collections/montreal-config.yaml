@@ -1,5 +1,5 @@
 id: montreal-3d
-title: Montréal 3D City Model (LoD2)
+title: Montréal 3D City Model
 description: "3D LoD2 city model of Montréal, Canada.\nCreated through photogrammetry. Includes terrain (TIN) in CityGML format.\nBuildings are textured. A 2009 dataset is also available.\nAvailable in CityGML and 3DM formats.\n"
 license: CC-BY-4.0
 keywords:

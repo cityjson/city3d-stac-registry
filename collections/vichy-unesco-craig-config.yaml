@@ -1,5 +1,5 @@
 id: craig-vichy-unesco-2024
-title: 3D building models Vichy UNESCO perimeter 2024
+title: Vichy UNESCO Perimeter 3D Building Models (2024)
 description: |
   High-precision digital 3D building models strictly limited to the UNESCO World Heritage perimeter within the city of Vichy, France.
   Unlike broader city models, this dataset focuses on a specific historical zone, containing exactly 879 buildings.
@@ -29,7 +29,6 @@ providers:
     # NOTE: Contact via contact@craig.fr
 inputs:
   - https://drive.opendata.craig.fr/s/opendata/download?path=%2F3d%2Fbati3d%2F02_CIM%2FCityGML%2F2024_Building%2FVichy_UNESCO&files=2024_BC1_Vichy_UNESCO_2021_LoD3.gml
-  # - https://drive.opendata.craig.fr/s/opendata?path=%2F3d%2Fbati3d%2F02_CIM%2FCityJSON%2F2024_Building%2FVichy_UNESCO # NOTE: Main repository folder for CityJSON files.
 extent:
   spatial:
     bbox: [3.4151, 46.1185, 3.4309, 46.1279] # [west, south, east, north]

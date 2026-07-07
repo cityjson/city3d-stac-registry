@@ -1,12 +1,11 @@
 id: japan-plateau-3d
-title: Japan PLATEAU 3D City Models (LoD1+LoD2)
-description: "National 3D city model project covering 260 municipalities across Japan at LoD1 and LoD2.\nPart of the PLATEAU project by the Japanese government (MLIT).\n170,413 CityGML files discovered via PLATEAU Data Catalog API.\n"
+title: Japan PLATEAU 3D City Models
+description: "National 3D city model project covering 260 municipalities across Japan with varying LoDs and feature types.\nPart of the PLATEAU project by the Japanese government (MLIT).\n170,413 CityGML files discovered via PLATEAU Data Catalog API.\n"
 license: CC-BY-4.0
 keywords:
 - 3d city model
 - buildings
-- LOD1
-- LOD2
+- multi-LOD
 - Japan
 - national
 - CityGML

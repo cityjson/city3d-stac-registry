@@ -1,5 +1,5 @@
 id: new-york-tum-3d
-title: New York City 3D City Model (LoD1) by TUM
+title: New York City 3D City Model - TUM
 description: "3D LoD1 city model of New York City created by Technical University of Munich (TUM).\nCreated through photogrammetry combined with existing public 2(.5)D datasets from NYC Open Data Portal.\nIncludes multiple feature classes: buildings, roads, lots, parks, water, and terrain.\nOver 1 million building objects and 500,000+ street space objects.\nAvailable in CityGML, KML, COLLADA, and glTF formats.\nLoD2 datasets also available for street space objects.\nSee research article and TUM project page for details.\nNote: This is a research dataset derived from NYC Open Data, distinct from the official NYC DoITT 3D Building Model.\n"
 license: other
 keywords:
