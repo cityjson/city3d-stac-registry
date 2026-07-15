@@ -25,7 +25,6 @@ inputs:
   - https://geobasis-rlp.de/data/geb3dlo/current/gml/LoD2_32_388_5490_2_RP.gml
 extent:
   spatial:
-    bbox: []
     crs: EPSG:25832
 links:
   - rel: source

@@ -23,7 +23,6 @@ inputs:
   - https://geodaten.leipzig.de/open_data/organisationseinheit/Amt_fuer_Geoinformation_und_Bodenordnung/3d/LoD2/GEB3D_Leipzig_LoD2_CityGML.zip
 extent:
   spatial:
-    bbox: []
     crs: EPSG:25833
 links:
   - rel: source

@@ -24,7 +24,6 @@ inputs:
   from_file: ../manifests/montreal_urls.txt
 extent:
   spatial:
-    bbox: []
     crs: EPSG:32188
   temporal:
     start: "2013-01-01T00:00:00Z"

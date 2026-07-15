@@ -35,7 +35,6 @@ inputs:
   from_file: ../manifests/3dbag_urls.txt
 extent:
   spatial:
-    bbox: []
     crs: EPSG:28992
   temporal:
     start: '2021-01-01T00:00:00Z'

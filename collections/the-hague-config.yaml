@@ -35,7 +35,6 @@ inputs:
   - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/DenHaag_01.xml
 extent:
   spatial:
-    bbox: []
     crs: EPSG:28992
   temporal:
     start: '2018-01-01T00:00:00Z'

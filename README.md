@@ -64,6 +64,17 @@ cargo run --manifest-path city3d-stac-tool/Cargo.toml -- \
   catalog --config catalog/catalog-config.yaml -o build/site
 ```
 
+Rebuild collection metadata from existing generated item JSON files, without
+downloading or regenerating items:
+
+```bash
+scripts/generate-catalog.sh --collections-only
+```
+
+Use a collection config stem to rebuild one collection, for example
+`scripts/generate-catalog.sh --collections-only japan-plateau`. Rebuild the
+root catalog afterwards with `scripts/generate-catalog.sh --catalog-only`.
+
 ## Contribution Model
 
 - Add or update dataset definitions in `collections/`.

@@ -138,7 +138,6 @@ https://assets.cms.plateau.reearth.io/assets/a3/4cf385-9d6e-4eb3-90c7-933fadc0f3
 https://assets.cms.plateau.reearth.io/assets/0d/976cb5-a499-4b4c-8352-63b598e7ea4d/13401_hachijo-machi_pref_2024_citygml_1_op.zip
 https://assets.cms.plateau.reearth.io/assets/ae/cf5f1c-8691-422f-ae90-691dda948cb9/13402_aogashima-mura_pref_2024_citygml_1_op.zip
 https://assets.cms.plateau.reearth.io/assets/c9/04ae74-7853-4611-afdd-077aacc692ce/13421_ogasawara-mura_pref_2025_citygml_1_op.zip
-https://assets.cms.plateau.reearth.io/assets/38/4f8759-9269-4d01-bdfc-906ad92e5dc1/13999_tokyo_city_2023_citygml_1_op.zip
 https://assets.cms.plateau.reearth.io/assets/04/96d45a-a30b-4c9f-88c0-c1323b5a0f86/14100_yokohama-shi_city_2024_citygml_2_op.zip
 https://assets.cms.plateau.reearth.io/assets/40/25bd0a-f174-4f55-a9bd-0e6868ece0ae/14130_kawasaki-shi_city_2022_citygml_4_op.zip
 https://assets.cms.plateau.reearth.io/assets/62/28918e-31cd-458e-80d1-370326b4084b/14150_sagamihara-shi_city_2024_citygml_1_op.zip

@@ -28,7 +28,6 @@ inputs:
   # - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/citygml/DA13_3D_Buildings_Merged.gml
 extent:
   spatial:
-    bbox: []
     crs: EPSG:2263
   temporal:
     start: '2014-01-01T00:00:00Z'

@@ -33,7 +33,6 @@ inputs:
 - https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/Zurich_Building_LoD2_V10.city.json
 extent:
   spatial:
-    bbox: []
     crs: EPSG:4326
   temporal:
     start: '2018-01-01T00:00:00Z'
