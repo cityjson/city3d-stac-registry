@@ -38,8 +38,6 @@ providers:
   - licensor
   - host
   description: City of Cambridge, Massachusetts - GIS department
-inputs:
-  - https://cambmagisdata.blob.core.windows.net/camb3d/Camb3D_Active_20220810.gdb.zip
 extent:
   spatial:
     bbox: [-71.1603989, 42.3524025, -71.0639844, 42.4042593]
