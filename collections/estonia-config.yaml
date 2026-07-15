@@ -31,7 +31,6 @@ inputs:
   - https://geoportaal.maaamet.ee/index.php?lang_id=2&plugin_act=otsing&andmetyyp=kasvuhooned_lod1&dl=1&f=kasvuhooned_lod1-eesti-citygml.zip&page_id=837
 extent:
   spatial:
-    bbox: []
     crs: EPSG:3301
   temporal:
     start: '2021-01-01T00:00:00Z'

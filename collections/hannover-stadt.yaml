@@ -27,7 +27,6 @@ inputs:
   - https://opengeodata.hannover-stadt.de/Stadtmodell_Hannover_CityGML_LOD2.zip
 extent:
   spatial:
-    bbox: []
     crs: EPSG:25832
   temporal:
     end: "2024-12-05T00:00:00Z" # NOTE: Based on last modification date (2nd link in 'Links')

@@ -32,7 +32,6 @@ inputs:
   - https://download.data.public.lu/resources/batiments-3d-lod-2-3-level-of-detail-2-3/20190603-110058/lod2-batiments-diekirch-bastendorf.gml
 extent:
   spatial:
-    bbox: []
     crs: EPSG:2169
   temporal:
     start: '2017-01-01T00:00:00Z'

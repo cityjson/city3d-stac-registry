@@ -59,7 +59,6 @@ inputs:
   from_file: ../manifests/american-cities-urls.txt
 extent:
   spatial:
-    bbox: []
     crs: EPSG:4326
   temporal:
     start: '2019-01-01T00:00:00Z'

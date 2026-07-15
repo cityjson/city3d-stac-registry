@@ -50,7 +50,6 @@ inputs:
 - https://raw.githubusercontent.com/ualsg/hdb3d-data/master/hdb.json
 extent:
   spatial:
-    bbox: []
     crs: EPSG:3414
   temporal:
     start: '2019-08-25T00:00:00Z'

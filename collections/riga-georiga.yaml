@@ -84,7 +84,6 @@ inputs:
   - https://data.gov.lv/dati/dataset/93d4239b-a9d9-4dd9-8500-6ce15fcf5e4e/resource/0a3f4dcf-5047-4762-8b5a-71695f9c5057/download/zolitude_lod2.gml # Zolitūde
 extent:
   spatial:
-    bbox: []
     crs: EPSG:3059
   temporal:
     start: "2021-01-01T00:00:00Z"

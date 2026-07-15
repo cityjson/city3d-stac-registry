@@ -33,7 +33,7 @@ inputs:
   from_file: ../manifests/japan-plateau-urls.txt
 # Throttle parallel downloads against the PLATEAU CMS — it is rate-sensitive
 # and large zips have been seen to drop mid-transfer at higher concurrency.
-concurrency: 4
+concurrency: 2
 extent:
   spatial:
     bbox: [122.93, 24.04, 153.99, 45.55] # [west, south, east, north] Japan national extent including outer islands

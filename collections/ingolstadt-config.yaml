@@ -44,7 +44,6 @@ inputs:
   - https://github.com/savenow/lod3-road-space-models/raw/fdddf41d62c49282bf319b79b9f0a7b0ce1152b2/models/road-network/citygml/2021-04-22_HD21_529_Intersections_CityHall_Ingolstadt_enhanced_traffic_spaces_v3.gml.gz
 extent:
   spatial:
-    bbox: []
     crs: EPSG:25832
   temporal:
     start: '2020-01-01T00:00:00Z'
