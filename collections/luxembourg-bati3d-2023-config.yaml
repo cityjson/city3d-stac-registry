@@ -39,7 +39,10 @@ providers:
 # download URLs embed upload timestamps and can be regenerated from
 # https://data.public.lu/api/1/datasets/base-de-donnees-nationale-des-batiments-3d-2023/
 inputs:
-  from_file: ../manifests/luxembourg-bati3d-2023_urls.txt
+  from_file: ../manifests/luxembourg-bati3d-2023-urls.txt
+# Throttle parallel downloads: individual commune archives reach several GB
+# and the portal is not built for many large parallel transfers.
+concurrency: 2
 extent:
   spatial:
     bbox: [5.73, 49.44, 6.53, 50.19] # Grand Duchy of Luxembourg national extent
