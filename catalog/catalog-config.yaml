@@ -57,3 +57,6 @@ collections:
 - ../collections/vienna-config.yaml
 - ../collections/japan-plateau-config.yaml
 - ../collections/cambridge-config.yaml
+- ../collections/luxembourg-lod1-2013-config.yaml
+- ../collections/luxembourg-bati3d-2020-config.yaml
+- ../collections/luxembourg-bati3d-2023-config.yaml

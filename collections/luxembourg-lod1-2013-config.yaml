@@ -1,0 +1,60 @@
+id: luxembourg-lod1-2013
+title: Luxembourg 3D Building Models 2013 (LoD1)
+description: |
+  Nationwide LoD1 building models for the Grand Duchy of Luxembourg: simple
+  blocks without roof detail, derived from the national topographic database
+  (BD-TOPO-L) based on 2013 aerial imagery.
+
+  Block height is the mean height of the vertices of the outer roof perimeter,
+  taken from the photogrammetric survey carried out for the 2013 BD-TOPO-L update.
+
+  Resolution is limited by that source: units are building blocks, so finer
+  units such as individual terraced houses or distinctive partial sections
+  (e.g. a church tower) are not separable.
+
+  Coordinate reference system: LUREF / EPSG:2169.
+license: CC0-1.0
+keywords:
+- 3d city model
+- buildings
+- LOD1
+- Luxembourg
+- CityGML
+- BD-TOPO-L
+providers:
+- name: Administration du Cadastre et de la Topographie (ACT)
+  url: https://act.public.lu/
+  roles:
+  - producer
+  - licensor
+  - host
+  description: Luxembourg Cadastre and Topography Administration, the official government body responsible for cadastral and geospatial data
+# The portal offers the same buildings at three aggregations: per commune, per
+# canton, and one file for the whole country. Only the country-wide archive is
+# listed here - adding the others would count every building three times.
+inputs:
+  - https://download.data.public.lu/resources/batiments-3d-lod-1-level-of-detail-1-1/20190528-082153/lod1-par-pays.zip
+extent:
+  spatial:
+    bbox: [5.73, 49.44, 6.53, 50.19] # Grand Duchy of Luxembourg national extent
+    crs: EPSG:2169
+  temporal:
+    start: '2013-01-01T00:00:00Z'
+    end: '2013-12-31T23:59:59Z'
+links:
+- rel: about
+  href: https://data.public.lu/en/datasets/batiments-3d-2013-lod-1-level-of-detail-1/
+  type: text/html
+  title: Luxembourg Open Data - Batiments 3D 2013 (LoD1)
+- rel: source
+  href: https://data.public.lu/
+  type: text/html
+  title: Luxembourg Open Data Portal
+- rel: viewer
+  href: https://map.geoportail.lu/
+  type: text/html
+  title: Luxembourg Geoportal
+- rel: license
+  href: https://creativecommons.org/publicdomain/zero/1.0/
+  type: text/html
+  title: CC0 1.0 Universal Public Domain Dedication

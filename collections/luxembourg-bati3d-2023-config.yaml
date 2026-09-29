@@ -1,0 +1,70 @@
+id: luxembourg-bati3d-2023
+title: Luxembourg National 3D Building Database 2023 (BD-L-Bati3D)
+description: |
+  Nationwide textured LoD2.2 building models for the Grand Duchy of Luxembourg,
+  derived from summer 2023 aerial imagery (flight height ~3700 m, RMSE in x, y and
+  z <= 20 cm) by photogrammetric roof restitution, downward extrusion, and
+  texturing from oblique imagery.
+
+  Only roofs of buildings with a footprint larger than 20 m2 were captured.
+  Roof superstructures (e.g. dormers) are included where the longest side exceeds
+  50 cm and the volume exceeds 1 m3.
+
+  Distributed as one zip archive per commune (100 communes, full national
+  coverage including Ville de Luxembourg), each containing a CityGML file with
+  building, roof, wall and ground surface objects plus the JPEG textures.
+  Every object carries a unique identifier linking it to its parent building.
+
+  Coordinate reference system: LUREF LTM / EPSG:2169. Note that LUREF is defined
+  as a left-handed geodetic coordinate system with X = northing and Y = easting.
+license: CC0-1.0
+keywords:
+- 3d city model
+- buildings
+- LOD2.2
+- Luxembourg
+- CityGML
+- textured
+- BD-L-Bati3D
+- photogrammetric
+providers:
+- name: Administration du Cadastre et de la Topographie (ACT)
+  url: https://act.public.lu/
+  roles:
+  - producer
+  - licensor
+  - host
+  description: Luxembourg Cadastre and Topography Administration, the official government body responsible for cadastral and geospatial data
+# One zip per commune. The list is long enough to keep out of this file; the
+# download URLs embed upload timestamps and can be regenerated from
+# https://data.public.lu/api/1/datasets/base-de-donnees-nationale-des-batiments-3d-2023/
+inputs:
+  from_file: ../manifests/luxembourg-bati3d-2023_urls.txt
+extent:
+  spatial:
+    bbox: [5.73, 49.44, 6.53, 50.19] # Grand Duchy of Luxembourg national extent
+    crs: EPSG:2169
+  temporal:
+    start: '2023-06-01T00:00:00Z'
+    end: '2023-09-30T23:59:59Z'
+links:
+- rel: about
+  href: https://data.public.lu/en/datasets/base-de-donnees-nationale-des-batiments-3d-2023/
+  type: text/html
+  title: Luxembourg Open Data - Base de donnees nationale des batiments 3D 2023
+- rel: predecessor-version
+  href: https://data.public.lu/en/datasets/base-de-donnees-nationale-des-batiments-3d/
+  type: text/html
+  title: BD-L-Bati3D 2020 (previous edition)
+- rel: source
+  href: https://data.public.lu/
+  type: text/html
+  title: Luxembourg Open Data Portal
+- rel: viewer
+  href: https://map.geoportail.lu/
+  type: text/html
+  title: Luxembourg Geoportal
+- rel: license
+  href: https://creativecommons.org/publicdomain/zero/1.0/
+  type: text/html
+  title: CC0 1.0 Universal Public Domain Dedication
