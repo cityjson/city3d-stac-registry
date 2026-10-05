@@ -1,0 +1,76 @@
+id: luxembourg-bati3d-2020
+title: Luxembourg National 3D Building Database 2020 (BD-L-Bati3D)
+description: |
+  Nationwide textured LoD2.2 building models for the Grand Duchy of Luxembourg,
+  derived from summer 2020 aerial imagery (flight height ~3500 m, RMSE in x, y and
+  z <= 20 cm) by photogrammetric roof restitution, downward extrusion, and
+  texturing from oblique imagery.
+
+  Only roofs of buildings with a footprint larger than 20 m2 were captured.
+  Roof superstructures (e.g. dormers) are included where the longest side exceeds
+  50 cm and the volume exceeds 1 m3.
+
+  Distributed as one zip archive per commune, each containing a CityGML file with
+  building, roof, wall and ground surface objects plus the JPEG textures. Every
+  object carries a unique identifier linking it to its parent building.
+
+  Coverage note: 99 communes are published here. The territory of the Ville de
+  Luxembourg is not part of this edition - the data owner directs requests to the
+  city's own topography and geomatics service. The 2023 edition
+  (luxembourg-bati3d-2023) supersedes this one and does cover the capital.
+
+  Coordinate reference system: LUREF LTM / EPSG:2169.
+license: CC0-1.0
+keywords:
+- 3d city model
+- buildings
+- LOD2.2
+- Luxembourg
+- CityGML
+- textured
+- BD-L-Bati3D
+- photogrammetric
+providers:
+- name: Administration du Cadastre et de la Topographie (ACT)
+  url: https://act.public.lu/
+  roles:
+  - producer
+  - licensor
+  - host
+  description: Luxembourg Cadastre and Topography Administration, the official government body responsible for cadastral and geospatial data
+# One zip per commune. The list is long enough to keep out of this file; the
+# download URLs embed upload timestamps and can be regenerated from
+# https://data.public.lu/api/1/datasets/base-de-donnees-nationale-des-batiments-3d/
+inputs:
+  from_file: ../manifests/luxembourg-bati3d-2020-urls.txt
+# Throttle parallel downloads: individual commune archives reach several GB
+# and the portal is not built for many large parallel transfers.
+concurrency: 2
+extent:
+  spatial:
+    bbox: [5.73, 49.44, 6.53, 50.19] # Grand Duchy of Luxembourg national extent (minus Ville de Luxembourg)
+    crs: EPSG:2169
+  temporal:
+    start: '2020-07-01T00:00:00Z'
+    end: '2020-09-30T23:59:59Z'
+links:
+- rel: about
+  href: https://data.public.lu/en/datasets/base-de-donnees-nationale-des-batiments-3d/
+  type: text/html
+  title: Luxembourg Open Data - Base de donnees nationale des batiments 3D 2020
+- rel: latest-version
+  href: https://data.public.lu/en/datasets/base-de-donnees-nationale-des-batiments-3d-2023/
+  type: text/html
+  title: BD-L-Bati3D 2023 (current edition)
+- rel: source
+  href: https://data.public.lu/
+  type: text/html
+  title: Luxembourg Open Data Portal
+- rel: viewer
+  href: https://map.geoportail.lu/
+  type: text/html
+  title: Luxembourg Geoportal
+- rel: license
+  href: https://creativecommons.org/publicdomain/zero/1.0/
+  type: text/html
+  title: CC0 1.0 Universal Public Domain Dedication
