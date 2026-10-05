@@ -83,3 +83,19 @@ root catalog afterwards with `scripts/generate-catalog.sh --catalog-only`.
 - Commit supporting URL manifests in `manifests/` when a dataset is too large to maintain inline.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/publishing.md](docs/publishing.md).
+
+## Citation
+If you use this repo for scientific works, please cite as below.
+
+```
+@Article{isprs-annals-XII-4-W1-2026-25-2026,
+AUTHOR = {Baba, H. and Ledoux, H.},
+TITLE = {A STAC Extension for discovering and cataloguing 3D city models},
+JOURNAL = {ISPRS Annals of the Photogrammetry, Remote Sensing and Spatial Information Sciences},
+VOLUME = {XII-4/W1-2026},
+YEAR = {2026},
+PAGES = {25--32},
+URL = {https://isprs-annals.copernicus.org/articles/XII-4-W1-2026/25/2026/},
+DOI = {10.5194/isprs-annals-XII-4-W1-2026-25-2026}
+}
+```
